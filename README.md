@@ -8,7 +8,7 @@ Use
 ```bash
 git clone https://github.com/homerours/jumper
 cd jumper
-./install.sh
+sudo ./install.sh
 ```
 to compile and move the `jumper` binary to `/usr/local/bin`. Then add 
 ```bash
@@ -17,15 +17,20 @@ source jumper.sh
 to your bash/zsh rc to get access to the jump functions.
 
 ## Usage
+Jumper is made of:
+- a `C` program, `jumper` which operates on files whose lines are in the format `<path>|<number-of-visits>|<timestamp-of-last-visit>`. Given such a file
+```bash
+jumper -f <file> -n N <query>
+```
+returns the top `N` entries of `<file>` that match `<query>`.
 
-- Use `j <something>` to jump to the most frequent/recent directories matching `<something>`.
-- Use `Ctrl+J` to fuzzy-find the most frequent/recent directories matching `<something>`.
-- The general syntax is `jumper -n <number-of-results> <query>`, so `j` is just an alias for `cd $(jumper -n 1 $1)`.
+- a shell script (`jumper.sh`) which uses `jumper` for fuzzy-finding and directories jumping:
+    - Use `z <something>` to jump to the most frequent/recent directories matching `<something>`.
+    - Use `Ctrl+J` to fuzzy-find the most frequent/recent directories matching a query.
 
 ## Principles
 
-The `jumper.sh` adds a `precmd` function that will be executed after each command and will record the `pwd` in the database (a file `~/.j`mimicing what [z](https://github.com/rupa/z) is doing).
-Then, the jumper binary is in charge of searching that file.
+The `jumper.sh` adds a `precmd` function that will be executed after each command and will record the `pwd` in the database (a file `~/.jumper` mimicing what [z](https://github.com/rupa/z) is doing).
 
 ## Contributing
 

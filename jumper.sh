@@ -1,7 +1,7 @@
-export jumpfile=~/.z
+export jumpfile=~/.jumper
 [[ -f ${jumpfile} ]] || touch "${jumpfile}"
 
-j() {
+z() {
 	new_path=$(jumper -f "${jumpfile}" -n 1 $1)
 	if [[ -z $new_path ]]; then
 		echo 'no match found'

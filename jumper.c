@@ -53,49 +53,48 @@ typedef struct record {
   int timeLastVisit;
 } record;
 
-void parse_record(char *string, record *rec) {
+static void parse_record(char *string, record *rec) {
   char *current = string;
   rec->path = strtok_r(string, "|", &current);
   rec->nVisits = atoi(strtok_r(current, "|", &current));
   rec->timeLastVisit = atoi(strtok_r(current, "|", &current));
 }
 
-double frecent(double rank, double time) {
+static double frecent(double rank, double time) {
   return 1.0 + log(1.0 + rank) / (0.0001 * time + 1.0);
 }
 
-void lookup(char *file, char *key, int n) {
-  FILE *fp;
-  char *line = NULL;
-  size_t len = 0;
-
-  fp = fopen(file, "r");
+static void lookup(char *file, char *key, int n) {
+  FILE *fp = fopen(file, "r");
   if (fp == NULL) {
-    printf("ERROR: File %s not found", file);
+    printf("ERROR: File %s not found\n", file);
     exit(EXIT_FAILURE);
   }
 
   heap *heap = new_heap(n);
+  record rec;
+
   int queueLength = 0;
   int key_length = strlen(key);
 
   double s, value, delta;
-  record *rec = (record *)malloc(sizeof(record));
 
   double now = (double)time(NULL);
+
+  char *line = NULL;
+  size_t len = 0;
   while (getline(&line, &len, fp) != -1) {
-    parse_record(line, rec);
-    s = match(rec->path, key, key_length);
+    parse_record(line, &rec);
+    s = match(rec.path, key, key_length);
     if (s > 0) {
-      delta = now - rec->timeLastVisit;
-      value = s * frecent(rec->nVisits, delta);
-      add(heap, value, strdup(rec->path));
+      delta = now - rec.timeLastVisit;
+      value = s * frecent(rec.nVisits, delta);
+      add(heap, value, strdup(rec.path));
     }
   }
   print_sorted(heap);
   free_heap(heap);
   fclose(fp);
-  free(rec);
   if (line) {
     free(line);
   }
@@ -103,8 +102,7 @@ void lookup(char *file, char *key, int n) {
 
 int main(int argc, char **argv) {
   char *file;
-  int n = 20;
-  int c;
+  int c, n = 20;
   while ((c = getopt(argc, argv, "hf:n:")) != -1)
     switch (c) {
     case 'f':
