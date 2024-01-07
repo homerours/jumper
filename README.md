@@ -28,7 +28,13 @@ returns the top `N` entries of `<file>` that match `<query>`.
     - Use `z <something>` to jump to the most frequent/recent directories matching `<something>`.
     - Use `Ctrl+J` to fuzzy-find the most frequent/recent directories matching a query.
 
-## Neovim
+## Vim/Neovim
+
+You can add something like
+```
+command! -nargs=+ Z :cd `jumper -f ~/.jumper -n 1 <args>`
+```
+to your `.vimrc` to then jump with `:Z <query>`.
 
 A Telescope extension [telescope-jumper](https://github.com/homerours/telescope-jumper) allows to use jumper within Neovim.
 
