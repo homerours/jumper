@@ -32,8 +32,7 @@ static double match(char *string, char *query, int key_length) {
       t++;
     }
   }
-  max_length = max(q - qinit, max_length);
-  total_length += max_length;
+  total_length += max(q - qinit, max_length);
   double s = ((double)total_length) / ((double)key_length);
   if (s < 0.3) {
     return 0.0;
@@ -57,7 +56,7 @@ static void parse_record(char *string, record *rec) {
   char *current = string;
   rec->path = strtok_r(string, "|", &current);
   rec->nVisits = atoi(strtok_r(current, "|", &current));
-  rec->timeLastVisit = atoi(strtok_r(current, "|", &current));
+  rec->timeLastVisit = atoi(current);
 }
 
 static double frecent(double rank, double time) {
@@ -74,22 +73,18 @@ static void lookup(char *file, char *key, int n) {
   heap *heap = new_heap(n);
   record rec;
 
-  int queueLength = 0;
   int key_length = strlen(key);
-
-  double s, value, delta;
-
+  double s, delta;
   double now = (double)time(NULL);
 
   char *line = NULL;
-  size_t len = 0;
+  size_t len;
   while (getline(&line, &len, fp) != -1) {
     parse_record(line, &rec);
     s = match(rec.path, key, key_length);
     if (s > 0) {
       delta = now - rec.timeLastVisit;
-      value = s * frecent(rec.nVisits, delta);
-      add(heap, value, strdup(rec.path));
+      insert(heap, s * frecent(rec.nVisits, delta), strdup(rec.path));
     }
   }
   print_sorted(heap);

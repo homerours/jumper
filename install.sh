@@ -13,10 +13,8 @@ mv jumper "${dest_folder}"
 
 echo "Success, installation completed!"
 
-wfzf=$(which fzf)
-if [[ -z ${wfzf} ]]
-then
-    echo "FZF not found, fuzzy finding may not work."
+if [[ -z $(which fzf) ]]; then
+    echo "Warning: FZF not found, fuzzy finding may not work."
 else
     echo "FZF found!"
 fi

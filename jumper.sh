@@ -22,7 +22,7 @@ __update_db() {
 	directory=$(pwd)
 	now=$(date +%s)
 	n=$(perl -i -pe '$k+= s{('"$directory"')\|(\d+)\|(\d+)}{"$1|".($2+1)."|'"$now"'"}ge; END{print "$k"}' "${jumpfile}")
-	if [[ $n == '0' ]]; then
+	if [[ $n == '0' ]] || [[ -z $n ]]; then
 		echo "${directory}|1|${now}" >> "${jumpfile}"
 	fi
 }
@@ -30,10 +30,7 @@ __update_db() {
 __clean_db() {
     # Remove entries for which the folder does not exist anymore
     tempfile="${jumpfile}_temp"
-    if [[ -f ${tempfile} ]]; then
-        rm ${tempfile}
-    fi
-    touch ${tempfile}
+    [[ -f ${tempfile} ]] && rm ${tempfile}
 
     while IFS= read -r line ; do
         entry="${line%%|*}"
@@ -58,14 +55,14 @@ if [[ ! -z ${BASH_VERSION} ]]; then
     # Update db
 	PROMPT_COMMAND="__update_db;$PROMPT_COMMAND"
 else
-    # Assume that this is Zsh
+    # We assume that this is Zsh
 	function run-fz {
         LBUFFER="${LBUFFER}$(__fz)"
 		zle reset-prompt
 	}
 	zle -N run-fz
 	bindkey '^J' run-fz
-    #
+
     # Update db
 	precmd() {
 		__update_db

@@ -60,7 +60,7 @@ static void heapify(heap *heap) {
   }
 }
 
-void add(heap *heap, double value, char *path) {
+void insert(heap *heap, double value, char *path) {
   if (heap->n_items == heap->size) {
     if (value > heap->items->value) {
       new_item(heap->items, value, path);
