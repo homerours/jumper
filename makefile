@@ -5,10 +5,10 @@ jumper: jumper.o heap.o
 	$(CC) -o $@ $^ $(FLAGS)
 
 jumper.o: jumper.c
-	$(CC) -c $^ $(FLAGS)
+	$(CC) -c $^
 
 heap.o: heap.c
-	$(CC) -c $^ $(FLAGS)
+	$(CC) -c $^
 
 clean:
 	rm -rf *.o

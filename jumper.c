@@ -1,10 +1,10 @@
 #include <ctype.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include <math.h>
 
 #include "heap.h"
 
@@ -15,10 +15,8 @@ static double match(char *string, char *query, int key_length) {
     return 1.0;
   }
   char *t = string;
-  int max_length = 0;
-  char *q = query;
-  char *qinit = query;
-  int total_length = 0;
+  int total_length = 0, max_length = 0;
+  char *q = query, *qinit = query;
   while (*t != 0 && *q != 0) {
     if (*q == ' ') {
       total_length += q - qinit + 1;
@@ -63,7 +61,7 @@ void parse_record(char *string, record *rec) {
 }
 
 double frecent(double rank, double time) {
-  return 1.0 + log(1.0 + rank) / (0.0001 * time + 1.25);
+  return 1.0 + log(1.0 + rank) / (0.0001 * time + 1.0);
 }
 
 void lookup(char *file, char *key, int n) {
