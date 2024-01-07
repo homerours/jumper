@@ -1,7 +1,8 @@
 export jumpfile=~/.z
+[[ -f ${jumpfile} ]] || touch "${jumpfile}"
+
 j() {
-	query=$1
-	new_path=$(jumper -f "${jumpfile}" -n 1 $query)
+	new_path=$(jumper -f "${jumpfile}" -n 1 $1)
 	if [[ -z $new_path ]]; then
 		echo 'no match found'
 	else
@@ -9,19 +10,13 @@ j() {
 	fi
 }
 
-fz() {
-	RG_PREFIX="jumper -f "${jumpfile}" -n 20"
-	INITIAL_QUERY=""
-	dest=$(fzf --height=20 --layout=reverse \
-		--ansi --disabled --query "$INITIAL_QUERY" \
-		--bind "start:reload:$RG_PREFIX {q}" \
-		--bind "change:reload:sleep 0.05; $RG_PREFIX {q} || true")
-	if [[ ! -z $dest ]]; then
-		cd "$dest"
-	fi
+__fz() {
+	__JUMPER="jumper -f ${jumpfile} -n 20"
+	fzf --height=20 --layout=reverse \
+		--ansi --disabled --query '' \
+		--bind "start:reload:${__JUMPER} {q}" \
+		--bind "change:reload:sleep 0.05; ${__JUMPER} {q} || true"
 }
-
-[[ -f ${jumpfile} ]] || touch "${jumpfile}"
 
 __update_db() {
 	directory=$(pwd)
@@ -32,28 +27,46 @@ __update_db() {
 	fi
 }
 
+__clean_db() {
+    # Remove entries for which the folder does not exist anymore
+    tempfile="${jumpfile}_temp"
+    if [[ -f ${tempfile} ]]; then
+        rm ${tempfile}
+    fi
+    touch ${tempfile}
+
+    while IFS= read -r line ; do
+        entry="${line%%|*}"
+        if [[ -d $entry ]]; then
+            echo "$line" >> ${tempfile}
+        else
+            echo "Removing $entry from database."
+        fi
+    done < "${jumpfile}"
+    mv "${tempfile}" "${jumpfile}"
+}
+
 if [[ ! -z ${BASH_VERSION} ]]; then
     # For Bash
-	FIRST_PROMPT=1
-	function PostCommand() {
-		AT_PROMPT=1
+    function run-fz() {
+        selected=$(__fz)
+        READLINE_LINE="${READLINE_LINE:0:$READLINE_POINT}$selected${READLINE_LINE:$READLINE_POINT}"
+        READLINE_POINT=$(( READLINE_POINT + ${#selected} ))
+    }
+	bind -x '"\C-j": run-fz'
 
-		if [ -n "$FIRST_PROMPT" ]; then
-			unset FIRST_PROMPT
-			return
-		fi
-		__update_db
-	}
-	PROMPT_COMMAND="PostCommand"
-	bind '"\C-j": "fz\C-m"'
+    # Update db
+	PROMPT_COMMAND="__update_db;$PROMPT_COMMAND"
 else
     # Assume that this is Zsh
 	function run-fz {
-		fz
+        LBUFFER="${LBUFFER}$(__fz)"
 		zle reset-prompt
 	}
 	zle -N run-fz
 	bindkey '^J' run-fz
+    #
+    # Update db
 	precmd() {
 		__update_db
 	}
