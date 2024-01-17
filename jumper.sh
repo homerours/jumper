@@ -13,6 +13,7 @@ z() {
 __fz() {
 	__JUMPER="jumper -f ${jumpfile} -n 20"
 	fzf --height=20 --layout=reverse \
+        --preview 'ls -p1UC --color=always {}' \
 		--ansi --disabled --query '' \
 		--bind "start:reload:${__JUMPER} {q}" \
 		--bind "change:reload:sleep 0.05; ${__JUMPER} {q} || true"
@@ -47,21 +48,32 @@ if [[ ! -z ${BASH_VERSION} ]]; then
     # For Bash
     function run-fz() {
         selected=$(__fz)
-        READLINE_LINE="${READLINE_LINE:0:$READLINE_POINT}$selected${READLINE_LINE:$READLINE_POINT}"
-        READLINE_POINT=$(( READLINE_POINT + ${#selected} ))
+        pre="${READLINE_LINE:0:$READLINE_POINT}"
+        if [[ -z $pre ]]; then
+            cd "$selected"
+            # echo -e "${PS1@P}"
+        else
+            READLINE_LINE="${pre}$selected${READLINE_LINE:$READLINE_POINT}"
+            READLINE_POINT=$(( READLINE_POINT + ${#selected} ))
+        fi
     }
-	bind -x '"\C-j": run-fz'
+	bind -x '"\C-y": run-fz'
 
     # Update db
 	PROMPT_COMMAND="__update_db;$PROMPT_COMMAND"
 else
     # We assume that this is Zsh
 	function run-fz {
-        LBUFFER="${LBUFFER}$(__fz)"
+        selected=$(__fz)
+        if [[ -z ${LBUFFER} ]]; then
+            cd $selected
+        else
+            LBUFFER="${LBUFFER}${selected}"
+        fi
 		zle reset-prompt
 	}
 	zle -N run-fz
-	bindkey '^J' run-fz
+	bindkey '^Y' run-fz
 
     # Update db
 	precmd() {
