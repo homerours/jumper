@@ -19,16 +19,42 @@ __fz() {
 		--bind "change:reload:sleep 0.05; ${__JUMPER} {q} || true"
 }
 
-__update_db() {
-	directory=$(pwd)
-	now=$(date +%s)
-	n=$(perl -i -pe '$k+= s{('"$directory"')\|(\d+)\|(\d+)}{"$1|".($2+1)."|'"$now"'"}ge; END{print "$k"}' "${jumpfile}")
-	if [[ $n == '0' ]] || [[ -z $n ]]; then
-		echo "${directory}|1|${now}" >> "${jumpfile}"
-	fi
+__jumper_update_db() {
+    jumper -f "${jumpfile}" -a "$PWD"
 }
 
-__clean_db() {
+__jumper_delete_duplicate_symlinks(){
+    tempfile="${jumpfile}_temp"
+    cp "${jumpfile}" "${tempfile}"
+    while IFS= read -r line ; do
+        entry="${line%%|*}"
+        real=$(realpath $entry)
+        if [[ $entry != $real ]]; then
+            sed -i -e "\:^${real}|:d" "${tempfile}"
+        fi
+    done < "${jumpfile}"
+    mv "${tempfile}" "${jumpfile}"
+}
+
+__jumper_replace_symlinks(){
+    tempfile="${jumpfile}_temp"
+    cp "${jumpfile}" "${tempfile}"
+    while IFS= read -r line ; do
+        entry="${line%%|*}"
+        real=$(realpath $entry)
+        if [[ $entry != $real ]]; then
+            sed -i -e "s:^${real}/:${entry}/:g" "${tempfile}"
+        fi
+    done < "${jumpfile}"
+    mv "${tempfile}" "${jumpfile}"
+}
+
+__jumper_clean_symlinks(){
+    __jumper_delete_duplicate_symlinks
+    __jumper_replace_symlinks
+}
+
+__jumper_clean_db() {
     # Remove entries for which the folder does not exist anymore
     tempfile="${jumpfile}_temp"
     [[ -f ${tempfile} ]] && rm ${tempfile}
@@ -51,7 +77,6 @@ if [[ ! -z ${BASH_VERSION} ]]; then
         pre="${READLINE_LINE:0:$READLINE_POINT}"
         if [[ -z $pre ]]; then
             cd "$selected"
-            # echo -e "${PS1@P}"
         else
             READLINE_LINE="${pre}$selected${READLINE_LINE:$READLINE_POINT}"
             READLINE_POINT=$(( READLINE_POINT + ${#selected} ))
@@ -60,7 +85,7 @@ if [[ ! -z ${BASH_VERSION} ]]; then
 	bind -x '"\C-y": run-fz'
 
     # Update db
-	PROMPT_COMMAND="__update_db;$PROMPT_COMMAND"
+	PROMPT_COMMAND="__jumper_update_db;$PROMPT_COMMAND"
 else
     # We assume that this is Zsh
 	function run-fz {
@@ -77,6 +102,6 @@ else
 
     # Update db
 	precmd() {
-		__update_db
+		__jumper_update_db
 	}
 fi

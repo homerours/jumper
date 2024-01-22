@@ -22,13 +22,17 @@ Jumper is made of:
 ```bash
 jumper -f <file> -n N <query>
 ```
-returns the top `N` entries of `<file>` that match `<query>`.
+returns the top `N` entries of `<file>` that match `<query>`. The command
+```bash
+jumper -f <file> -a <path>
+```
+adds the `<path>` to the `<file>`, or updates its data if already present.
 
 - a shell script (`jumper.sh`) which uses `jumper` for fuzzy-finding and directories jumping:
     - Use `z <something>` to jump to the most frequent/recent directories matching `<something>`.
     - Use `Ctrl+J` to fuzzy-find the most frequent/recent directories matching a query.
 
-- Use `__clean_db` to remove from the database directories that do not exist anymore.
+- Use `__jumper_clean_db` to remove from the database directories that do not exist anymore.
 
 ## Vim/Neovim
 
@@ -40,10 +44,6 @@ to your `.vimrc` to then jump with `:Z <query>`.
 
 A Telescope extension [telescope-jumper](https://github.com/homerours/telescope-jumper) allows to use jumper within Neovim.
 
-## Principles
+## How it works
 
 The `jumper.sh` adds a `precmd` function that will be executed after each command and will record the `pwd` in the database (a file `~/.jumper` in the same way [z](https://github.com/rupa/z) does).
-
-## Contributing
-
-PR / comments are welcome :)

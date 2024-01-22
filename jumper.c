@@ -7,16 +7,22 @@
 #include <unistd.h>
 
 #include "heap.h"
+#include "record.h"
 
 static inline int max(int x, int y) { return ((x) > (y) ? x : y); }
+
+const char *HELP_STRING = "Jumper:\n\
+- To find the closest matches to <query>:\n\
+%s -f <logfile> -n <number-of-results> <query>\n\
+- To update the database with <query>:\n\
+%s -f <logfile> -a <query>\n";
 
 static double match(char *string, char *query, int key_length) {
   if (*query == '\0') {
     return 1.0;
   }
-  char *t = string;
   int total_length = 0, max_length = 0;
-  char *q = query, *qinit = query;
+  char *t = string, *q = query, *qinit = query;
   while (*t != 0 && *q != 0) {
     if (*q == ' ') {
       total_length += q - qinit + 1;
@@ -46,21 +52,81 @@ static double match(char *string, char *query, int key_length) {
   return s;
 }
 
-typedef struct record {
-  char *path;
-  int nVisits;
-  int timeLastVisit;
-} record;
-
-static void parse_record(char *string, record *rec) {
-  char *current = string;
-  rec->path = strtok_r(string, "|", &current);
-  rec->nVisits = atoi(strtok_r(current, "|", &current));
-  rec->timeLastVisit = atoi(current);
+static char *file_to_buffer(FILE *fp, size_t *size) {
+  long int position = ftell(fp);
+  fseek(fp, 0, SEEK_END);
+  long int end_position = ftell(fp);
+  fseek(fp, position, SEEK_SET);
+  *size = end_position - position;
+  char *buffer = (char *)malloc((*size + 1) * sizeof(char));
+  size_t n_read = fread(buffer, sizeof(char), *size, fp);
+  if (n_read != *size) {
+    fprintf(stderr, "ERROR: Could not read file.");
+    exit(EXIT_FAILURE);
+  }
+  buffer[*size] = '\0';
+  return buffer;
 }
 
 static double frecent(double rank, double time) {
-  return 1.0 + log(1.0 + rank) / (0.0001 * time + 1.0);
+  return 1.0 + log(1.0 + rank) / (0.00005 * time + 1.0);
+}
+
+static void update_data(char *file, char *key) {
+  FILE *fp = fopen(file, "r+");
+  if (fp == NULL) {
+    fprintf(stderr, "ERROR: File %s not found\n", file);
+    exit(EXIT_FAILURE);
+  }
+
+  record rec;
+  int now = (int)time(NULL);
+  char *line = NULL;
+  size_t len;
+  long int position = ftell(fp);
+
+  while (getline(&line, &len, fp) != -1) {
+    parse_record(line, &rec);
+    if (strcmp(rec.path, key) == 0) {
+      rec.n_visits += 1;
+      rec.last_visit = now;
+      char *rec_string = record_to_string(&rec);
+      int record_length = strlen(rec_string);
+      long int new_position = ftell(fp);
+
+      if (record_length > new_position - position - 1) {
+        // New record is longer than the current one
+        // We have to copy the rest of the file
+        fseek(fp, new_position - 1, SEEK_SET);
+        size_t file_tail_size;
+        char *file_tail = file_to_buffer(fp, &file_tail_size);
+        fseek(fp, position, SEEK_SET);
+        fwrite(rec_string, sizeof(char), record_length, fp);
+        fwrite(file_tail, sizeof(char), file_tail_size, fp);
+        free(file_tail);
+      } else {
+        fseek(fp, position, SEEK_SET);
+        fwrite(rec_string, sizeof(char), record_length, fp);
+      }
+      free(rec_string);
+      break;
+    }
+    position = ftell(fp);
+  }
+  if (feof(fp)) {
+    rec.n_visits = 1;
+    rec.path = key;
+    rec.last_visit = now;
+    char *rec_string = record_to_string(&rec);
+    int record_length = strlen(rec_string);
+    fwrite(rec_string, sizeof(char), record_length, fp);
+    fwrite("\n", sizeof(char), 1, fp);
+    free(rec_string);
+  }
+  fclose(fp);
+  if (line) {
+    free(line);
+  }
 }
 
 static void lookup(char *file, char *key, int n) {
@@ -83,8 +149,8 @@ static void lookup(char *file, char *key, int n) {
     parse_record(line, &rec);
     s = match(rec.path, key, key_length);
     if (s > 0) {
-      delta = now - rec.timeLastVisit;
-      insert(heap, s * frecent(rec.nVisits, delta), strdup(rec.path));
+      delta = now - rec.last_visit;
+      insert(heap, s * frecent(rec.n_visits, delta), strdup(rec.path));
     }
   }
   print_sorted(heap);
@@ -96,29 +162,32 @@ static void lookup(char *file, char *key, int n) {
 }
 
 int main(int argc, char **argv) {
-  char *file;
-  int c, n = 20;
-  while ((c = getopt(argc, argv, "hf:n:")) != -1)
+  char *file = NULL;
+  int c, n = 20, mode = 0;
+  while ((c = getopt(argc, argv, "hf:n:a")) != -1)
     switch (c) {
     case 'f':
       file = optarg;
+      break;
+    case 'a':
+      mode = 1;
       break;
     case 'n':
       n = atoi(optarg);
       if (n <= 0) {
         fprintf(stderr,
                 "ERROR: The number of results -n has to be positive!\n");
+        return 1;
       }
       break;
     case 'h':
-      printf(
-          "Usage: %s -f <logfile-of-visited-folders> -n <number-of-entries>\n",
-          argv[0]);
+      printf(HELP_STRING, argv[0], argv[0]);
       break;
     case '?':
-      if (optopt == 'n')
-        fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-      else if (isprint(optopt))
+      if (optopt == 'f' || optopt == 'n') {
+        return 1;
+      }
+      if (isprint(optopt))
         fprintf(stderr, "Unknown option `-%c'.\n", optopt);
       else
         fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
@@ -135,10 +204,18 @@ int main(int argc, char **argv) {
     for (int i = optind; i < argc; i++) {
       fprintf(stderr, "%s ", argv[i]);
     }
+    fprintf(stderr, "\n");
     return 1;
   }
-
+  if (file == NULL) {
+    fprintf(stderr, "ERROR: you must provide a data file with -f.\n");
+    return 1;
+  }
   char *key = argv[argc - 1];
-  lookup(file, key, n);
+  if (mode == 0) {
+    lookup(file, key, n);
+  } else if (*key != '\0') {
+    update_data(file, key);
+  }
   return 0;
 }
