@@ -41,16 +41,21 @@ In order to populate the directories database, a precommand is added to bash/zsh
 
 ## Vim/Neovim
 
+### Telescope extension
+A Telescope extension [telescope-jumper](https://github.com/homerours/telescope-jumper) allows to fuzzy-find jumper results within Neovim. 
+
+Below are instructions to use jumper within Vim/Neovim without this plugin.
+
 ### Jump to directories
 You can add something like
-```
+```vim
 command! -nargs=+ Z :cd `jumper -f ~/.jumper -n 1 <args>`
 ```
 to your `.vimrc` to then jump with `:Z <query>`.
 
 ### Jump to files
 In order to log the files you open, add
-```
+```vim
 autocmd BufReadPre *   silent execute '!jumper -f ~/.jumper_files -a ' .. expand('%:p')
 ```
 or
@@ -67,9 +72,6 @@ vim.api.nvim_create_autocmd({ "BufNewFile", "BufReadPre" }, {
 })
 ```
 to your `.vimrc`/`init.lua`. Then, in order to jump to files, add something like:
-```
+```vim
 command! -nargs=+ Zf :edit `jumper -f ~/.jumper_files -n 1 <args>`
 ```
-
-### Telescope extension
-A Telescope extension [telescope-jumper](https://github.com/homerours/telescope-jumper) allows to fuzzy-find jumper results within Neovim.
