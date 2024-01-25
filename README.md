@@ -1,6 +1,6 @@
 # Jumper
 
-Jumper is a program that helps you jumping to / fuzzy-finding the directories and files that you frequently visit.
+Jumper is a command-line program that helps you jumping to / fuzzy-finding the directories and files that you frequently visit.
 It uses [FZF](https://github.com/junegunn/fzf) for fuzzy-finding and is heavily inspired by [z](https://github.com/rupa/z).
 
 ## Installation
@@ -14,7 +14,7 @@ to compile and move the `jumper` binary to `/usr/local/bin`. Then add
 ```bash
 source path/to/jumper.sh
 ```
-to your `bashrc`/`zshrc` to get access to jumper's functions.
+to your `.bashrc`/`.zshrc` to get access to jumper's functions.
 
 ## Requirements
 - A C compiler for installation. The makefile uses `gcc`.
@@ -30,20 +30,21 @@ returns the top `N` entries of `<file>` that match `<query>`. The command
 ```bash
 jumper -f <file> -a <path>
 ```
-adds the `<path>` to the `<file>`, or updates its data (increments the visits count and updates the timestamp) if already present.
+adds the `<path>` to the `<file>`, or updates its data (increments the visits count and updates the time stamp) if already present.
 From these two basic functions, the shell script `jumper.sh` defines various functions/mappings (see next section) allowing to quickly jump around!
 
 ## Usage
 - Use `z <something>` to jump to the most frequent/recent directories matching `<something>`.
 - Use `zf <something>` to open (in `$EDITOR`) the most frequent/recent file matching `<something>`.
 - Use `Ctrl+Y` to fuzzy-find the most frequent/recent directories matching a query (FZF required).
-- Yse `Ctrl+U` to fuzzy-find the most frequent/recent files matching a query (FZF required).
+- Use `Ctrl+U` to fuzzy-find the most frequent/recent files matching a query (FZF required).
+All these mappings can be updated in `jumper.sh`.
 
-Database maintainance:
+Database maintenance:
 - Use `__jumper_clean_db` to remove from the database directories that do not exist anymore.
 - Use `__jumper_clean_files_db` to remove from the database files that do not exist anymore.
 
-In order to populate the directories database, a precommand is added to bash/zsh. To populate the files database, you will have to call `jumper -f ~/.jumper_files -a <full-path-to-file>` everytime you open a file. For Vim/Neovim, this can be done using an `autocmd` (see next section). For other editors, you can for instance use aliases.
+In order to populate the directories database, a pre-command is added to Bash/Zsh. To populate the files database, you will have to call `jumper -f ~/.jumper_files -a <full-path-to-file>` every time you open a file. For Vim/Neovim, this can be done using an `autocmd` (see next section). For other editors, you can for instance use aliases.
 
 ## Vim/Neovim
 
@@ -64,13 +65,14 @@ In order to log the files you open, add
 ```vim
 autocmd BufReadPre *   silent execute '!jumper -f ~/.jumper_files -a ' .. expand('%:p')
 ```
-or
+or, if you are using Neovim's lua api,
 ```lua
 vim.api.nvim_create_autocmd({ "BufNewFile", "BufReadPre" }, {
     pattern = { "*" },
     callback = function(ev)
         local filename = vim.api.nvim_buf_get_name(ev.buf)
-        if not string.find(filename, ":") then
+        -- do not log .git files, and buffers opened by plugins (which often contain some ':')
+        if not (string.find(filename, "/.git") or string.find(filename, ":")) then
             local cmd = 'jumper -f ~/.jumper_files -a ' .. filename
             os.execute(cmd)
         end
