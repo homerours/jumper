@@ -1,5 +1,7 @@
 #pragma once
 
+extern const int MAX_HEAP_SIZE;
+
 typedef struct item item;
 
 typedef struct heap heap;

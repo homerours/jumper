@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+const int MAX_HEAP_SIZE = 10000;
+
 typedef struct item {
   double value;
   char *path;
@@ -23,12 +25,11 @@ typedef struct heap {
   item *items;
 } heap;
 
-const int MAX_SIZE = 1000;
 
 heap *new_heap(int size) {
   heap *heap = malloc(sizeof(struct heap));
   heap->n_items = 0;
-  heap->size = size > MAX_SIZE ? MAX_SIZE : size;
+  heap->size = size > MAX_HEAP_SIZE ? MAX_HEAP_SIZE : size;
   heap->items = (item *)malloc(size * sizeof(item));
   return heap;
 }

@@ -11,9 +11,9 @@
 
 static inline int max(int x, int y) { return ((x) > (y) ? x : y); }
 
-const char *HELP_STRING = "Jumper:\n\
+const char *HELP_STRING = "Jumper: jump around your directories and files!\n\n\
 - To find the closest matches to <query>:\n\
-%s -f <logfile> -n <number-of-results> <query>\n\
+%s -f <logfile> -n <number-of-results> <query>\n\n\
 - To update the database with <query>:\n\
 %s -f <logfile> -a <query>\n";
 
@@ -163,7 +163,7 @@ static void lookup(char *file, char *key, int n) {
 
 int main(int argc, char **argv) {
   char *file = NULL;
-  int c, n = 20, mode = 0;
+  int c, n = MAX_HEAP_SIZE, mode = 0;
   while ((c = getopt(argc, argv, "hf:n:a")) != -1)
     switch (c) {
     case 'f':

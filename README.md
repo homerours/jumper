@@ -1,6 +1,6 @@
 # Jumper
 
-Jumper is a directory-jumper program that helps you jumping to / fuzzy-finding the directories that you frequently visit.
+Jumper is a program that helps you jumping to / fuzzy-finding the directories and files that you frequently visit.
 It uses [FZF](https://github.com/junegunn/fzf) for fuzzy-finding and is heavily inspired by [z](https://github.com/rupa/z).
 
 ## Installation
@@ -12,12 +12,17 @@ sudo ./install.sh
 ```
 to compile and move the `jumper` binary to `/usr/local/bin`. Then add 
 ```bash
-source jumper.sh
+source path/to/jumper.sh
 ```
-to your bash/zsh rc to get access to the jump functions.
+to your `bashrc`/`zshrc` to get access to jumper's functions.
+
+## Requirements
+- A C compiler for installation. The makefile uses `gcc`.
+- Bash (>=4.0) or Zsh.
+- [FZF](https://github.com/junegunn/fzf). This is not mandatory, but you will need it for fuzzy-finding.
 
 ## Concept
-Jumper is a C program, `jumper` which operates on files whose lines are in the format `<path>|<number-of-visits>|<timestamp-of-last-visit>`. Given such a file
+Jumper is a C program, `jumper`, which operates on files whose lines are in the format `<path>|<number-of-visits>|<timestamp-of-last-visit>`. Such file is typically used to record accesses to files/directories. Given such a file, the command
 ```bash
 jumper -f <file> -n N <query>
 ```
@@ -25,11 +30,12 @@ returns the top `N` entries of `<file>` that match `<query>`. The command
 ```bash
 jumper -f <file> -a <path>
 ```
-adds the `<path>` to the `<file>`, or updates its data if already present. This `jumper` command is then used to record the directories/files visited, and to output the most "frecent" entry matching a query.
+adds the `<path>` to the `<file>`, or updates its data (increments the visits count and updates the timestamp) if already present.
+From these two basic functions, the shell script `jumper.sh` defines various functions/mappings (see next section) allowing to quickly jump around!
 
 ## Usage
 - Use `z <something>` to jump to the most frequent/recent directories matching `<something>`.
-- Use `zf <something>` to open (in "$EDITOR") the most frequent/recent file matching `<something>`.
+- Use `zf <something>` to open (in `$EDITOR`) the most frequent/recent file matching `<something>`.
 - Use `Ctrl+Y` to fuzzy-find the most frequent/recent directories matching a query (FZF required).
 - Yse `Ctrl+U` to fuzzy-find the most frequent/recent files matching a query (FZF required).
 
@@ -75,3 +81,22 @@ to your `.vimrc`/`init.lua`. Then, in order to jump to files, add something like
 ```vim
 command! -nargs=+ Zf :edit `jumper -f ~/.jumper_files -n 1 <args>`
 ```
+
+## Combine it with your favorite tools!
+
+You can for instance define a function
+```bash
+fu() {
+    RG_PREFIX="jumper -f ${jumpfile_files} '' | xargs rg -i --column --line-number --color=always "
+    INITIAL_QUERY=''
+    fzf --ansi --disabled --query "$INITIAL_QUERY" \
+    --bind "start:reload:$RG_PREFIX {q}" \
+    --bind "change:reload:sleep 0.1; $RG_PREFIX {q} || true" \
+    --delimiter : \
+    --preview 'bat --color=always {1} --highlight-line {2}' \
+    --preview-window 'up,60%,border-bottom,+{2}+3/3,~3' \
+    --bind 'enter:become(nvim {1} +{2})'
+}
+```
+which allows to "live-grep" (using here [ripgrep](https://github.com/BurntSushi/ripgrep)) the files of jumper's database.
+This is also available in the Telescope extension [telescope-jumper](https://github.com/homerours/telescope-jumper).
