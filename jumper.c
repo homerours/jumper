@@ -162,6 +162,10 @@ static void lookup(char *file, char *key, int n) {
 }
 
 int main(int argc, char **argv) {
+  if (argc == 1) {
+    printf(HELP_STRING, argv[0], argv[0]);
+    return 0;
+  }
   char *file = NULL;
   int c, n = MAX_HEAP_SIZE, mode = 0;
   while ((c = getopt(argc, argv, "hf:n:a")) != -1)
