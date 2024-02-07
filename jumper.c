@@ -21,35 +21,45 @@ static double match(char *string, char *query, int key_length) {
   if (*query == '\0') {
     return 1.0;
   }
-  int total_length = 0, max_length = 0;
-  char *t = string, *q = query, *qinit = query;
+  char *t = string, *q = query;
+  char *tb, *qb;
+  int consecutive = 0, max_consecutive = 0;
   while (*t != 0 && *q != 0) {
-    if (*q == ' ') {
-      total_length += q - qinit + 1;
-      qinit = ++q;
-      max_length = 0;
-    } else if (tolower(*t) == tolower(*q)) {
+    if (tolower(*t) == tolower(*q)) {
+      if (consecutive == 0) {
+        tb = t - 1;
+        qb = q - 1;
+        while (tb >= string && qb >= query && tolower(*tb) == tolower(*qb)) {
+          tb--;
+          qb--;
+          consecutive++;
+        }
+      }
       q++;
-      t++;
-    } else if (q != qinit) {
-      max_length = max(q - qinit, max_length);
-      q = qinit;
+      consecutive++;
+      max_consecutive = max(max_consecutive, consecutive);
     } else {
-      t++;
+      if (consecutive == 1) {
+        q--;
+      }
+      consecutive = 0;
     }
+    t++;
   }
-  total_length += max(q - qinit, max_length);
-  double s = ((double)total_length) / ((double)key_length);
+  if (consecutive == 1 && key_length > 1) {
+    q--;
+  }
+  double s = ((double)(q - query)) / ((double)key_length);
   if (s < 0.3) {
     return 0.0;
   }
   if (s == 1.0) {
-    if (strchr(t, '/') == NULL) {
-      return 10000.0;
+    if (strchr(t, '/') == NULL && consecutive > 1) {
+      return consecutive * 1000.0;
     }
-    return 100.0;
+    return consecutive * 100.0;
   }
-  return s;
+  return max_consecutive * s;
 }
 
 static char *file_to_buffer(FILE *fp, size_t *size) {

@@ -122,7 +122,7 @@ if [[ ! -z ${BASH_VERSION} ]]; then
     run-fz() {
         selected=$(__jumper_fdir)
         pre="${READLINE_LINE:0:$READLINE_POINT}"
-        if [[ -z $pre ]]; then
+        if [[ -z $pre ]] && [[ ! -z ${selected} ]]; then
             cd "$selected"
         else
             READLINE_LINE="${pre}$selected${READLINE_LINE:$READLINE_POINT}"
@@ -149,7 +149,7 @@ else
     # We assume that this is Zsh
     run-fz() {
         selected=$(__jumper_fdir)
-        if [[ -z ${LBUFFER} ]]; then
+        if [[ -z ${LBUFFER} ]] && [[ ! -z ${selected} ]]; then
             cd $selected
         else
             LBUFFER="${LBUFFER}${selected}"
