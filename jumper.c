@@ -17,19 +17,19 @@ const char *HELP_STRING = "Jumper: jump around your directories and files!\n\n\
 - To update the database with <query>:\n\
 %s -f <logfile> -a <query>\n";
 
-static double match(char *string, char *query, int key_length) {
+static double match(char *string, char *query, int query_length) {
   if (*query == '\0') {
     return 1.0;
   }
-  char *t = string, *q = query;
-  char *tb, *qb;
+  char *t = string, *q = query, *tb, *qb;
   int consecutive = 0, max_consecutive = 0;
   while (*t != 0 && *q != 0) {
     if (tolower(*t) == tolower(*q)) {
       if (consecutive == 0) {
         tb = t - 1;
         qb = q - 1;
-        while (tb >= string && qb >= query && tolower(*tb) == tolower(*qb)) {
+        // Backward search
+        while (qb >= query && tolower(*tb) == tolower(*qb)) {
           tb--;
           qb--;
           consecutive++;
@@ -40,24 +40,26 @@ static double match(char *string, char *query, int key_length) {
       max_consecutive = max(max_consecutive, consecutive);
     } else {
       if (consecutive == 1) {
+        // Discard single char matches
         q--;
       }
       consecutive = 0;
     }
     t++;
   }
-  if (consecutive == 1 && key_length > 1) {
+  if (consecutive == 1 && query_length > 1) {
+    // Discard single char matches
     q--;
   }
-  double s = ((double)(q - query)) / ((double)key_length);
+  double s = ((double)(q - query)) / ((double)query_length);
   if (s < 0.3) {
     return 0.0;
   }
   if (s == 1.0) {
-    if (strchr(t, '/') == NULL && consecutive > 1) {
-      return consecutive * 1000.0;
+    if (strchr(t, '/') == NULL) {
+      return max_consecutive * 100.0 + consecutive * 1000.0;
     }
-    return consecutive * 100.0;
+    return max_consecutive * 100.0;
   }
   return max_consecutive * s;
 }
@@ -78,7 +80,7 @@ static char *file_to_buffer(FILE *fp, size_t *size) {
   return buffer;
 }
 
-static double frecent(double rank, double time) {
+static double frecentcy(double rank, double time) {
   return 1.0 + log(1.0 + rank) / (0.00005 * time + 1.0);
 }
 
@@ -160,7 +162,7 @@ static void lookup(char *file, char *key, int n) {
     s = match(rec.path, key, key_length);
     if (s > 0) {
       delta = now - rec.last_visit;
-      insert(heap, s * frecent(rec.n_visits, delta), strdup(rec.path));
+      insert(heap, s * frecentcy(rec.n_visits, delta), strdup(rec.path));
     }
   }
   print_sorted(heap);
