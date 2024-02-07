@@ -7,7 +7,8 @@ export __JUMPER_MAX_RESULTS=100
 
 # Jump to most frecent file
 z() {
-	new_path=$(jumper -f "${jumpfile}" -n 1 $1)
+    args="${@// /\ }"
+	new_path=$(jumper -f "${jumpfile}" -n 1 "${args}")
 	if [[ -z $new_path ]]; then
 		echo 'No match found.'
 	else
@@ -17,7 +18,8 @@ z() {
 
 # Edit the most frecent file
 zf() {
-    file=$(jumper -f "${jumpfile_files}" -n 1 $1)
+    args="${@// /\ }"
+    file=$(jumper -f "${jumpfile_files}" -n 1 "${args}")
 	if [[ -z $file ]]; then
 		echo 'No match found.'
     else
