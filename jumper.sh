@@ -29,7 +29,7 @@ zf() {
 
 # Fuzzy-find directories
 __jumper_fdir() {
-	__JUMPER="jumper -f ${jumpfile} -n ${__JUMPER_MAX_RESULTS}"
+	__JUMPER="jumper -c -f ${jumpfile} -n ${__JUMPER_MAX_RESULTS}"
 	fzf --height=70% --layout=reverse \
 		--ansi --disabled --query '' \
 		--bind "start:reload:${__JUMPER} {q}" \
@@ -39,7 +39,7 @@ __jumper_fdir() {
 
 # Fuzzy-find files
 __jumper_ffile() {
-	__JUMPER="jumper -f ${jumpfile_files} -n ${__JUMPER_MAX_RESULTS}"
+	__JUMPER="jumper -c -f ${jumpfile_files} -n ${__JUMPER_MAX_RESULTS}"
 	fzf --height=70% --layout=reverse \
 		--ansi --disabled --query '' \
 		--bind "start:reload:${__JUMPER} {q}" \
