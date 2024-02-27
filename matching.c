@@ -24,13 +24,13 @@ typedef struct matching_data {
   int *char_bonus;
 } matching_data;
 
-const int gap_penalty = 1;
-const int first_gap_penalty = 3;
+const int gap_penalty = 2;
+const int first_gap_penalty = 5;
 const int gap_penalty_separator = 1;
-const int first_gap_penalty_separator = 3;
-const int match_base_reward = 8;
+const int first_gap_penalty_separator = 2;
+const int match_base_reward = 10;
 const int uppercase_bonus = 3;
-const int start_bonus = 2;
+const int start_bonus = 3;
 const int end_of_path_bonus = 1;
 
 bool is_separator(char c) {
@@ -224,7 +224,7 @@ char *match(char *string, char *query, bool colors, int *score) {
   int start, end;
   if (!quick_match(string, query, &start, &end)) {
     *score = 0;
-    return strdup(string);
+    return string;
   }
   matching_data *data = make_data(string, query);
   int n = data->n, m = data->m;
@@ -249,7 +249,7 @@ char *match(char *string, char *query, bool colors, int *score) {
   if (imax == 0) {
     *score = 0;
     free_matching_data(data);
-    return strdup(string);
+    return string;
   }
   *score = maximum;
   char *match_string;

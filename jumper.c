@@ -36,7 +36,16 @@ static char *file_to_buffer(FILE *fp, size_t *size) {
 }
 
 static double frecentcy(double rank, double time) {
-  return 1.0 + log(1.0 + rank) / (0.00005 * time + 1.0);
+  double days = time / (3600.0 * 24.0);
+  double multiplier = 0.25;
+  if (days < 0.04) { // < 1 hour
+    multiplier = 1.0;
+  } else if (days < 1) {
+    multiplier = 0.5;
+  } else if (days < 10) {
+    multiplier = 0.3;
+  }
+  return 1.0 + multiplier * log(1.0 + rank);
 }
 
 static void update_data(char *file, char *key) {
@@ -113,16 +122,18 @@ static void lookup(char *file, char *key, int n, bool colors) {
 
   char *line = NULL;
   size_t len;
-  char * output_string;
+  char *output_string;
   while (getline(&line, &len, fp) != -1) {
     parse_record(line, &rec);
     output_string = match(rec.path, key, colors, &s);
     if (s > 0) {
       delta = now - rec.last_visit;
-      insert(heap, s * frecentcy(rec.n_visits, delta), output_string);
-    } else {
-        free(output_string);
-    }
+      double fr = frecentcy(rec.n_visits, delta);
+      insert(heap, s * fr, output_string);
+    } 
+    // else {
+    //   free(output_string);
+    // }
   }
   // printf("Prinf heap\n");
   print_sorted(heap);
