@@ -120,6 +120,8 @@ static void lookup(char *file, char *key, int n, bool colors) {
     if (s > 0) {
       delta = now - rec.last_visit;
       insert(heap, s * frecentcy(rec.n_visits, delta), output_string);
+    } else {
+        free(output_string);
     }
   }
   // printf("Prinf heap\n");

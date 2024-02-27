@@ -26,7 +26,6 @@ typedef struct heap {
   item *items;
 } heap;
 
-
 heap *new_heap(int size) {
   heap *heap = malloc(sizeof(struct heap));
   heap->n_items = 0;
@@ -65,8 +64,11 @@ static void heapify(heap *heap) {
 void insert(heap *heap, double value, char *path) {
   if (heap->n_items == heap->size) {
     if (value > heap->items->value) {
+      free(heap->items->path);
       new_item(heap->items, value, path);
       bubble_down(heap, 0);
+    } else {
+      free(path);
     }
   } else {
     new_item(heap->items + heap->n_items, value, path);
@@ -94,5 +96,6 @@ void print_sorted(heap *heap) {
   }
   for (int i = 0; i < n; i++) {
     printf("%s\n", heap->items[i].path);
+    free(heap->items[i].path);
   }
 }

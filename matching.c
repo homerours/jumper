@@ -53,6 +53,8 @@ int *matching_bonus(char *string, int n) {
   for (int i = 1; i < n; i++) {
     if (is_separator(string[i - 1]) && isalpha(string[i])) {
       bonus[i] = start_bonus;
+    } else {
+      bonus[i] = 0;
     }
     if (string[i] == '/') {
       last_slash = i;
@@ -88,8 +90,7 @@ matching_data *make_data(char *string, char *query) {
     matrix[i * m].match_score = 0;
     matrix[i * m].gap_score = 0;
   }
-  int N = min(n, m);
-  for (int j = 1; j <= N - 1; j++) {
+  for (int j = 1; j < m; j++) {
     for (int i = j - 1; i < n; i++) {
       matrix[i * m + j].match_score = -1;
       matrix[i * m + j].gap_score = -1;
@@ -100,7 +101,7 @@ matching_data *make_data(char *string, char *query) {
   data->string = string;
   data->query = query;
   data->matrix = matrix;
-  data->char_bonus = matching_bonus(string, n);
+  data->char_bonus = matching_bonus(string, n - 1);
   return data;
 }
 
@@ -146,17 +147,17 @@ void parent(matching_data *data, int i, int j, bool *skip) {
   }
 }
 
-char *extract_matching(matching_data *data, int i0, char * full_string) {
-  int offset =  data->string - full_string;
+char *extract_matching(matching_data *data, int i0, char *full_string) {
+  int offset = data->string - full_string;
   int n = data->n + offset, m = data->m;
-  int imax = i0+offset;
+  int imax = i0 + offset;
   int i = imax, j = m - 1, c;
   int nbreaks = 0;
   bool is_matched = true;
-  int *breaks = (int *)malloc(m * sizeof(int));
+  int *breaks = (int *)malloc(2 * m * sizeof(int));
   bool skip = false;
   while (j > 0) {
-    parent(data, i-offset, j, &skip);
+    parent(data, i - offset, j, &skip);
     if (skip) {
       if (is_matched) {
         breaks[nbreaks++] = i - 1;
@@ -174,9 +175,9 @@ char *extract_matching(matching_data *data, int i0, char * full_string) {
   const char *COLOR_GREEN = "\x1b[32m"; // 5
   const char *COLOR_RESET = "\x1b[0m";  // 4
   int new_len = 9 + n + nbreaks * 9 + 1;
-  char * string = full_string;
+  char *string = full_string;
   char *new_string = (char *)malloc(new_len * sizeof(char));
-  new_string[new_len] = '\0';
+  new_string[new_len - 1] = '\0';
   int k = 0;
   for (; k < i; k++) {
     new_string[k] = string[k];
@@ -231,6 +232,7 @@ char *match(char *string, char *query, bool colors, int *score) {
     *score = 0;
     return strdup(string);
   }
+  substring = string;
   matching_data *data = make_data(substring, query);
   int n = data->n, m = data->m;
   int margin = 0, imax = 0, maximum = -1;
