@@ -27,7 +27,7 @@ const int first_gap_penalty_separator = 2;
 const int match_base_reward = 10;
 const int uppercase_bonus = 3;
 const int start_bonus = 3;
-const int end_of_path_bonus = 2;
+const int end_of_path_bonus = 4;
 
 static inline bool is_separator(char c) {
   return (c == '/' || c == '_' || c == '-' || c == '.' || c == '#' ||
