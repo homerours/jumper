@@ -1,14 +1,14 @@
-export jumpfile=~/.jumper
-export jumpfile_files=~/.jumper_files
+export __JUMPER_FOLDERS=~/.jfolders
+export __JUMPER_FILES=~/.jfiles
 export __JUMPER_MAX_RESULTS=100
 
-[[ -f ${jumpfile} ]] || touch "${jumpfile}"
-[[ -f ${jumpfile_files} ]] || touch "${jumpfile_files}"
+[[ -f ${__JUMPER_FOLDERS} ]] || touch "${__JUMPER_FOLDERS}"
+[[ -f ${__JUMPER_FILES} ]] || touch "${__JUMPER_FILES}"
 
-# Jump to most frecent file
+# Jump to most frecent folder
 z() {
     args="${@// /\ }"
-	new_path=$(jumper -f "${jumpfile}" -n 1 "${args}")
+	new_path=$(jumper -f "${__JUMPER_FOLDERS}" -n 1 "${args}")
 	if [[ -z $new_path ]]; then
 		echo 'No match found.'
 	else
@@ -19,7 +19,7 @@ z() {
 # Edit the most frecent file
 zf() {
     args="${@// /\ }"
-    file=$(jumper -f "${jumpfile_files}" -n 1 "${args}")
+    file=$(jumper -f "${__JUMPER_FILES}" -n 1 "${args}")
 	if [[ -z $file ]]; then
 		echo 'No match found.'
     else
@@ -29,7 +29,7 @@ zf() {
 
 # Fuzzy-find directories
 __jumper_fdir() {
-	__JUMPER="jumper -c -f ${jumpfile} -n ${__JUMPER_MAX_RESULTS}"
+	__JUMPER="jumper -c -f ${__JUMPER_FOLDERS} -n ${__JUMPER_MAX_RESULTS}"
 	fzf --height=70% --layout=reverse \
 		--ansi --disabled --query '' \
 		--bind "start:reload:${__JUMPER} {q}" \
@@ -39,7 +39,7 @@ __jumper_fdir() {
 
 # Fuzzy-find files
 __jumper_ffile() {
-	__JUMPER="jumper -c -f ${jumpfile_files} -n ${__JUMPER_MAX_RESULTS}"
+	__JUMPER="jumper -c -f ${__JUMPER_FILES} -n ${__JUMPER_MAX_RESULTS}"
 	fzf --height=70% --layout=reverse \
 		--ansi --disabled --query '' \
 		--bind "start:reload:${__JUMPER} {q}" \
@@ -50,34 +50,34 @@ __jumper_ffile() {
 
 # Add folder to database
 __jumper_update_db() {
-    jumper -f "${jumpfile}" -a "$PWD"
+    jumper -f "${__JUMPER_FOLDERS}" -a "$PWD"
 }
 
 # Clean simlinks
 __jumper_delete_duplicate_symlinks(){
-    tempfile="${jumpfile}_temp"
-    cp "${jumpfile}" "${tempfile}"
+    tempfile="${__JUMPER_FOLDERS}_temp"
+    cp "${__JUMPER_FOLDERS}" "${tempfile}"
     while IFS= read -r line ; do
         entry="${line%%|*}"
         real=$(realpath $entry)
         if [[ $entry != $real ]]; then
             sed -i -e "\:^${real}|:d" "${tempfile}"
         fi
-    done < "${jumpfile}"
-    mv "${tempfile}" "${jumpfile}"
+    done < "${__JUMPER_FOLDERS}"
+    mv "${tempfile}" "${__JUMPER_FOLDERS}"
 }
 
 __jumper_replace_symlinks(){
-    tempfile="${jumpfile}_temp"
-    cp "${jumpfile}" "${tempfile}"
+    tempfile="${__JUMPER_FOLDERS}_temp"
+    cp "${__JUMPER_FOLDERS}" "${tempfile}"
     while IFS= read -r line ; do
         entry="${line%%|*}"
         real=$(realpath $entry)
         if [[ $entry != $real ]]; then
             sed -i -e "s:^${real}/:${entry}/:g" "${tempfile}"
         fi
-    done < "${jumpfile}"
-    mv "${tempfile}" "${jumpfile}"
+    done < "${__JUMPER_FOLDERS}"
+    mv "${tempfile}" "${__JUMPER_FOLDERS}"
 }
 
 __jumper_clean_symlinks(){
@@ -87,7 +87,7 @@ __jumper_clean_symlinks(){
 
 # Remove entries for which the folder does not exist anymore
 __jumper_clean_db() {
-    tempfile="${jumpfile}_temp"
+    tempfile="${__JUMPER_FOLDERS}_temp"
     [[ -f ${tempfile} ]] && rm ${tempfile}
 
     while IFS= read -r line ; do
@@ -97,13 +97,13 @@ __jumper_clean_db() {
         else
             echo "Removing $entry from database."
         fi
-    done < "${jumpfile}"
-    mv "${tempfile}" "${jumpfile}"
+    done < "${__JUMPER_FOLDERS}"
+    mv "${tempfile}" "${__JUMPER_FOLDERS}"
 }
 
 # Remove entries for which the file does not exist anymore
 __jumper_clean_files_db() {
-    tempfile="${jumpfile_files}_temp"
+    tempfile="${__JUMPER_FILES}_temp"
     [[ -f ${tempfile} ]] && rm ${tempfile}
 
     while IFS= read -r line ; do
@@ -113,8 +113,8 @@ __jumper_clean_files_db() {
         else
             echo "Removing $entry from database."
         fi
-    done < "${jumpfile_files}"
-    mv "${tempfile}" "${jumpfile_files}"
+    done < "${__JUMPER_FILES}"
+    mv "${tempfile}" "${__JUMPER_FILES}"
 }
 
 if [[ ! -z ${BASH_VERSION} ]]; then

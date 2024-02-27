@@ -26,7 +26,7 @@ Jumper is a C program, `jumper`, which operates on files whose lines are in the 
 ```bash
 jumper -f <file> -n N <query>
 ```
-returns the top `N` entries of `<file>` that match `<query>`. The command
+returns the top `N` entries of `<file>` that match `<query>`. Adding the `-c` flag colors the matched substring. The command
 ```bash
 jumper -f <file> -a <path>
 ```
@@ -44,7 +44,7 @@ Database maintenance:
 - Use `__jumper_clean_db` to remove from the database directories that do not exist anymore.
 - Use `__jumper_clean_files_db` to remove from the database files that do not exist anymore.
 
-In order to populate the directories database, a pre-command is added to Bash/Zsh. To populate the files database, you will have to call `jumper -f ~/.jumper_files -a <full-path-to-file>` every time you open a file. For Vim/Neovim, this can be done using an `autocmd` (see next section). For other editors, you can for instance use aliases.
+In order to populate the directories database, a pre-command is added to Bash/Zsh. To populate the files database, you will have to call `jumper -f ${__JUMPER_FILES} -a <full-path-to-file>` every time you open a file. For Vim/Neovim, this can be done using an `autocmd` (see next section). For other editors, you can for instance use aliases.
 
 ## Vim/Neovim
 
@@ -56,14 +56,14 @@ Below are instructions to use jumper within Vim/Neovim without this plugin.
 ### Jump to directories
 You can add something like
 ```vim
-command! -nargs=+ Z :cd `jumper -f ~/.jumper -n 1 <args>`
+command! -nargs=+ Z :cd `jumper -f ${__JUMPER_FOLDERS} -n 1 <args>`
 ```
 to your `.vimrc` to then jump with `:Z <query>`.
 
 ### Jump to files
 In order to log the files you open, add
 ```vim
-autocmd BufReadPre *   silent execute '!jumper -f ~/.jumper_files -a ' .. expand('%:p')
+autocmd BufReadPre *   silent execute '!jumper -f ${__JUMPER_FILES} -a ' .. expand('%:p')
 ```
 or, if you are using Neovim's lua api,
 ```lua
@@ -73,7 +73,7 @@ vim.api.nvim_create_autocmd({ "BufNewFile", "BufReadPre" }, {
         local filename = vim.api.nvim_buf_get_name(ev.buf)
         -- do not log .git files, and buffers opened by plugins (which often contain some ':')
         if not (string.find(filename, "/.git") or string.find(filename, ":")) then
-            local cmd = 'jumper -f ~/.jumper_files -a ' .. filename
+            local cmd = 'jumper -f ${__JUMPER_FILES} -a ' .. filename
             os.execute(cmd)
         end
     end
@@ -81,7 +81,7 @@ vim.api.nvim_create_autocmd({ "BufNewFile", "BufReadPre" }, {
 ```
 to your `.vimrc`/`init.lua`. Then, in order to jump to files, add something like:
 ```vim
-command! -nargs=+ Zf :edit `jumper -f ~/.jumper_files -n 1 <args>`
+command! -nargs=+ Zf :edit `jumper -f ${__JUMPER_FILES} -n 1 <args>`
 ```
 
 ## Combine it with your favorite tools!
@@ -89,7 +89,7 @@ command! -nargs=+ Zf :edit `jumper -f ~/.jumper_files -n 1 <args>`
 You can for instance define a function
 ```bash
 fu() {
-    RG_PREFIX="jumper -f ${jumpfile_files} '' | xargs rg -i --column --line-number --color=always "
+    RG_PREFIX="jumper -f ${__JUMPER_FILES} '' | xargs rg -i --column --line-number --color=always "
     INITIAL_QUERY=''
     fzf --ansi --disabled --query "$INITIAL_QUERY" \
     --bind "start:reload:$RG_PREFIX {q}" \

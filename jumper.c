@@ -11,8 +11,6 @@
 #include "matching.h"
 #include "record.h"
 
-static inline int max(int x, int y) { return ((x) > (y) ? x : y); }
-
 const char *HELP_STRING = "Jumper: jump around your directories and files!\n\n\
 - To find the closest matches to <query>:\n\
 %s -f <logfile> -n <number-of-results> [-c (to highlight the matches)] <query>\n\n\
@@ -117,14 +115,14 @@ static void lookup(char *file, char *key, int n, bool colors) {
 
   int match_score;
   double now = (double)time(NULL), delta;
-  char *line = NULL, *output_string;
+  char *line = NULL, *matched_str;
   size_t len;
   while (getline(&line, &len, fp) != -1) {
     parse_record(line, &rec);
-    output_string = match(rec.path, key, colors, &match_score);
+    matched_str = match(rec.path, key, colors, &match_score);
     if (match_score > 0) {
       delta = now - rec.last_visit;
-      insert(heap, match_score * frecentcy(rec.n_visits, delta), output_string);
+      insert(heap, match_score * frecentcy(rec.n_visits, delta), matched_str);
     }
   }
   print_sorted(heap);
