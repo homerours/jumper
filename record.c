@@ -18,6 +18,6 @@ void parse_record(char *string, record *rec) {
 char *record_to_string(record *rec) {
   int n = strlen(rec->path) + 30;
   char *buffer = (char *)malloc(n * sizeof(char));
-  sprintf(buffer, "%s|%d|%d", rec->path, rec->n_visits, rec->last_visit);
+  snprintf(buffer, n, "%s|%d|%d", rec->path, rec->n_visits, rec->last_visit);
   return buffer;
 }

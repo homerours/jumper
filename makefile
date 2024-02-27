@@ -1,4 +1,5 @@
 CC=gcc -O3
+# CC=gcc -fsanitize=address -static-libsan
 FLAGS=-lm
 
 jumper: jumper.o heap.o record.o matching.o
