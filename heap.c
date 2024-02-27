@@ -98,4 +98,5 @@ void print_sorted(heap *heap) {
     printf("%s\n", heap->items[i].path);
     free(heap->items[i].path);
   }
+  free_heap(heap);
 }

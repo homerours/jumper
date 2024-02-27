@@ -11,12 +11,11 @@
 #include "matching.h"
 #include "record.h"
 
-
 static inline int max(int x, int y) { return ((x) > (y) ? x : y); }
 
 const char *HELP_STRING = "Jumper: jump around your directories and files!\n\n\
 - To find the closest matches to <query>:\n\
-%s -f <logfile> -n <number-of-results> <query>\n\n\
+%s -f <logfile> -n <number-of-results> [-c (to highlight the matches)] <query>\n\n\
 - To update the database with <query>:\n\
 %s -f <logfile> -a <query>\n";
 
@@ -116,29 +115,19 @@ static void lookup(char *file, char *key, int n, bool colors) {
   heap *heap = new_heap(n);
   record rec;
 
-  int key_length = strlen(key);
-  int s;
-  double delta;
-  double now = (double)time(NULL);
-
-  char *line = NULL;
+  int match_score;
+  double now = (double)time(NULL), delta;
+  char *line = NULL, *output_string;
   size_t len;
-  char *output_string;
   while (getline(&line, &len, fp) != -1) {
     parse_record(line, &rec);
-    output_string = match(rec.path, key, colors, &s);
-    if (s > 0) {
+    output_string = match(rec.path, key, colors, &match_score);
+    if (match_score > 0) {
       delta = now - rec.last_visit;
-      double fr = frecentcy(rec.n_visits, delta);
-      insert(heap, s * fr, output_string);
-    } 
-    // else {
-    //   free(output_string);
-    // }
+      insert(heap, match_score * frecentcy(rec.n_visits, delta), output_string);
+    }
   }
-  // printf("Prinf heap\n");
   print_sorted(heap);
-  free_heap(heap);
   fclose(fp);
   if (line) {
     free(line);
