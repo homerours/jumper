@@ -7,13 +7,6 @@
 #include <time.h>
 #include <unistd.h>
 
-// #define ANSI_COLOR_RED "\x1b[31m"
-// #define ANSI_COLOR_GREEN "\x1b[32m"
-// #define ANSI_COLOR_YELLOW "\x1b[33m"
-// #define ANSI_COLOR_BLUE "\x1b[34m"
-// #define ANSI_COLOR_MAGENTA "\x1b[35m"
-// #define ANSI_COLOR_CYAN "\x1b[36m"
-// #define ANSI_COLOR_RESET "\x1b[0m"
 static inline int max(int x, int y) { return ((x) > (y) ? x : y); }
 static inline int min(int x, int y) { return ((x) < (y) ? x : y); }
 
@@ -208,13 +201,14 @@ char *extract_matching(matching_data *data, int i0, char *full_string) {
   return new_string;
 }
 
-bool quick_match(char *string, char *query, char **substring) {
+bool quick_match(char *string, char *query, int* start, int*end) {
   char *t = string, *q = query;
   while (*t != 0 && *q != 0) {
     if (tolower(*t) == tolower(*q)) {
       if (q == query) {
-        *substring = (t == string) ? string : t - 1;
+          *start = t - string;
       }
+      *end = t - string;
       q++;
     }
     t++;
@@ -227,13 +221,12 @@ char *match(char *string, char *query, bool colors, int *score) {
     *score = 1;
     return strdup(string);
   }
-  char *substring;
-  if (!quick_match(string, query, &substring)) {
+  int start, end;
+  if (!quick_match(string, query, &start, &end)) {
     *score = 0;
     return strdup(string);
   }
-  substring = string;
-  matching_data *data = make_data(substring, query);
+  matching_data *data = make_data(string, query);
   int n = data->n, m = data->m;
   int margin = 0, imax = 0, maximum = -1;
   scores *cell;
@@ -281,7 +274,7 @@ char *match(char *string, char *query, bool colors, int *score) {
 //   return 0;
 // }
 
-static double match1(char *string, char *query, int query_length) {
+double match1(char *string, char *query, int query_length) {
   if (*query == '\0') {
     return 1.0;
   }

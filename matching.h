@@ -17,3 +17,4 @@
 
 // typedef struct matching_score matching_score;
 char * match(char *string, char *query, bool colors, int * score);
+double match1(char *string, char *query, int query_length);
