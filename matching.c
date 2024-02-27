@@ -146,15 +146,17 @@ void parent(matching_data *data, int i, int j, bool *skip) {
   }
 }
 
-char *extract_matching(matching_data *data, int imax) {
-  int n = data->n, m = data->m;
+char *extract_matching(matching_data *data, int i0, char * full_string) {
+  int offset =  data->string - full_string;
+  int n = data->n + offset, m = data->m;
+  int imax = i0+offset;
   int i = imax, j = m - 1, c;
   int nbreaks = 0;
   bool is_matched = true;
   int *breaks = (int *)malloc(m * sizeof(int));
   bool skip = false;
   while (j > 0) {
-    parent(data, i, j, &skip);
+    parent(data, i-offset, j, &skip);
     if (skip) {
       if (is_matched) {
         breaks[nbreaks++] = i - 1;
@@ -172,17 +174,18 @@ char *extract_matching(matching_data *data, int imax) {
   const char *COLOR_GREEN = "\x1b[32m"; // 5
   const char *COLOR_RESET = "\x1b[0m";  // 4
   int new_len = 9 + n + nbreaks * 9 + 1;
+  char * string = full_string;
   char *new_string = (char *)malloc(new_len * sizeof(char));
   new_string[new_len] = '\0';
   int k = 0;
   for (; k < i; k++) {
-    new_string[k] = data->string[k];
+    new_string[k] = string[k];
   }
   strncpy(new_string + k, COLOR_GREEN, 5);
   k += 5;
   int sk = i;
   for (; sk < imax; sk++) {
-    new_string[k] = data->string[sk];
+    new_string[k] = string[sk];
     k++;
     if (nbreaks > 0 && breaks[nbreaks - 1] == sk) {
       if (nbreaks % 2 == 1) {
@@ -199,7 +202,7 @@ char *extract_matching(matching_data *data, int imax) {
   strncpy(new_string + k, COLOR_RESET, 4);
   k += 4;
   for (; sk < n; k++, sk++) {
-    new_string[k] = data->string[sk];
+    new_string[k] = string[sk];
   }
   return new_string;
 }
@@ -256,7 +259,7 @@ char *match(char *string, char *query, bool colors, int *score) {
   *score = maximum;
   char *match_string;
   if (colors) {
-    match_string = extract_matching(data, imax);
+    match_string = extract_matching(data, imax, string);
   } else {
     match_string = strdup(string);
   }
