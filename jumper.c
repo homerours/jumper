@@ -11,6 +11,7 @@
 #include "matching.h"
 #include "record.h"
 
+
 static inline int max(int x, int y) { return ((x) > (y) ? x : y); }
 
 const char *HELP_STRING = "Jumper: jump around your directories and files!\n\n\

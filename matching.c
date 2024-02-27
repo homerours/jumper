@@ -78,13 +78,13 @@ matching_data *make_data(char *string, char *query) {
   matching_data *data = (matching_data *)malloc(sizeof(struct matching_data));
   int n = strlen(string) + 1;
   int m = strlen(query) + 1;
-  scores *matrix = (scores *)malloc(n * m * sizeof(struct scores));
-  for (int i = 0; i < n; i++) {
+  int h = (n - m + 2);
+  scores *matrix = (scores *)malloc(h * m * sizeof(struct scores));
+
+  for (int i = 0; i < h; i++) {
     matrix[i * m].match_score = 0;
     matrix[i * m].gap_score = 0;
-  }
-  for (int j = 1; j < m; j++) {
-    for (int i = j - 1; i < n; i++) {
+    for (int j = 1; j < m; j++) {
       matrix[i * m + j].match_score = -1;
       matrix[i * m + j].gap_score = -1;
     }
@@ -98,8 +98,9 @@ matching_data *make_data(char *string, char *query) {
   return data;
 }
 
-inline scores *get_cell(matching_data *data, int i, int j) {
-  return data->matrix + i * data->m + j;
+static inline scores *get_cell(matching_data *data, int i, int j) {
+  // return data->matrix + i * data->m + j;
+  return data->matrix + (i - j + 1) * data->m + j;
 }
 
 void free_matching_data(matching_data *data) {
@@ -109,7 +110,6 @@ void free_matching_data(matching_data *data) {
 }
 
 void fill(matching_data *data, int i, int j) {
-  int m = data->m;
   scores *cell = get_cell(data, i, j);
   scores *top = get_cell(data, i - 1, j);
   scores *top_left = get_cell(data, i - 1, j - 1);
@@ -134,7 +134,6 @@ void fill(matching_data *data, int i, int j) {
 }
 
 void parent(matching_data *data, int i, int j, bool *skip) {
-  int m = data->m;
   scores *cell = get_cell(data, i, j);
   if (*skip) {
     *skip = (cell->match_score - first_gap_penalty <=
@@ -236,7 +235,8 @@ char *match(char *string, char *query, bool colors, int *score) {
   scores *cell;
   for (int i = 1; i < n; i++) {
     int k = min(i - margin, m - 1);
-    for (int j = 1; j <= k; j++) {
+    int k0 = max(i - (n - m + 1), 0) + 1;
+    for (int j = k0; j <= k; j++) {
       fill(data, i, j);
       cell = get_cell(data, i, j);
       if (j == k && cell->match_score == -1 && cell->gap_score == -1) {
