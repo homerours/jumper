@@ -66,7 +66,10 @@ int *matching_bonus(char *string, int n) {
   return bonus;
 }
 
-int score(char a, char b, int bonus) {
+int score(matching_data *data, int i, int j) {
+  char a = data->query[j - 1];
+  char b = data->string[i - 1];
+  int bonus = data->char_bonus[i - 1];
   if (isupper(b) && a == b) {
     return match_base_reward + bonus + uppercase_bonus;
   }
@@ -115,9 +118,13 @@ void fill(matching_data *data, int i, int j) {
   int g =
       max(top->gap_score - gap_penalty, top->match_score - first_gap_penalty);
   cell->gap_score = max(g, -1);
-  int match =
-      score(data->query[j - 1], data->string[i - 1], data->char_bonus[i - 1]);
 
+  if ((top->gap_score != -1 || top->match_score != -1) &&
+      cell->gap_score == -1) {
+    cell->gap_score = 0;
+  }
+
+  int match = score(data, i, j);
   if (match > 0) {
     int maxi = max(top_left->gap_score, top_left->match_score);
     if (maxi >= 0) {
@@ -197,12 +204,31 @@ char *extract_matching(matching_data *data, int imax) {
   return new_string;
 }
 
+bool quick_match(char *string, char *query, char **substring) {
+  char *t = string, *q = query;
+  while (*t != 0 && *q != 0) {
+    if (tolower(*t) == tolower(*q)) {
+      if (q == query) {
+        *substring = (t == string) ? string : t - 1;
+      }
+      q++;
+    }
+    t++;
+  }
+  return *q == 0;
+}
+
 char *match(char *string, char *query, bool colors, int *score) {
   if (*query == '\0') {
     *score = 1;
     return strdup(string);
   }
-  matching_data *data = make_data(string, query);
+  char *substring;
+  if (!quick_match(string, query, &substring)) {
+    *score = 0;
+    return strdup(string);
+  }
+  matching_data *data = make_data(substring, query);
   int n = data->n, m = data->m;
   int margin = 0, imax = 0, maximum = -1;
   scores *cell;
