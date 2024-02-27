@@ -16,4 +16,4 @@
 // #define ANSI_COLOR_RESET "\x1b[0m"
 
 // typedef struct matching_score matching_score;
-int match(char *string, char *query, bool colors, char **matched_string);
+char * match(char *string, char *query, bool colors, int * score);

@@ -11,6 +11,7 @@ typedef struct item {
 static void new_item(item *item, double value, char *path) {
   item->value = value;
   item->path = path;
+  // printf("new item: %s (%f)\n", path,value);
 }
 
 static inline void swap(item *item1, item *item2) {

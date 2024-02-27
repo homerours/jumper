@@ -107,19 +107,22 @@ static void lookup(char *file, char *key, int n, bool colors) {
   record rec;
 
   int key_length = strlen(key);
-  double s, delta;
+  int s;
+  double delta;
   double now = (double)time(NULL);
 
   char *line = NULL;
   size_t len;
+  char * output_string;
   while (getline(&line, &len, fp) != -1) {
     parse_record(line, &rec);
-    s = match(rec.path, key, colors, &rec.path);
+    output_string = match(rec.path, key, colors, &s);
     if (s > 0) {
       delta = now - rec.last_visit;
-      insert(heap, s * frecentcy(rec.n_visits, delta), rec.path);
+      insert(heap, s * frecentcy(rec.n_visits, delta), output_string);
     }
   }
+  // printf("Prinf heap\n");
   print_sorted(heap);
   free_heap(heap);
   fclose(fp);
@@ -135,7 +138,7 @@ int main(int argc, char **argv) {
   }
   char *file = NULL;
   int c, n = MAX_HEAP_SIZE, mode = 0;
-  bool colors=false;
+  bool colors = false;
   while ((c = getopt(argc, argv, "hf:n:ac")) != -1)
     switch (c) {
     case 'f':

@@ -17,10 +17,15 @@
 static inline int max(int x, int y) { return ((x) > (y) ? x : y); }
 static inline int min(int x, int y) { return ((x) < (y) ? x : y); }
 
+typedef struct scores {
+  int match_score;
+  int gap_score;
+} scores;
+
 typedef struct matching_data {
   char *string;
   char *query;
-  int *matrix;
+  scores *matrix;
   int n;
   int m;
   int *char_bonus;
@@ -28,31 +33,27 @@ typedef struct matching_data {
 
 const int gap_penalty = 1;
 const int first_gap_penalty = 3;
+const int gap_penalty_separator = 1;
+const int first_gap_penalty_separator = 3;
 const int match_base_reward = 8;
 const int uppercase_bonus = 3;
 const int start_bonus = 2;
 const int end_of_path_bonus = 1;
 
-int matching_value(char c) {
-  if (isalpha(c)) {
-    return 0;
-
-  } else if (isdigit(c)) {
-    return 0;
-  }
-  if (c == '/' || c == '_' || c == '-' || c == '.' || c == '#' || c == '\\') {
-    return 1;
-  }
-  return 0;
+bool is_separator(char c) {
+  return (c == '/' || c == '_' || c == '-' || c == '.' || c == '#' ||
+          c == '\\' || c == ' ');
 }
 
 int *matching_bonus(char *string, int n) {
   int *bonus = (int *)malloc(n * sizeof(int));
-  int bonus_next_char = 0;
   int last_slash = -1;
-  for (int i = 0; i < n; i++) {
-    bonus[i] = bonus_next_char;
-    bonus_next_char = matching_value(string[i]);
+  bonus[0] = start_bonus;
+
+  for (int i = 1; i < n; i++) {
+    if (is_separator(string[i - 1]) && isalpha(string[i])) {
+      bonus[i] = start_bonus;
+    }
     if (string[i] == '/') {
       last_slash = i;
     }
@@ -79,14 +80,16 @@ matching_data *make_data(char *string, char *query) {
   matching_data *data = (matching_data *)malloc(sizeof(struct matching_data));
   int n = strlen(string) + 1;
   int m = strlen(query) + 1;
-  int *matrix = (int *)malloc(n * m * sizeof(int));
-  for (int i = 0; i <= n; i++) {
-    matrix[i * m] = 0;
+  scores *matrix = (scores *)malloc(n * m * sizeof(struct scores));
+  for (int i = 0; i < n; i++) {
+    matrix[i * m].match_score = 0;
+    matrix[i * m].gap_score = 0;
   }
   int N = min(n, m);
   for (int j = 1; j <= N - 1; j++) {
     for (int i = j - 1; i < n; i++) {
-      matrix[i * m + j] = -1;
+      matrix[i * m + j].match_score = -1;
+      matrix[i * m + j].gap_score = -1;
     }
   }
   data->n = n;
@@ -97,49 +100,67 @@ matching_data *make_data(char *string, char *query) {
   data->char_bonus = matching_bonus(string, n);
   return data;
 }
+
 void free_matching_data(matching_data *data) {
   free(data->matrix);
   free(data->char_bonus);
   free(data);
 }
-// returns true if the parent of (i,j) is (i-1,j-1)
-bool diag(matching_data *data, int i, int j, int *c) {
+
+void fill(matching_data *data, int i, int j) {
   int m = data->m;
-  if (data->matrix[(i - 1) * m + j - 1] < 0) {
-    return false;
+  scores *cell = data->matrix + i * m + j;
+  scores *top = data->matrix + (i - 1) * m + j;
+  scores *top_left = data->matrix + (i - 1) * m + j - 1;
+  int g =
+      max(top->gap_score - gap_penalty, top->match_score - first_gap_penalty);
+  cell->gap_score = max(g, -1);
+  int match =
+      score(data->query[j - 1], data->string[i - 1], data->char_bonus[i - 1]);
+
+  if (match > 0) {
+    int maxi = max(top_left->gap_score, top_left->match_score);
+    if (maxi >= 0) {
+      cell->match_score = maxi + match;
+    } else {
+      cell->match_score = -1;
+    }
   }
-  *c = score(data->query[j - 1], data->string[i - 1], data->char_bonus[i - 1]);
-  if (data->matrix[(i - 1) * m + j] < 0) {
-    return true;
+}
+
+void parent(matching_data *data, int i, int j, bool *skip) {
+  int m = data->m;
+  scores cell = data->matrix[i * m + j];
+  if (*skip) {
+    *skip =
+        (cell.match_score - first_gap_penalty <= cell.gap_score - gap_penalty);
+  } else {
+    *skip = (cell.match_score < cell.gap_score);
   }
-  if (*c > 0) {
-    return data->matrix[(i - 1) * m + j] - gap_penalty <=
-           data->matrix[(i - 1) * m + j - 1] + *c;
-  }
-  return false;
 }
 
 char *extract_matching(matching_data *data, int imax) {
   int n = data->n, m = data->m;
-  int *matrix = data->matrix;
   int i = imax, j = m - 1, c;
   int nbreaks = 0;
   bool is_matched = true;
   int *breaks = (int *)malloc(m * sizeof(int));
+  bool skip = false;
   while (j > 0) {
-    if (diag(data, i, j, &c)) {
-      if (!is_matched) {
-        breaks[nbreaks++] = i - 1;
-      }
-      j -= 1;
-      is_matched = true;
-    } else {
+    parent(data, i, j, &skip);
+    if (skip) {
       if (is_matched) {
         breaks[nbreaks++] = i - 1;
         is_matched = false;
       }
+    } else {
+      if (!is_matched) {
+        breaks[nbreaks++] = i - 1;
+        is_matched = true;
+      }
+      j = j - 1;
     }
-    i -= 1;
+    i = i - 1;
   }
   const char *COLOR_GREEN = "\x1b[32m"; // 5
   const char *COLOR_RESET = "\x1b[0m";  // 4
@@ -176,70 +197,56 @@ char *extract_matching(matching_data *data, int imax) {
   return new_string;
 }
 
-int match(char *string, char *query, bool colors, char **matched_string) {
+char *match(char *string, char *query, bool colors, int *score) {
   if (*query == '\0') {
-    *matched_string = strdup(string);
-    return 1;
+    *score = 1;
+    return strdup(string);
   }
   matching_data *data = make_data(string, query);
   int n = data->n, m = data->m;
-  // for (int i = 0; i < n - 1; i++) {
-  //   printf("%c  %d\n", string[i], data->char_bonus[i]);
-  // }
-  int *matrix = data->matrix;
-  int margin = 0, imax = 0, maximum = -1, c;
+  int margin = 0, imax = 0, maximum = -1;
+  scores *cell;
   for (int i = 1; i < n; i++) {
     int k = min(i - margin, m - 1);
     for (int j = 1; j <= k; j++) {
-      if (diag(data, i, j, &c)) {
-        // Parent is (i-1,j-1), which can not be -1
-        if (c < 0) {
-          margin = i - j + 1;
-          break;
-        }
-        matrix[i * m + j] = matrix[(i - 1) * m + j - 1] + c;
-        // printf("Match (%d,%d) on letter %c  val=%d  (c=%d)\n", i, j,
-        //        string[i - 1], matrix[i * m + j], c);
-        if (j == (m - 1) && matrix[i * m + j] >= maximum) {
-          maximum = matrix[i * m + j];
-          // printf("Max (%d,%d) on letter %c  val=%d\n", i, j, string[i - 1],
-          //        maximum);
-          imax = i;
-        }
-      } else {
-        // Parent is (i-1,j): it is not -1
-        if (diag(data, i - 1, j, &c)) {
-          // We had a match at (i-1,j) -> extra gap penalty
-          matrix[i * m + j] =
-              max(matrix[(i - 1) * m + j] - first_gap_penalty, 0);
-        } else {
-          matrix[i * m + j] = max(matrix[(i - 1) * m + j] - gap_penalty, 0);
-        }
-        // printf("Skip (%d,%d) on letter %c  val=%d  (c=%d)\n", i, j,
-        //        string[i - 1], matrix[i * m + j], c);
+      fill(data, i, j);
+      cell = data->matrix + i * m + j;
+      if (j == k && cell->match_score == -1 && cell->gap_score == -1) {
+        margin = i - j + 1;
+        break;
+      }
+      if (j == (m - 1) && cell->match_score >= maximum) {
+        imax = max(i, imax);
+        maximum = cell->match_score;
       }
     }
   }
-  // printf("End of match: imax=%d  maxi=%d\n", imax, maximum);
+
   if (imax == 0) {
-    return 0;
+    *score = 0;
+    free_matching_data(data);
+    return strdup(string);
   }
+  *score = maximum;
+  char *match_string;
   if (colors) {
-    *matched_string = extract_matching(data, imax);
+    match_string = extract_matching(data, imax);
   } else {
-    *matched_string = strdup(string);
+    match_string = strdup(string);
   }
   free_matching_data(data);
-  return maximum;
+  return match_string;
 }
 
 // int main() {
-//   char *string = "lodocm";
-//   char *query = "lom";
-//   char *result = "NONE";
-//   int maximum = match(string, query, true, &result);
+//   // char *string = "lodocm";
+//   // char *query = "lom";
+//   char *string = "/s/leo/";
+//   char *query = "leo";
+//   int maxi;
+//   char *result = match(string, query, true, &maxi);
 //   printf("%s\n", result);
-//   printf("Maximum: %d\n", maximum);
+//   printf("Maximum: %d\n", maxi);
 //   return 0;
 // }
 
