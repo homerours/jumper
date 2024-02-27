@@ -98,6 +98,10 @@ matching_data *make_data(char *string, char *query) {
   return data;
 }
 
+inline scores *get_cell(matching_data *data, int i, int j) {
+  return data->matrix + i * data->m + j;
+}
+
 void free_matching_data(matching_data *data) {
   free(data->matrix);
   free(data->char_bonus);
@@ -106,9 +110,9 @@ void free_matching_data(matching_data *data) {
 
 void fill(matching_data *data, int i, int j) {
   int m = data->m;
-  scores *cell = data->matrix + i * m + j;
-  scores *top = data->matrix + (i - 1) * m + j;
-  scores *top_left = data->matrix + (i - 1) * m + j - 1;
+  scores *cell = get_cell(data, i, j);
+  scores *top = get_cell(data, i - 1, j);
+  scores *top_left = get_cell(data, i - 1, j - 1);
   int g =
       max(top->gap_score - gap_penalty, top->match_score - first_gap_penalty);
   cell->gap_score = max(g, -1);
@@ -131,12 +135,12 @@ void fill(matching_data *data, int i, int j) {
 
 void parent(matching_data *data, int i, int j, bool *skip) {
   int m = data->m;
-  scores cell = data->matrix[i * m + j];
+  scores *cell = get_cell(data, i, j);
   if (*skip) {
-    *skip =
-        (cell.match_score - first_gap_penalty <= cell.gap_score - gap_penalty);
+    *skip = (cell->match_score - first_gap_penalty <=
+             cell->gap_score - gap_penalty);
   } else {
-    *skip = (cell.match_score < cell.gap_score);
+    *skip = (cell->match_score < cell->gap_score);
   }
 }
 
@@ -201,12 +205,12 @@ char *extract_matching(matching_data *data, int i0, char *full_string) {
   return new_string;
 }
 
-bool quick_match(char *string, char *query, int* start, int*end) {
+bool quick_match(char *string, char *query, int *start, int *end) {
   char *t = string, *q = query;
   while (*t != 0 && *q != 0) {
     if (tolower(*t) == tolower(*q)) {
       if (q == query) {
-          *start = t - string;
+        *start = t - string;
       }
       *end = t - string;
       q++;
@@ -234,7 +238,7 @@ char *match(char *string, char *query, bool colors, int *score) {
     int k = min(i - margin, m - 1);
     for (int j = 1; j <= k; j++) {
       fill(data, i, j);
-      cell = data->matrix + i * m + j;
+      cell = get_cell(data, i, j);
       if (j == k && cell->match_score == -1 && cell->gap_score == -1) {
         margin = i - j + 1;
         break;
