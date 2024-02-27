@@ -1,6 +1,6 @@
 export __JUMPER_FOLDERS=~/.jfolders
 export __JUMPER_FILES=~/.jfiles
-export __JUMPER_MAX_RESULTS=100
+export __JUMPER_MAX_RESULTS=150
 
 [[ -f ${__JUMPER_FOLDERS} ]] || touch "${__JUMPER_FOLDERS}"
 [[ -f ${__JUMPER_FILES} ]] || touch "${__JUMPER_FILES}"
@@ -34,7 +34,6 @@ __jumper_fdir() {
 		--ansi --disabled --query '' \
 		--bind "start:reload:${__JUMPER} {q}" \
 		--bind "change:reload:sleep 0.05; ${__JUMPER} {q} || true"
-        # --preview 'ls -p1UC --color=always {}' \
 }
 
 # Fuzzy-find files
@@ -44,7 +43,6 @@ __jumper_ffile() {
 		--ansi --disabled --query '' \
 		--bind "start:reload:${__JUMPER} {q}" \
 		--bind "change:reload:sleep 0.05; ${__JUMPER} {q} || true"
-        # --preview 'bat --color=always {}' \
 }
 
 
@@ -86,10 +84,9 @@ __jumper_clean_symlinks(){
 }
 
 # Remove entries for which the folder does not exist anymore
-__jumper_clean_db() {
+__jumper_clean_folders_db() {
     tempfile="${__JUMPER_FOLDERS}_temp"
     [[ -f ${tempfile} ]] && rm ${tempfile}
-
     while IFS= read -r line ; do
         entry="${line%%|*}"
         if [[ -d $entry ]]; then
@@ -105,7 +102,6 @@ __jumper_clean_db() {
 __jumper_clean_files_db() {
     tempfile="${__JUMPER_FILES}_temp"
     [[ -f ${tempfile} ]] && rm ${tempfile}
-
     while IFS= read -r line ; do
         entry="${line%%|*}"
         if [[ -f $entry ]]; then

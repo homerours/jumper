@@ -41,7 +41,7 @@ From these two basic functions, the shell script `jumper.sh` defines various fun
 All these mappings can be updated in `jumper.sh`.
 
 Database maintenance:
-- Use `__jumper_clean_db` to remove from the database directories that do not exist anymore.
+- Use `__jumper_clean_folders_db` to remove from the database directories that do not exist anymore.
 - Use `__jumper_clean_files_db` to remove from the database files that do not exist anymore.
 
 In order to populate the directories database, a pre-command is added to Bash/Zsh. To populate the files database, you will have to call `jumper -f ${__JUMPER_FILES} -a <full-path-to-file>` every time you open a file. For Vim/Neovim, this can be done using an `autocmd` (see next section). For other editors, you can for instance use aliases.
