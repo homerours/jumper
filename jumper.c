@@ -35,15 +35,15 @@ static char *file_to_buffer(FILE *fp, size_t *size) {
 
 static double frecentcy(double rank, double time) {
   double days = time / (3600.0 * 24.0);
-  double multiplier = 0.25;
+  double multiplier = 1.0;
   if (days < 0.04) { // < 1 hour
-    multiplier = 1.0;
+    multiplier = 4.0;
   } else if (days < 1) {
-    multiplier = 0.5;
+    multiplier = 2.0;
   } else if (days < 10) {
-    multiplier = 0.3;
+    multiplier = 1.2;
   }
-  return 1.0 + multiplier * log(1.0 + rank);
+  return multiplier * log(1.0 + rank);
 }
 
 static void update_data(char *file, char *key) {
@@ -122,7 +122,7 @@ static void lookup(char *file, char *key, int n, bool colors) {
     matched_str = match(rec.path, key, colors, &match_score);
     if (match_score > 0) {
       delta = now - rec.last_visit;
-      insert(heap, match_score * frecentcy(rec.n_visits, delta), matched_str);
+      insert(heap, match_score + frecentcy(rec.n_visits, delta), matched_str);
     }
   }
   print_sorted(heap);
