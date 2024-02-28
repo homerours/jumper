@@ -1,2 +1,2 @@
 #include <stdbool.h>
-char * match(char *string, char *query, bool colors, int * score);
+char * match(const char *string, const char *query, bool colors, int * score);

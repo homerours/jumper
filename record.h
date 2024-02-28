@@ -1,11 +1,11 @@
 #pragma once
 
-typedef struct record {
-  char *path;
+typedef struct Record {
+  const char *path;
   int n_visits;
   int last_visit;
-} record;
+} Record;
 
-void parse_record(char *string, record *rec);
+void parse_record(char *string, Record *rec);
 
-char *record_to_string(record *rec);
+char *record_to_string(Record *rec);

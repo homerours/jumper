@@ -1,52 +1,52 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 const int MAX_HEAP_SIZE = 10000;
 
-typedef struct item {
+typedef struct Item {
   double value;
   char *path;
-} item;
+} Item;
 
-static void new_item(item *item, double value, char *path) {
+static void new_item(Item *item, double value, char *path) {
   item->value = value;
   item->path = path;
-  // printf("new item: %s (%f)\n", path,value);
 }
 
-static inline void swap(item *item1, item *item2) {
-  item tmp = *item1;
+static inline void swap(Item *item1, Item *item2) {
+  Item tmp = *item1;
   *item1 = *item2;
   *item2 = tmp;
 }
 
-typedef struct heap {
+typedef struct Heap {
   int n_items;
   int size;
-  item *items;
-} heap;
+  Item *items;
+} Heap;
 
-heap *new_heap(int size) {
-  heap *heap = malloc(sizeof(struct heap));
+Heap *new_heap(int size) {
+  Heap *heap = malloc(sizeof(struct Heap));
   heap->n_items = 0;
   heap->size = size > MAX_HEAP_SIZE ? MAX_HEAP_SIZE : size;
-  heap->items = (item *)malloc(size * sizeof(item));
+  heap->items = (Item *)malloc(size * sizeof(Item));
   return heap;
 }
 
 static inline int parent(int i) { return ((i + 1) >> 1) - 1; }
 static inline int child(int i) { return (i << 1) + 1; }
 
-static void bubble_down(heap *heap, int elem) {
+static void bubble_down(Heap *heap, int elem) {
   int n = elem;
   int nchild = child(n);
-  item *items = heap->items;
+  Item *items = heap->items;
   while (nchild < heap->n_items) {
-    item *parent = items + n;
+    Item *parent = items + n;
     if (heap->n_items > nchild + 1 &&
         items[nchild].value > items[nchild + 1].value)
       nchild++;
-    item *childe = items + nchild;
+    Item *childe = items + nchild;
     if (parent->value <= childe->value)
       break;
     swap(parent, childe);
@@ -55,13 +55,13 @@ static void bubble_down(heap *heap, int elem) {
   }
 }
 
-static void heapify(heap *heap) {
+static void heapify(Heap *heap) {
   for (int i = parent(heap->n_items - 1); i != -1; i--) {
     bubble_down(heap, i);
   }
 }
 
-void insert(heap *heap, double value, char *path) {
+void insert(Heap *heap, double value, char *path) {
   if (heap->n_items == heap->size) {
     if (value > heap->items->value) {
       free(heap->items->path);
@@ -79,13 +79,13 @@ void insert(heap *heap, double value, char *path) {
   }
 }
 
-void free_heap(heap *heap) {
+void free_heap(Heap *heap) {
   free(heap->items);
   free(heap);
 }
 
-void print_sorted(heap *heap) {
-  int n = heap->n_items;
+void print_heap(Heap *heap, bool print_scores) {
+  const int n = heap->n_items;
   if (n != heap->size) {
     heapify(heap);
   }
@@ -95,7 +95,11 @@ void print_sorted(heap *heap) {
     bubble_down(heap, 0);
   }
   for (int i = 0; i < n; i++) {
-    printf("%s\n", heap->items[i].path);
+    if (print_scores) {
+      printf("%.3f  %s\n", heap->items[i].value, heap->items[i].path);
+    } else {
+      printf("%s\n", heap->items[i].path);
+    }
     free(heap->items[i].path);
   }
   free_heap(heap);

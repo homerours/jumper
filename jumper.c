@@ -11,11 +11,17 @@
 #include "matching.h"
 #include "record.h"
 
-const char *HELP_STRING = "Jumper: jump around your directories and files!\n\n\
+static const char HELP_STRING[] =
+    "Jumper: jump around your directories and files!\n\n\
 - To find the closest matches to <query>:\n\
-%s -f <logfile> -n <number-of-results> [-c (to highlight the matches)] <query>\n\n\
+  %s -f <logfile>  <query>\n\n\
+  Optional flags:\n\
+      -n (int N)    : limit the number of results to N\n\
+      -c            : highlight the matched characters in the search results\n\
+      -s            : show the scores of the matches\n\
+      -m (double m) : use a 'frecency multiplier' of m when computing the scores\n\n\
 - To update the database with <query>:\n\
-%s -f <logfile> -a <query>\n";
+  %s -f <logfile> -a <query>\n";
 
 static char *file_to_buffer(FILE *fp, size_t *size) {
   long int position = ftell(fp);
@@ -33,7 +39,7 @@ static char *file_to_buffer(FILE *fp, size_t *size) {
   return buffer;
 }
 
-static double frecentcy(double rank, double time) {
+static double frecency(double rank, double time) {
   double days = time / (3600.0 * 24.0);
   double multiplier = 1.0;
   if (days < 0.04) { // < 1 hour
@@ -46,14 +52,14 @@ static double frecentcy(double rank, double time) {
   return multiplier * log(1.0 + rank);
 }
 
-static void update_data(char *file, char *key) {
+static void update_database(const char *file, const char *key) {
   FILE *fp = fopen(file, "r+");
   if (fp == NULL) {
     fprintf(stderr, "ERROR: File %s not found\n", file);
     exit(EXIT_FAILURE);
   }
 
-  record rec;
+  Record rec;
   int now = (int)time(NULL);
   char *line = NULL;
   size_t len;
@@ -65,7 +71,7 @@ static void update_data(char *file, char *key) {
       rec.n_visits += 1;
       rec.last_visit = now;
       char *rec_string = record_to_string(&rec);
-      int record_length = strlen(rec_string);
+      const int record_length = strlen(rec_string);
       long int new_position = ftell(fp);
 
       if (record_length > new_position - position - 1) {
@@ -92,7 +98,7 @@ static void update_data(char *file, char *key) {
     rec.path = key;
     rec.last_visit = now;
     char *rec_string = record_to_string(&rec);
-    int record_length = strlen(rec_string);
+    const int record_length = strlen(rec_string);
     fwrite(rec_string, sizeof(char), record_length, fp);
     fwrite("\n", sizeof(char), 1, fp);
     free(rec_string);
@@ -103,53 +109,66 @@ static void update_data(char *file, char *key) {
   }
 }
 
-static void lookup(char *file, char *key, int n, bool colors) {
+static void lookup(const char *file, const char *key, int n, double fm,
+                   bool colors, bool print_scores) {
   FILE *fp = fopen(file, "r");
   if (fp == NULL) {
     printf("ERROR: File %s not found\n", file);
     exit(EXIT_FAILURE);
   }
 
-  heap *heap = new_heap(n);
-  record rec;
+  Heap *heap = new_heap(n);
+  Record rec;
 
   int match_score;
-  double now = (double)time(NULL), delta;
+  double now = (double)time(NULL), score;
   char *line = NULL, *matched_str;
   size_t len;
   while (getline(&line, &len, fp) != -1) {
     parse_record(line, &rec);
     matched_str = match(rec.path, key, colors, &match_score);
     if (match_score > 0) {
-      delta = now - rec.last_visit;
-      insert(heap, match_score + frecentcy(rec.n_visits, delta), matched_str);
+      score = match_score + fm * frecency(rec.n_visits, now - rec.last_visit);
+      insert(heap, score, matched_str);
     }
   }
-  print_sorted(heap);
+  print_heap(heap, print_scores);
   fclose(fp);
   if (line) {
     free(line);
   }
 }
 
+enum MODE {
+  MODE_search,
+  MODE_add,
+};
+
 int main(int argc, char **argv) {
   if (argc == 1) {
     printf(HELP_STRING, argv[0], argv[0]);
     return 0;
   }
-  char *file = NULL;
-  int c, n = MAX_HEAP_SIZE, mode = 0;
-  bool colors = false;
-  while ((c = getopt(argc, argv, "hf:n:ac")) != -1)
-    switch (c) {
+  const char *file = NULL;
+  int n = MAX_HEAP_SIZE;
+  double fm = 1.0;
+  enum MODE mode = MODE_search;
+  bool highlight_matches = false;
+  bool print_scores = false;
+  int flag;
+  while ((flag = getopt(argc, argv, "hf:n:m:acs")) != -1)
+    switch (flag) {
     case 'f':
       file = optarg;
       break;
     case 'a':
-      mode = 1;
+      mode = MODE_add;
       break;
     case 'c':
-      colors = true;
+      highlight_matches = true;
+      break;
+    case 's':
+      print_scores = true;
       break;
     case 'n':
       n = atoi(optarg);
@@ -159,11 +178,14 @@ int main(int argc, char **argv) {
         return 1;
       }
       break;
+    case 'm':
+      fm = atof(optarg);
+      break;
     case 'h':
       printf(HELP_STRING, argv[0], argv[0]);
       break;
     case '?':
-      if (optopt == 'f' || optopt == 'n') {
+      if (optopt == 'f' || optopt == 'n' || optopt == 'm') {
         return 1;
       }
       if (isprint(optopt))
@@ -190,11 +212,11 @@ int main(int argc, char **argv) {
     fprintf(stderr, "ERROR: you must provide a data file with -f.\n");
     return 1;
   }
-  char *key = argv[argc - 1];
-  if (mode == 0) {
-    lookup(file, key, n, colors);
-  } else if (*key != '\0') {
-    update_data(file, key);
+  const char *key = argv[argc - 1];
+  if (mode == MODE_search) {
+    lookup(file, key, n, fm, highlight_matches, print_scores);
+  } else if (*key != 0) {
+    update_database(file, key);
   }
   return 0;
 }
