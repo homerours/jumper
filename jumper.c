@@ -7,21 +7,10 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "arguments.h"
 #include "heap.h"
 #include "matching.h"
 #include "record.h"
-
-static const char HELP_STRING[] =
-    "Jumper: jump around your directories and files!\n\n\
-- To find the closest matches to <query>:\n\
-  %s -f <logfile>  <query>\n\n\
-  Optional flags:\n\
-      -n (int N)    : limit the number of results to N\n\
-      -c            : highlight the matched characters in the search results\n\
-      -s            : show the scores of the matches\n\
-      -m (double m) : use a 'frecency multiplier' of m when computing the scores\n\n\
-- To update the database with <query>:\n\
-  %s -f <logfile> -a <query>\n";
 
 static char *file_to_buffer(FILE *fp, size_t *size) {
   long int position = ftell(fp);
@@ -139,84 +128,14 @@ static void lookup(const char *file, const char *key, int n, double fm,
   }
 }
 
-enum MODE {
-  MODE_search,
-  MODE_add,
-};
-
 int main(int argc, char **argv) {
-  if (argc == 1) {
-    printf(HELP_STRING, argv[0], argv[0]);
-    return 0;
+  Arguments *args = parse_arguments(argc, argv);
+  if (args->mode == MODE_search) {
+    lookup(args->file_path, args->key, args->n_results,
+           args->frecency_multiplier, args->highlight, args->print_scores);
+  } else {
+    update_database(args->file_path, args->key);
   }
-  const char *file = NULL;
-  int n = MAX_HEAP_SIZE;
-  double fm = 1.0;
-  enum MODE mode = MODE_search;
-  bool highlight_matches = false;
-  bool print_scores = false;
-  int flag;
-  while ((flag = getopt(argc, argv, "hf:n:m:acs")) != -1)
-    switch (flag) {
-    case 'f':
-      file = optarg;
-      break;
-    case 'a':
-      mode = MODE_add;
-      break;
-    case 'c':
-      highlight_matches = true;
-      break;
-    case 's':
-      print_scores = true;
-      break;
-    case 'n':
-      n = atoi(optarg);
-      if (n <= 0) {
-        fprintf(stderr,
-                "ERROR: The number of results -n has to be positive!\n");
-        return 1;
-      }
-      break;
-    case 'm':
-      fm = atof(optarg);
-      break;
-    case 'h':
-      printf(HELP_STRING, argv[0], argv[0]);
-      break;
-    case '?':
-      if (optopt == 'f' || optopt == 'n' || optopt == 'm') {
-        return 1;
-      }
-      if (isprint(optopt))
-        fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-      else
-        fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
-      return 1;
-    default:
-      abort();
-    }
-
-  if (optind == argc) {
-    return 0;
-  }
-  if (optind < argc - 1) {
-    fprintf(stderr, "ERROR: Got more than 1 query: ");
-    for (int i = optind; i < argc; i++) {
-      fprintf(stderr, "%s ", argv[i]);
-    }
-    fprintf(stderr, "\n");
-    return 1;
-  }
-  if (file == NULL) {
-    fprintf(stderr, "ERROR: you must provide a data file with -f.\n");
-    return 1;
-  }
-  const char *key = argv[argc - 1];
-  if (mode == MODE_search) {
-    lookup(file, key, n, fm, highlight_matches, print_scores);
-  } else if (*key != 0) {
-    update_database(file, key);
-  }
+  free(args);
   return 0;
 }
