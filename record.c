@@ -3,14 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-static const double SHORT_DECAY = 1e-4;
-static const double LONG_DECAY = 1e-6;
+#include "record.h"
 
-typedef struct Record {
-  const char *path;
-  double n_visits;
-  int last_visit;
-} Record;
+static const double SHORT_DECAY = 1e-4;
+static const double LONG_DECAY = 3 * 1e-7;
 
 void parse_record(char *string, Record *rec) {
   char *current = string;
@@ -33,5 +29,6 @@ char *record_to_string(Record *rec) {
 }
 
 double frecency(double n_visits, double delta) {
-  return log(1.0 + 20 * exp(-SHORT_DECAY * delta) + n_visits);
+  return log(1.0 + 10 * exp(-SHORT_DECAY * delta) +
+             exp(-LONG_DECAY * delta) * n_visits);
 }
