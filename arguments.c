@@ -7,7 +7,7 @@
 
 #include "arguments.h"
 
-static const char *HELP_STRING =
+static const char HELP_STRING[] =
     "Usage: %s [OPTIONS] QUERY\n"
     " -f, --data-file=FILE_PATH         Path of the database.\n"
     " -a, --add                         Add the query to the database or "

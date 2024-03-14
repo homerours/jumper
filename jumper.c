@@ -28,19 +28,6 @@ static char *file_to_buffer(FILE *fp, size_t *size) {
   return buffer;
 }
 
-static double frecency(double rank, double time) {
-  double days = time / (3600.0 * 24.0);
-  double multiplier = 1.0;
-  if (days < 0.04) { // < 1 hour
-    multiplier = 4.0;
-  } else if (days < 1) {
-    multiplier = 2.0;
-  } else if (days < 10) {
-    multiplier = 1.2;
-  }
-  return multiplier * log(1.0 + rank);
-}
-
 static void update_database(const char *file, const char *key) {
   FILE *fp = fopen(file, "r+");
   if (fp == NULL) {
@@ -57,8 +44,7 @@ static void update_database(const char *file, const char *key) {
   while (getline(&line, &len, fp) != -1) {
     parse_record(line, &rec);
     if (strcmp(rec.path, key) == 0) {
-      rec.n_visits += 1;
-      rec.last_visit = now;
+      update_record(&rec, now);
       char *rec_string = record_to_string(&rec);
       const int record_length = strlen(rec_string);
       long int new_position = ftell(fp);

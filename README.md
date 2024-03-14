@@ -26,11 +26,10 @@ From these two basic functions, the shell script `jumper.sh` defines various fun
 
 The command `jumper -f <file> -n N <query>` outputs the "top N matches" for `<query>`. The matches are ranked using a score, which combines:
 
-- The frecency of the match: this measures the frequency and recency of the visits of the match. Here, we use the formula
-```
-frecency(match) = log(1 + number-of-visits) * decay(time-since-last-visit)
-```
-where `decay` is a decaying function.
+- The frecency of the match: this measures the frequency and recency of the visits of the match. Assume that a match has been visited at times $t_1 < cdots < t_n$, then at time $t$,
+$$
+frecency(match,t) = \log\left(1 + 20 e^{- \alpha_1 (t - t_n)} + \sum_{i=1}^n e^{-\alpha_2 (t-t_i)} \right)
+$$
 - How well the match matches the query, quantified by `match_score(query, match)`. Roughly speaking,
 ```
 match_score(query, match) = 10 * number-of-matched-characters - 8 * number-of-gaps + "bonuses"
