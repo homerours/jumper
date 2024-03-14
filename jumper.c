@@ -1,5 +1,4 @@
 #include <ctype.h>
-#include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -84,15 +83,14 @@ static void update_database(const char *file, const char *key) {
   }
 }
 
-static void lookup(const char *file, const char *key, int n, double fm,
-                   bool colors, bool print_scores) {
-  FILE *fp = fopen(file, "r");
+static void lookup(Arguments *args) {
+  FILE *fp = fopen(args->file_path, "r");
   if (fp == NULL) {
-    printf("ERROR: File %s not found\n", file);
+    printf("ERROR: File %s not found\n", args->file_path);
     exit(EXIT_FAILURE);
   }
 
-  Heap *heap = new_heap(n);
+  Heap *heap = new_heap(args->n_results);
   Record rec;
 
   int match_score;
@@ -101,13 +99,14 @@ static void lookup(const char *file, const char *key, int n, double fm,
   size_t len;
   while (getline(&line, &len, fp) != -1) {
     parse_record(line, &rec);
-    matched_str = match(rec.path, key, colors, &match_score);
+    matched_str = match(rec.path, args->key, args->highlight, &match_score);
     if (match_score > 0) {
-      score = match_score + fm * frecency(rec.n_visits, now - rec.last_visit);
+      score = match_score + 2 * args->frecency_multiplier *
+                                frecency(rec.n_visits, now - rec.last_visit);
       insert(heap, score, matched_str);
     }
   }
-  print_heap(heap, print_scores);
+  print_heap(heap, args->print_scores);
   fclose(fp);
   if (line) {
     free(line);
@@ -117,8 +116,7 @@ static void lookup(const char *file, const char *key, int n, double fm,
 int main(int argc, char **argv) {
   Arguments *args = parse_arguments(argc, argv);
   if (args->mode == MODE_search) {
-    lookup(args->file_path, args->key, args->n_results,
-           args->frecency_multiplier, args->highlight, args->print_scores);
+    lookup(args);
   } else {
     update_database(args->file_path, args->key);
   }
