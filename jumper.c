@@ -99,7 +99,7 @@ static void lookup(Arguments *args) {
   size_t len;
   while (getline(&line, &len, fp) != -1) {
     parse_record(line, &rec);
-    matched_str = match(rec.path, args->key, args->highlight, &match_score);
+    match_score = match(rec.path, args->key, args->highlight, &matched_str);
     if (match_score > 0) {
       score = match_score + 2 * args->frecency_multiplier *
                                 frecency(rec.n_visits, now - rec.last_visit);

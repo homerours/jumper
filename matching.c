@@ -204,14 +204,15 @@ static bool quick_match(const char *string, const char *query) {
   return *q == 0;
 }
 
-char *match(const char *string, const char *query, bool colors, int *score) {
+int match(const char *string, const char *query, bool colors,
+          char **matched_string) {
   if (*query == 0) {
-    *score = 1;
-    return strdup(string);
+    *matched_string = strdup(string);
+    return 1;
   }
   if (!quick_match(string, query)) {
-    *score = 0;
-    return (char *)string;
+    *matched_string = (char *)string;
+    return 0;
   }
   MatchingData *data = make_data(string, query);
   const int n = data->n;
@@ -233,18 +234,16 @@ char *match(const char *string, const char *query, bool colors, int *score) {
     }
   }
   if (maximum == -1) {
-    *score = 0;
     free_matching_data(data);
-    return (char *)string;
+    *matched_string = (char *)string;
+    return 0;
   }
-  *score = maximum;
   // We have a match, allocate memory
-  char *match_string;
   if (colors) {
-    match_string = extract_matching(data, imax);
+    *matched_string = extract_matching(data, imax);
   } else {
-    match_string = strdup(string);
+    *matched_string = strdup(string);
   }
   free_matching_data(data);
-  return match_string;
+  return maximum;
 }
