@@ -6,7 +6,8 @@ It uses [FZF](https://github.com/junegunn/fzf) for fuzzy-finding and is heavily 
 It differentiates itself from the plethora of similar tools on the following points.
 - It is not restricted to folders. It allows to quickly navigate files, or anything you want.
 - It allows fuzzy-finding.
-- His ranking mechanism combines the "frecency" of the match (as [z](https://github.com/rupa/z) does) and the accuracy of the match (as [fzf](https://github.com/junegunn/fzf) or [fzy](https://github.com/jhawthorn/fzy) do). More details below.
+- His ranking mechanism combines the "frecency" of the match (as [z](https://github.com/rupa/z) does) and the accuracy of the match (as [fzf](https://github.com/junegunn/fzf) or [fzy](https://github.com/jhawthorn/fzy) do). More details [here](https://github.com/homerours/jumper/blob/master/algorithm.md).
+- Written in C, for speed and portability.
 
 ## Concept
 Jumper is a C program, `jumper`, which operates on files whose lines are in the format `<path>|<number-of-visits>|<timestamp-of-last-visit>`. Such file is typically used to record accesses to files/directories. Given such a file, the command
@@ -30,10 +31,10 @@ The pathes that matches a given query are ranked based on
 
 The ranking of a path at time $t$ is based on the following score
 ```math
-\text{score}(\text{query}, \text{path}) =  \beta \times \text{frecency}(t, \text{path}) + \text{accuracy}(\text{query}, \text{path})
+\text{score}(\text{query}, \text{path}) =  \text{frecency}(t, \text{path}) + \beta \times \text{accuracy}(\text{query}, \text{path})
 ```
 where $\beta = 1.0$ by default, but can be updated with the flag `-b <value>`. 
-More details about the scoring mechanism are given [here](https://github.com/homerours/jumper/algorithm.md).
+More details about the scoring mechanism are given [here](https://github.com/homerours/jumper/blob/master/algorithm.md).
 
 ## Installation process
 

@@ -34,7 +34,7 @@ Similarly to the fuzzy-finders [fzf](https://github.com/junegunn/fzf) or [fzy](h
 
 This finds the match that maximizes
 ```
-U(match) = 10 * len(query) - 9 * number-of-gaps - total-length-of-gaps + bonuses(match)
+U(match) = 10 * len(query) - 9 * (number-of-splits - 1) - total-length-of-gaps + bonuses(match)
 ```
 The `bonuses` above give additional points if matches happen at special places, such at the end of the path, or beginning of words. Then the accuracy is
 
@@ -76,6 +76,6 @@ P(\text{query}|\text{path}) = \frac{1}{Z} \exp\Big(\frac{\beta}{2} \, \text{accu
 
 The posterior probability is therefore propotional to
 ```math
-P(\text{path}|\text{query}) \propto \lambda(t, \text{path}) \exp(\frac{\beta}{2} \,  \text{accuracy}(\text{query},\text{path}))
+P(\text{path}|\text{query}) \propto \lambda(t, \text{path}) \exp\Big(\frac{\beta}{2} \,  \text{accuracy}(\text{query},\text{path})\Big)
 ```
-The present ranking algorithm simply ranks the pathes according to their $\log$-posterior probability.
+The ranking algorithm simply ranks the pathes according to their $\log$-posterior probability.
