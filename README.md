@@ -24,26 +24,16 @@ From these two basic functions, the shell script `jumper.sh` defines various fun
 
 ### Ranking mechanism
 
-The command `jumper -f <file> -n N <query>` outputs the "top N matches" for `<query>`. The matches are ranked using a score, which combines:
+The pathes that matches a given query are ranked based on
+- the frecency of the path: how often / recently has this path been visited ?
+- the accuracy of the query: how well does the query matches the path ?
 
-- The frecency of the match: this measures the frequency and recency of the visits of the match. Assume that a match has been visited at times $t_1 < \cdots < t_n$, then at time $t$,
+The ranking of a path at time $t$ is based on the following score
 ```math
-frecency(match,t) = \log\left(1 + 10 e^{- \alpha_1 (t - t_n)} + \sum_{i=1}^n e^{-\alpha_2 (t-t_i)} \right)
+score(query, path) =  \beta * frecency(t, path) + accuracy(query, math)
 ```
-- How well the match matches the query, quantified by `match_score(query, match)`. Roughly speaking,
-```
-match_score(query, match) = 10 * number-of-matched-characters - 8 * number-of-gaps + "bonuses"
-```
-
-Based on these two values, the final score of the match is
-```
-score(query, match) = match_score(query, match) + m * frecency(match)
-```
-where `m = 1.0` by default, but can be updated with the flag `-m <your multiplier>`. 
-These additive definition is motivated by the following.
-Suppose that one is fuzzy-finding a match, adding one character to `<query>` at a time.
-At first, when `<query>` has very few character (typically <=2), the `match_score` will be very small, hence the ranking will be mostly decided by the frecency.
-However, as more characters are added, the ranking will favors matches that are more accurate.
+where $\beta = 1.0$ by default, but can be updated with the flag `-b <your multiplier>`. 
+More details about the scoring mechanism are given [here](algorith.md).
 
 ## Installation process
 
@@ -57,7 +47,7 @@ Use
 ```bash
 git clone https://github.com/homerours/jumper
 cd jumper
-sudo ./install.sh
+make install
 ```
 to compile and move the `jumper` binary to `/usr/local/bin`. Then add 
 ```bash

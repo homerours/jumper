@@ -15,6 +15,10 @@ install: jumper clean
 	mv $< $(BINDIR)
 	@echo "Add 'source jumper.sh' to your bash/zsh rc."
 
+uninstall:
+	rm -f $(BINDIR)/jumper
+	@echo "Please also remove 'source jumper.sh' from your bash/zsh rc."
+
 jumper: jumper.o heap.o record.o matching.o arguments.o
 	@echo 'Compiling jumper...'
 	$(CC) -o $@ $^ $(FLAGS)
