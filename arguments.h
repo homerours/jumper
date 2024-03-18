@@ -12,7 +12,7 @@ typedef struct Arguments {
   int n_results;
   bool highlight;
   bool print_scores;
-  double frecency_multiplier;
+  double beta;
 } Arguments;
 
 Arguments *parse_arguments(int argc, char **argv);
