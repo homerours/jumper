@@ -30,7 +30,7 @@ The pathes that matches a given query are ranked based on
 
 The ranking of a path at time $t$ is based on the following score
 ```math
-score(query, path) =  \beta * frecency(t, path) + accuracy(query, math)
+\text{score}(\text{query}, \text{path}) =  \beta \times \text{frecency}(t, \text{path}) + \text{accuracy}(\text{query}, \text{math})
 ```
 where $\beta = 1.0$ by default, but can be updated with the flag `-b <value>`. 
 More details about the scoring mechanism are given [here](algorithm.md).

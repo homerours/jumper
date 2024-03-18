@@ -15,7 +15,7 @@ Let's consider an item that has not been visited within the last 10 hours, so th
 Let's set $t=0$ as the origin of times.
 Assume moreover that this item is typically visited every $T$ seconds, so that $T_i = - i T$ for $i=0,1,2, \dots$. Therefore
 ```math
-frecency(t) 
+\text{frecency}(t) 
 \simeq \log\left(1 + \sum_{i=0}^{\infty} e^{-\alpha_2 i T} \right)
  =  \log\left(1 + \frac{1}{1 - e^{-\alpha_2 T}} \right)
 ```
@@ -34,19 +34,19 @@ Similarly to the fuzzy-finders [fzf](https://github.com/junegunn/fzf) or [fzy](h
 
 This finds the match that maximizes
 ```
-score(match) = 10 * len(query) - 9 * number-of-gaps - total-length-of-gaps + bonuses(match)
+U(match) = 10 * len(query) - 9 * number-of-gaps - total-length-of-gaps + bonuses(match)
 ```
 The `bonuses` above give additional points if matches happen at special places, such at the end of the path, or beginning of words. Then the accuracy is
 
 ```math
-accuracy(query, path) = \max_{matches} score(match)
+\text{accuracy}(query, path) = \max_{match} U(\text{match}).
 
 ```
 
 ## Final score
 Based on these two values, the final score of the match is
 ```math
-score(query, path, t) =  frecency(path, t) + \frac{\beta}{2} accuracy(query, path)
+\text{score}(\text{query}, \text{path}, t) =  \text{frecency}(\text{path}, t) + \frac{\beta}{2} \text{accuracy}(\text{query}, \text{path}).
 ```
 where $\beta = 1.0$ by default, but can be updated with the flag `-b <value>`. 
 These additive definition is motivated by the following.
@@ -61,7 +61,7 @@ The definitions of scores above can be motivated by the following statistical mo
 
 Assume that the visits of a given folder $F$ is a self-exciting point process, with conditional intensity
 ```math
-\lambda(t) = 1 + 10 e^{-alpha_1 (t - T_0(F))} + \sum_{T_k(F) \leq t} e^{-\alpha_2 (t - T_k(F))}
+\lambda(t) = 1 + 10 e^{-alpha_1 (t - T_0)} + \sum_{T_k \leq t} e^{-\alpha_2 (t - T_k)}
 ```
 independently from the visits to the other folders.
 
@@ -70,12 +70,12 @@ The user gave his query to the algorithm, which can be seen as a noisy observati
 
 Let us model
 ```math
-P(query|path) = \frac{1}{Z} \exp(\frac{\beta}{2} accuracy(query,path))
+P(query|path) = \frac{1}{Z} \exp\Big(\frac{\beta}{2} \text{accuracy}(\text{query},\text{path})\Big)
 ```
 ($Z$ being here the appropriate normalizing constant) meaning that the user is more likely make query that have a large accuracy.
 
 The posterior probability is therefore propotional to
 ```math
-\lambda(t, path) \exp(\beta (query,path))
+\lambda(t, path) \exp(\beta \text{accuracy}(\text{query},\text{path}))
 ```
 The present ranking algorithm simply ranks the pathes according to their $\log$-posterior probability.
