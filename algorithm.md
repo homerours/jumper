@@ -39,14 +39,14 @@ U(match) = 10 * len(query) - 9 * number-of-gaps - total-length-of-gaps + bonuses
 The `bonuses` above give additional points if matches happen at special places, such at the end of the path, or beginning of words. Then the accuracy is
 
 ```math
-\text{accuracy}(query, path) = \max_{match} U(\text{match}).
+\text{accuracy}(\text{query}, \text{path}) = \max_{match} U(\text{match}).
 
 ```
 
 ## Final score
 Based on these two values, the final score of the match is
 ```math
-\text{score}(\text{query}, \text{path}, t) =  \text{frecency}(\text{path}, t) + \frac{\beta}{2} \text{accuracy}(\text{query}, \text{path}).
+\text{score}(\text{query}, \text{path}, t) =  \text{frecency}(\text{path}, t) + \frac{\beta}{2} \, \text{accuracy}(\text{query}, \text{path}).
 ```
 where $\beta = 1.0$ by default, but can be updated with the flag `-b <value>`. 
 These additive definition is motivated by the following.
@@ -61,21 +61,21 @@ The definitions of scores above can be motivated by the following statistical mo
 
 Assume that the visits of a given folder $F$ is a self-exciting point process, with conditional intensity
 ```math
-\lambda(t) = 1 + 10 e^{-alpha_1 (t - T_0)} + \sum_{T_k \leq t} e^{-\alpha_2 (t - T_k)}
+\lambda(t) = 1 + 10 e^{-\alpha_1 (t - T_0)} + \sum_{T_k \leq t} e^{-\alpha_2 (t - T_k)}
 ```
 independently from the visits to the other folders.
 
-When the user makes a query to the database, he knows already the next folder he would like to visit, which is the folder whose point process has a jump at time $t$.
-The user gave his query to the algorithm, which can be seen as a noisy observation of the path of the folder the user would like to visit.
+When the user queries the database at a time $t$, he knows already the next folder he would like to visit, which is the folder whose point process has a jump at time $t$.
+The user gave his query to the algorithm, which can be seen as a noisy observation of the path of the folder he would like to visit.
 
 Let us model
 ```math
-P(query|path) = \frac{1}{Z} \exp\Big(\frac{\beta}{2} \text{accuracy}(\text{query},\text{path})\Big)
+P(\text{query}|\text{path}) = \frac{1}{Z} \exp\Big(\frac{\beta}{2} \, \text{accuracy}(\text{query},\text{path})\Big)
 ```
 ($Z$ being here the appropriate normalizing constant) meaning that the user is more likely make query that have a large accuracy.
 
 The posterior probability is therefore propotional to
 ```math
-\lambda(t, path) \exp(\beta \text{accuracy}(\text{query},\text{path}))
+P(\text{path}|\text{query}) \propto \lambda(t, \text{path}) \exp(\frac{\beta}{2} \,  \text{accuracy}(\text{query},\text{path}))
 ```
 The present ranking algorithm simply ranks the pathes according to their $\log$-posterior probability.

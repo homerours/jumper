@@ -30,10 +30,10 @@ The pathes that matches a given query are ranked based on
 
 The ranking of a path at time $t$ is based on the following score
 ```math
-\text{score}(\text{query}, \text{path}) =  \beta \times \text{frecency}(t, \text{path}) + \text{accuracy}(\text{query}, \text{math})
+\text{score}(\text{query}, \text{path}) =  \beta \times \text{frecency}(t, \text{path}) + \text{accuracy}(\text{query}, \text{path})
 ```
 where $\beta = 1.0$ by default, but can be updated with the flag `-b <value>`. 
-More details about the scoring mechanism are given [here](algorithm.md).
+More details about the scoring mechanism are given [here](https://github.com/homerours/jumper/algorithm.md).
 
 ## Installation process
 
