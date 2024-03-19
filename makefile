@@ -25,7 +25,7 @@ jumper: jumper.o heap.o record.o matching.o arguments.o
 	$(CC) -o $@ $^ $(FLAGS) -lm
 	@echo 'Success!'
 
-%.o: %.c
+%.o: src/%.c
 	$(CC) -c $^ $(FLAGS)
 
 clean:

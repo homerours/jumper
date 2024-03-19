@@ -6,7 +6,7 @@ It uses [FZF](https://github.com/junegunn/fzf) for fuzzy-finding and is heavily 
 It differentiates itself from the plethora of similar tools on the following points:
 - It is not restricted to folders. It allows to quickly navigate files, or anything you want.
 - It allows fuzzy-finding.
-- Efficient ranking mechanism which combines the "frecency" of the match (as [z](https://github.com/rupa/z) does) and the accuracy of the match (as [fzf](https://github.com/junegunn/fzf) or [fzy](https://github.com/jhawthorn/fzy) do). More details [here](https://github.com/homerours/jumper/blob/master/algorithm.md).
+- Efficient ranking mechanism which combines the "frecency" of the match (as [z](https://github.com/rupa/z) does) and the accuracy of the match (as [fzf](https://github.com/junegunn/fzf) or [fzy](https://github.com/jhawthorn/fzy) do). More details [here](https://github.com/homerours/jumper/blob/master/doc/algorithm.md).
 - Written in C, for speed and portability.
 
 ## Concept
@@ -45,13 +45,13 @@ The ranking of a path at time $t$ is based on the following score
 \text{score}(\text{query}, \text{path}) =  \text{frecency}(t, \text{path}) + \beta \times \text{accuracy}(\text{query}, \text{path})
 ```
 where $\beta = 1.0$ by default, but can be updated with the flag `-b <value>`. 
-More details about the scoring mechanism are given [here](https://github.com/homerours/jumper/blob/master/algorithm.md).
+More details about the scoring mechanism are given [here](https://github.com/homerours/jumper/blob/master/doc/algorithm.md).
 
 ## Installation process
 
 ### Requirements
 - A C compiler for installation. The makefile uses `gcc`.
-- Bash (>=4.0) or Zsh.
+- Bash (>=4.0), Zsh or Fish.
 - [FZF](https://github.com/junegunn/fzf). This is not mandatory, but you will need it for fuzzy-finding.
 
 ### Installation
@@ -63,9 +63,12 @@ make install
 ```
 to compile and move the `jumper` binary to `/usr/local/bin`. Then add 
 ```bash
-source path/to/jumper.sh
+source <path-to>/shell/jumper.{bash, zsh, or fish depending on the shell you use}
 ```
-to your `.bashrc`/`.zshrc` to get access to jumper's functions.
+to your `.bashrc`, `.zshrc` or `.config/fish/config.fish` to get access to jumper's functions.
+
+> [!TIP]
+> If you were already using [z](https://github.com/rupa/z), you can `cp ~/.z ~/.jfolders` to export your database to Jumper.
 
 ## Vim/Neovim
 
@@ -95,7 +98,7 @@ vim.api.nvim_create_autocmd({ "BufNewFile", "BufReadPre" }, {
         local filename = vim.api.nvim_buf_get_name(ev.buf)
         -- do not log .git files, and buffers opened by plugins (which often contain some ':')
         if not (string.find(filename, "/.git") or string.find(filename, ":")) then
-            local cmd = 'jumper -f ${__JUMPER_FILES} -a ' .. filename
+            local cmd = "jumper -f ${__JUMPER_FILES} -a '" .. filename .. "'" 
             os.execute(cmd)
         end
     end
