@@ -14,7 +14,9 @@ BINDIR=$(PREFIX)/bin
 install: jumper clean
 	@if [ -z $(shell which fzf) ]; then echo "WARNING: FZF not found, fuzzy finding may not work."; fi
 	mv $< $(BINDIR)
-	@echo "Add 'source jumper.sh' to your bash/zsh rc."
+	@echo "Bash: Add 'source $(PWD)/shell/jumper.bash' to your bashrc."
+	@echo "Zsh : Add 'source $(PWD)/shell/jumper.zsh' to your zshrc."
+	@echo "Fish: Add 'source $(PWD)/shell/jumper.fish' to your config.fish."
 
 uninstall:
 	rm -f $(BINDIR)/jumper
