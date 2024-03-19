@@ -19,7 +19,7 @@ returns the top `N` entries of `<file>` that match `<query>`. Adding the `-c` fl
 jumper -f <file> -a <path>
 ```
 adds the `<path>` to the `<file>`, or updates its data (increments the visits count and updates the time stamp) if already present.
-From these two basic functions, the shell script `jumper.sh` defines various functions/mappings (see next section) allowing to quickly jump around
+From these two basic functions, the shell scripts `shell/jumper.{bash,zsh,fish}` define various functions/mappings (see next section) allowing to quickly jump around
 - Folders: Folders' visits are recorded in the file `${__JUMPER_FOLDERS}` using a shell pre-command.
 - Files: Files open are recorded in the file `${__JUMPER_FILES}` by making Vim run `jumper -f ${__JUMPER_FILES} -a <current-file>` each time a file is open. This can be adapted to other editors.
 
@@ -28,7 +28,7 @@ From these two basic functions, the shell script `jumper.sh` defines various fun
 - Use `zf <something>` to open (in `$EDITOR`) the most frequent/recent file matching `<something>`.
 - Use `Ctrl+Y` to fuzzy-find the most frequent/recent directories matching a query (FZF required).
 - Use `Ctrl+U` to fuzzy-find the most frequent/recent files matching a query (FZF required).
-All these mappings can be updated in `jumper.sh`.
+All these mappings can be updated in `shell/jumper.{bash,zsh,fish}`.
 
 Database maintenance:
 - Use `__jumper_clean_folders_db` to remove from the database directories that do not exist anymore.
