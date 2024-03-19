@@ -23,7 +23,7 @@ zf() {
 	if [[ -z $file ]]; then
 		echo 'No match found.'
     else
-		eval "${EDITOR} ${file}"
+		eval "${EDITOR} '${file}'"
 	fi
 }
 
@@ -114,60 +114,3 @@ __jumper_clean_files_db() {
     done < "${__JUMPER_FILES}"
     mv "${tempfile}" "${__JUMPER_FILES}"
 }
-
-if [[ ! -z ${BASH_VERSION} ]]; then
-    # For Bash
-    run-fz() {
-        selected=$(__jumper_fdir)
-        pre="${READLINE_LINE:0:$READLINE_POINT}"
-        if [[ -z $pre ]] && [[ ! -z ${selected} ]]; then
-            cd "$selected"
-        else
-            READLINE_LINE="${pre}$selected${READLINE_LINE:$READLINE_POINT}"
-            READLINE_POINT=$(( READLINE_POINT + ${#selected} ))
-        fi
-    }
-    run-fz-file() {
-        selected=$(__jumper_ffile)
-        pre="${READLINE_LINE:0:$READLINE_POINT}"
-        READLINE_LINE="${pre}$selected${READLINE_LINE:$READLINE_POINT}"
-        READLINE_POINT=$(( READLINE_POINT + ${#selected} ))
-    }
-
-    # Bindings
-	bind -x '"\C-y": run-fz'
-    # In some terminals, C-u is bind to kill
-    # and can not be remapped.
-    stty kill undef
-	bind -x '"\C-u": run-fz-file'
-
-    # Update db
-	PROMPT_COMMAND="__jumper_update_db;$PROMPT_COMMAND"
-else
-    # We assume that this is Zsh
-    run-fz() {
-        selected=$(__jumper_fdir)
-        if [[ -z ${LBUFFER} ]] && [[ ! -z ${selected} ]]; then
-            cd $selected
-        else
-            LBUFFER="${LBUFFER}${selected}"
-        fi
-		zle reset-prompt
-	}
-    run-fz-file() {
-        selected=$(__jumper_ffile)
-        LBUFFER="${LBUFFER}${selected}"
-		zle reset-prompt
-	}
-
-    # Bindings
-	zle -N run-fz
-	zle -N run-fz-file
-	bindkey '^Y' run-fz
-	bindkey '^U' run-fz-file
-
-    # Update db
-	precmd() {
-		__jumper_update_db
-	}
-fi
