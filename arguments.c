@@ -18,7 +18,7 @@ static const char HELP_STRING[] =
     " -s, --scores              Print the scores of the matches.\n"
     " -b, --beta=BETA           Specify an inverse temperature\n"
     "                           when computing the score (default=1.0).\n"
-    " -h, --help                Display this help and exit\n";
+    " -h, --help                Display this help and exit.\n";
 
 static void help(const char *argv0) { printf(HELP_STRING, argv0); }
 

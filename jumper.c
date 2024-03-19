@@ -85,7 +85,7 @@ static void update_database(const char *file, const char *key) {
 static void lookup(Arguments *args) {
   FILE *fp = fopen(args->file_path, "r");
   if (fp == NULL) {
-    printf("ERROR: File %s not found\n", args->file_path);
+    fprintf(stderr, "ERROR: File %s not found\n", args->file_path);
     exit(EXIT_FAILURE);
   }
 
