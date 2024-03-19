@@ -80,8 +80,8 @@ Below are instructions to use jumper within Vim/Neovim without this plugin.
 ### Jump to directories
 You can add something like
 ```vim
-command! -nargs=+ Z :cd `jumper -f ${__JUMPER_FOLDERS} -n 1 <args>`
-command! -nargs=+ Zf :edit `jumper -f ${__JUMPER_FILES} -n 1 <args>`
+command! -nargs=+ Z :cd `jumper -f ${__JUMPER_FOLDERS} -n 1 '<args>'`
+command! -nargs=+ Zf :edit `jumper -f ${__JUMPER_FILES} -n 1 '<args>'`
 ```
 to your `.vimrc` to then change directory with `:Z <query>` or open frequently opened files with `:Zf <query>`.
 
