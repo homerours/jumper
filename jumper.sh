@@ -31,6 +31,7 @@ zf() {
 __jumper_fdir() {
 	__JUMPER="jumper -c -f ${__JUMPER_FOLDERS} -n ${__JUMPER_MAX_RESULTS}"
 	fzf --height=70% --layout=reverse \
+        --keep-right \
 		--ansi --disabled --query '' \
 		--bind "start:reload:${__JUMPER} {q}" \
 		--bind "change:reload:sleep 0.05; ${__JUMPER} {q} || true"
@@ -40,6 +41,7 @@ __jumper_fdir() {
 __jumper_ffile() {
 	__JUMPER="jumper -c -f ${__JUMPER_FILES} -n ${__JUMPER_MAX_RESULTS}"
 	fzf --height=70% --layout=reverse \
+        --keep-right \
 		--ansi --disabled --query '' \
 		--bind "start:reload:${__JUMPER} {q}" \
 		--bind "change:reload:sleep 0.05; ${__JUMPER} {q} || true"
