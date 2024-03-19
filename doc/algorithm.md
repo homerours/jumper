@@ -62,9 +62,9 @@ However, as more characters are added, the ranking will favors matches that are 
 
 The definitions of scores above can be motivated by the following statistical model.
 
-Assume that the visits of a given folder $F$ is a self-exciting point process, with conditional intensity
+Assume that the visits of a given path is a self-exciting point process, with conditional intensity
 ```math
-\lambda(t) = 1 + 10 e^{-\alpha_1 (t - T_0)} + \sum_{T_k \leq t} e^{-\alpha_2 (t - T_k)}
+\lambda(t, \text{path}) = 1 + 10 e^{-\alpha_1 (t - T_0)} + \sum_{T_k \leq t} e^{-\alpha_2 (t - T_k)}
 ```
 independently from the visits to the other folders.
 
