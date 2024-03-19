@@ -1,10 +1,10 @@
 CC=gcc
-# FLAGS=-O3 -lm
+FLAGS=-O3
 
-FLAGS=-Wall -Wextra -Wpedantic \
-	-Wformat=2 -Wno-unused-parameter -Wshadow \
-	-Wwrite-strings -Wstrict-prototypes -Wold-style-definition \
-	-Wredundant-decls -Wnested-externs -Wmissing-include-dirs
+# FLAGS=-Wall -Wextra -Wpedantic \
+# 	-Wformat=2 -Wno-unused-parameter -Wshadow \
+# 	-Wwrite-strings -Wstrict-prototypes -Wold-style-definition \
+# 	-Wredundant-decls -Wnested-externs -Wmissing-include-dirs
 # FLAGS+=-fsanitize=address -static-libsan
 
 PREFIX=/usr/local
@@ -23,6 +23,9 @@ jumper: jumper.o heap.o record.o matching.o arguments.o
 	@echo 'Compiling jumper...'
 	$(CC) -o $@ $^ $(FLAGS)
 	@echo 'Success!'
+
+record.o: record.c
+	$(CC) -c $^ $(FLAGS) -lm
 
 %.o: %.c
 	$(CC) -c $^ $(FLAGS)
