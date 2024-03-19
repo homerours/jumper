@@ -6,12 +6,12 @@ Jumper use both frecency (frequency+recency at which items have been visited) an
 ## Frecency
 The frecency of a match measures the frequency and recency of the visits of the match. Assume that a match has been visited at times $T_0 > \cdots > T_n$, then at time $t$, we define
 ```math
-\text{frecency}(t) = \log\left(1 + 10 e^{- \alpha_1 (t - T_0)} + \sum_{i=0}^n e^{-\alpha_2 (t-T_i)} \right)
+\text{frecency}(t) = \log\left(1 + 10 \, e^{- \alpha_1 (t - T_0)} + \sum_{i=0}^n e^{-\alpha_2 (t-T_i)} \right)
 ```
-Here $\alpha_1 = 10^{-4}$ and $\alpha_2 = 3 \times 10^{-7}$ and all times are expressed in seconds. These values are chosen so that $e^{-\alpha_1 {\rm \ 2 \ hours}} \simeq 1 / 2$ and  $e^{-\alpha_2 {\rm \ 1\ month}} \simeq 1 / 2$.
+Here $\alpha_1 = 10^{-4}$, $\alpha_2 = 3 \times 10^{-7}$ and all times are expressed in seconds. These values are chosen so that $e^{-\alpha_1 {\rm \ 2 \ hours}} \simeq 1 / 2$ and  $e^{-\alpha_2 {\rm \ 1\ month}} \simeq 1 / 2$.
 
 Let us now motivate a bit the definition of frecency above. 
-Let's consider an item that has not been visited within the last 10 hours, so that we can neglect the term $10 e^{- \alpha_1 (t - T_0)}$. 
+Let us first consider an item that has not been visited within the last 10 hours, so that we can neglect the term $10 e^{- \alpha_1 (t - T_0)}$. 
 Let's set $t=0$ as the origin of times.
 Assume moreover that this item is typically visited every $T$ seconds, so that $T_i = - i T$ for $i=0,1,2, \dots$. Therefore
 ```math
@@ -25,7 +25,9 @@ We plot this function below:
 
 In the case where the item has just been visited, the frecency above gets an increase of $+10$ inside of the $\log$, leading to the dashed curve. This allows directories that have been very recently visited but that do not have a long history of visits (think for instance at a newly created directory) to compete with older directories that have been visited for a very long time.
 
-As we can see from the plot above, the frecency will typically be a number in the range $[0,5]$.
+As we can see from the plot above, the frecency will typically be a number in the range $[0,5]$. Many other definitions for frecency are possible. We chose this one for the following reasons:
+- It does not diverge at time goes. [z](https://github.com/rupa/z) uses something like `number-of-visits / time-since-last-visit`, which may explode over time (and therefore require some "aging" mechanism).
+- It only requires to keep track of a float $\sum_i e^{-\alpha_2 (t-T_i)}$ and the time of last visit to be computed.
 
 ## Match accuracy
 
@@ -48,12 +50,13 @@ Based on these two values, the final score of the match is
 ```math
 \text{score}(\text{query}, \text{path}, t) =  \text{frecency}(\text{path}, t) + \frac{\beta}{2} \, \text{accuracy}(\text{query}, \text{path}).
 ```
-where $\beta = 1.0$ by default, but can be updated with the flag `-b <value>`. 
+where $\beta = 1.0$ by default, and be updated with the flag `-b <value>`. 
 These additive definition is motivated by the following.
 
 Suppose that one is fuzzy-finding a path, adding one character to the `query` at a time.
-At first, when `query` has very few character (typically <=2), the `accuracy` will be very small, hence the ranking will be mostly decided by the frecency.
-However, as more characters are added, the ranking will favors matches that are more accurate.
+At first, when `query` has very few character (typically <=2), all the paths containing these two characters consecutive will have maximum `accuracy`.
+Hence the ranking will be mostly decided by the frecency.
+However, as more characters are added, the ranking will favors matches that are more accurate. The ranking will then be dominated by the accuracy of the matches.
 
 ## Statistical interpretation
 
@@ -74,8 +77,8 @@ P(\text{query}|\text{path}) = \frac{1}{Z} \exp\Big(\frac{\beta}{2} \, \text{accu
 ```
 ($Z$ being here the appropriate normalizing constant) meaning that the user is more likely make query that have a large accuracy.
 
-The posterior probability is therefore propotional to
+The posterior probability is therefore proportional to
 ```math
 P(\text{path}|\text{query}) \propto \lambda(t, \text{path}) \exp\Big(\frac{\beta}{2} \,  \text{accuracy}(\text{query},\text{path})\Big)
 ```
-The ranking algorithm simply ranks the pathes according to their $\log$-posterior probability.
+The ranking algorithm simply ranks the paths according to their $\log$-posterior probability.

@@ -3,14 +3,14 @@
 Jumper is a command-line program that helps you jumping to / fuzzy-finding the directories and files that you frequently visit.
 It uses [FZF](https://github.com/junegunn/fzf) for fuzzy-finding and is heavily inspired by [z](https://github.com/rupa/z).
 
-It differentiates itself from the plethora of similar tools on the following points.
+It differentiates itself from the plethora of similar tools on the following points:
 - It is not restricted to folders. It allows to quickly navigate files, or anything you want.
 - It allows fuzzy-finding.
-- His ranking mechanism combines the "frecency" of the match (as [z](https://github.com/rupa/z) does) and the accuracy of the match (as [fzf](https://github.com/junegunn/fzf) or [fzy](https://github.com/jhawthorn/fzy) do). More details [here](https://github.com/homerours/jumper/blob/master/algorithm.md).
+- Efficient ranking mechanism which combines the "frecency" of the match (as [z](https://github.com/rupa/z) does) and the accuracy of the match (as [fzf](https://github.com/junegunn/fzf) or [fzy](https://github.com/jhawthorn/fzy) do). More details [here](https://github.com/homerours/jumper/blob/master/algorithm.md).
 - Written in C, for speed and portability.
 
 ## Concept
-Jumper is a C program, `jumper`, which operates on files whose lines are in the format `<path>|<number-of-visits>|<timestamp-of-last-visit>`. Such file is typically used to record accesses to files/directories. Given such a file, the command
+`jumper` operates on files whose lines are in the format `<path>|<number-of-visits>|<timestamp-of-last-visit>`. Such file is typically used to record accesses to files/directories. Given such a file, the command
 ```bash
 jumper -f <file> -n N <query>
 ```
@@ -23,9 +23,20 @@ From these two basic functions, the shell script `jumper.sh` defines various fun
 - Folders: Folders' visits are recorded in the file `${__JUMPER_FOLDERS}` using a shell pre-command.
 - Files: Files open are recorded in the file `${__JUMPER_FILES}` by making Vim run `jumper -f ${__JUMPER_FILES} -a <current-file>` each time a file is open. This can be adapted to other editors.
 
+### Usage
+- Use `z <something>` to jump to the most frequent/recent directories matching `<something>`.
+- Use `zf <something>` to open (in `$EDITOR`) the most frequent/recent file matching `<something>`.
+- Use `Ctrl+Y` to fuzzy-find the most frequent/recent directories matching a query (FZF required).
+- Use `Ctrl+U` to fuzzy-find the most frequent/recent files matching a query (FZF required).
+All these mappings can be updated in `jumper.sh`.
+
+Database maintenance:
+- Use `__jumper_clean_folders_db` to remove from the database directories that do not exist anymore.
+- Use `__jumper_clean_files_db` to remove from the database files that do not exist anymore.
+
 ### Ranking mechanism
 
-The pathes that matches a given query are ranked based on
+The paths that matches a given query are ranked based on
 - the frecency of the path: how often / recently has this path been visited ?
 - the accuracy of the query: how well does the query matches the path ?
 
@@ -55,19 +66,6 @@ to compile and move the `jumper` binary to `/usr/local/bin`. Then add
 source path/to/jumper.sh
 ```
 to your `.bashrc`/`.zshrc` to get access to jumper's functions.
-
-## Usage
-- Use `z <something>` to jump to the most frequent/recent directories matching `<something>`.
-- Use `zf <something>` to open (in `$EDITOR`) the most frequent/recent file matching `<something>`.
-- Use `Ctrl+Y` to fuzzy-find the most frequent/recent directories matching a query (FZF required).
-- Use `Ctrl+U` to fuzzy-find the most frequent/recent files matching a query (FZF required).
-All these mappings can be updated in `jumper.sh`.
-
-Database maintenance:
-- Use `__jumper_clean_folders_db` to remove from the database directories that do not exist anymore.
-- Use `__jumper_clean_files_db` to remove from the database files that do not exist anymore.
-
-In order to populate the directories database, a pre-command is added to Bash/Zsh. To populate the files database, you will have to call `jumper -f ${__JUMPER_FILES} -a <full-path-to-file>` every time you open a file. For Vim/Neovim, this can be done using an `autocmd` (see next section). For other editors, you can for instance use aliases.
 
 ## Vim/Neovim
 
