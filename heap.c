@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-const int MAX_HEAP_SIZE = 10000;
+const int MAX_HEAP_SIZE = 50000;
 
 typedef struct Item {
   double value;

@@ -101,7 +101,7 @@ static void lookup(Arguments *args) {
     match_score = match(rec.path, args->key, args->highlight, &matched_str);
     if (match_score > 0) {
       score = args->beta * match_score +
-              frecency(rec.n_visits, now - rec.last_visit);
+              2 * frecency(rec.n_visits, now - rec.last_visit);
       insert(heap, score, matched_str);
     }
   }

@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "arguments.h"
+#include "heap.h"
 
 static const char HELP_STRING[] =
     "Usage: %s [OPTIONS] QUERY\n"
@@ -34,7 +35,7 @@ static struct option longopts[] = {
 void args_init(Arguments *args) {
   args->file_path = NULL;
   args->key = "";
-  args->n_results = 1;
+  args->n_results = MAX_HEAP_SIZE;
   args->highlight = false;
   args->print_scores = false;
   args->mode = MODE_search;

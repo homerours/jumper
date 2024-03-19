@@ -27,7 +27,7 @@ In the case where the item has just been visited, the frecency above gets an inc
 
 As we can see from the plot above, the frecency will typically be a number in the range $[0,5]$. Many other definitions for frecency are possible. We chose this one for the following reasons:
 - It does not diverge at time goes. [z](https://github.com/rupa/z) uses something like `number-of-visits / time-since-last-visit`, which may explode over time (and therefore require some "aging" mechanism).
-- It only requires to keep track of a float $\sum_i e^{-\alpha_2 (t-T_i)}$ and the time of last visit to be computed.
+- It only requires to keep track of the "adjusted" number of visits $\sum_i e^{-\alpha_2 (t-T_i)}$ and the time of last visit to be computed.
 
 ## Match accuracy
 
