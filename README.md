@@ -4,9 +4,9 @@ Jumper is a command-line program that helps you jumping to / fuzzy-finding the d
 It uses [FZF](https://github.com/junegunn/fzf) for fuzzy-finding and is heavily inspired by [z](https://github.com/rupa/z).
 
 It differentiates itself from the plethora of similar tools on the following points:
-- It is not restricted to folders. It allows to quickly navigate files, or anything you want.
-- It allows fuzzy-finding.
+- It is not restricted to folders. It allows to quickly navigate files, or anything you want (you can easily create and query a new custom database).
 - Efficient ranking mechanism which combines the "frecency" of the match (as [z](https://github.com/rupa/z) does) and the accuracy of the match (as [fzf](https://github.com/junegunn/fzf) or [fzy](https://github.com/jhawthorn/fzy) do). More details [here](https://github.com/homerours/jumper/blob/master/doc/algorithm.md).
+- It allows fuzzy-finding.
 - Written in C, for speed and portability.
 
 ## Concept
@@ -19,7 +19,7 @@ returns the top `N` entries of `<file>` that match `<query>`. Adding the `-c` fl
 jumper -f <file> -a <path>
 ```
 adds the `<path>` to the `<file>`, or updates its data (increments the visits count and updates the time stamp) if already present.
-From these two basic functions, the shell scripts `shell/jumper.{bash,zsh,fish}` define various functions/mappings (see next section) allowing to quickly jump around
+From these two main functions, the shell scripts `shell/jumper.{bash,zsh,fish}` define various functions/mappings (see next section) allowing to quickly jump around
 - Folders: Folders' visits are recorded in the file `${__JUMPER_FOLDERS}` using a shell pre-command.
 - Files: Files open are recorded in the file `${__JUMPER_FILES}` by making Vim run `jumper -f ${__JUMPER_FILES} -a <current-file>` each time a file is open. This can be adapted to other editors.
 
@@ -28,6 +28,7 @@ From these two basic functions, the shell scripts `shell/jumper.{bash,zsh,fish}`
 - Use `zf <something>` to open (in `$EDITOR`) the most frequent/recent file matching `<something>`.
 - Use `Ctrl+Y` to fuzzy-find the most frequent/recent directories matching a query (FZF required).
 - Use `Ctrl+U` to fuzzy-find the most frequent/recent files matching a query (FZF required).
+
 All these mappings can be updated in `shell/jumper.{bash,zsh,fish}`.
 
 Database maintenance:
@@ -77,7 +78,7 @@ A Telescope extension [telescope-jumper](https://github.com/homerours/telescope-
 
 Below are instructions to use jumper within Vim/Neovim without this plugin.
 
-### Jump to directories
+### Jump to directories and files
 You can add something like
 ```vim
 command! -nargs=+ Z :cd `jumper -f ${__JUMPER_FOLDERS} -n 1 '<args>'`
@@ -85,7 +86,6 @@ command! -nargs=+ Zf :edit `jumper -f ${__JUMPER_FILES} -n 1 '<args>'`
 ```
 to your `.vimrc` to then change directory with `:Z <query>` or open frequently opened files with `:Zf <query>`.
 
-### Jump to files
 In order to log the files you open, add
 ```vim
 autocmd BufReadPre *   silent execute '!jumper -f ${__JUMPER_FILES} -a ' .. expand('%:p')
@@ -104,10 +104,7 @@ vim.api.nvim_create_autocmd({ "BufNewFile", "BufReadPre" }, {
     end
 })
 ```
-to your `.vimrc`/`init.lua`. Then, in order to jump to files, add something like:
-```vim
-command! -nargs=+ Zf :edit `jumper -f ${__JUMPER_FILES} -n 1 <args>`
-```
+to your `.vimrc`/`init.lua`. 
 
 ## Combine it with your favorite tools
 
