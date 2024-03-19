@@ -21,11 +21,8 @@ uninstall:
 
 jumper: jumper.o heap.o record.o matching.o arguments.o
 	@echo 'Compiling jumper...'
-	$(CC) -o $@ $^ $(FLAGS)
+	$(CC) -o $@ $^ $(FLAGS) -lm
 	@echo 'Success!'
-
-record.o: record.c
-	$(CC) -c $^ $(FLAGS) -lm
 
 %.o: %.c
 	$(CC) -c $^ $(FLAGS)
