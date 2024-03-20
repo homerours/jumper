@@ -71,8 +71,8 @@ to your `.bashrc`, `.zshrc` or `.config/fish/config.fish` to get access to jumpe
 > [!TIP]
 > If you were already using [z](https://github.com/rupa/z), you can `cp ~/.z ~/.jfolders` to export your database to Jumper.
 
-In order to keep track of the visited files, the function `jumper -f $__JUMPER_FILES -a <file>` as to be called each time `<file>` is visited. 
-This can be done automatically in Vim/Neovim, see next section. For other programs, you may want to use aliases (better solutions can be found, using for instance "hooks" in emacs) 
+In order to keep track of the visited files, the function `jumper -f $__JUMPER_FILES -a <file>` has to be called each time `<file>` is visited. 
+This can be done automatically in Vim/Neovim, see next section. For other programs, you may want to use aliases (better solutions exist, using for instance "hooks" in emacs) 
 ```bash
 function myeditor() {
    jumper -f $__JUMPER_FILES -a "$1" 
