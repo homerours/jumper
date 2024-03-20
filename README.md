@@ -88,7 +88,7 @@ to your `.vimrc` to then change directory with `:Z <query>` or open frequently o
 
 In order to log the files you open, add
 ```vim
-autocmd BufReadPre *   silent execute '!jumper -f ${__JUMPER_FILES} -a ' .. expand('%:p')
+autocmd BufReadPre,BufNewFile *   silent execute '!jumper -f ${__JUMPER_FILES} -a ' .. expand('%:p')
 ```
 or, if you are using Neovim's lua api,
 ```lua
