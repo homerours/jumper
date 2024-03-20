@@ -12,11 +12,11 @@ void parse_record(char *string, Record *rec) {
   char *current = string;
   rec->path = strtok_r(string, "|", &current);
   rec->n_visits = atof(strtok_r(current, "|", &current));
-  rec->last_visit = atoi(current);
+  rec->last_visit = atoll(current);
 }
 
-void update_record(Record *rec, int now) {
-  int delta = now - rec->last_visit;
+void update_record(Record *rec, long long now) {
+  double delta = now - rec->last_visit;
   rec->n_visits = 1 + exp(-LONG_DECAY * delta) * rec->n_visits;
   rec->last_visit = now;
 }
@@ -24,7 +24,7 @@ void update_record(Record *rec, int now) {
 char *record_to_string(Record *rec) {
   int n = strlen(rec->path) + 30;
   char *buffer = (char *)malloc(n * sizeof(char));
-  snprintf(buffer, n, "%s|%f|%d", rec->path, rec->n_visits, rec->last_visit);
+  snprintf(buffer, n, "%s|%f|%lld", rec->path, rec->n_visits, rec->last_visit);
   return buffer;
 }
 

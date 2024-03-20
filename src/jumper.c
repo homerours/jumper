@@ -34,7 +34,7 @@ static void update_database(const char *file, const char *key) {
   }
 
   Record rec;
-  int now = (int)time(NULL);
+  long long now = (long long)time(NULL);
   char *line = NULL;
   size_t len;
   long int position = ftell(fp);
@@ -47,8 +47,13 @@ static void update_database(const char *file, const char *key) {
       const int record_length = strlen(rec_string);
       long int new_position = ftell(fp);
 
-      if (record_length > new_position - position - 1) {
-        // New record is longer than the current one
+      if (record_length == new_position - position - 1) {
+        // New record has the same length as the current one
+        // one can simply overwrite the corresponding chars
+        fseek(fp, position, SEEK_SET);
+        fwrite(rec_string, sizeof(char), record_length, fp);
+      } else {
+        // New record is longer/shorter than the current one
         // We have to copy the rest of the file
         fseek(fp, new_position - 1, SEEK_SET);
         size_t file_tail_size;
@@ -57,9 +62,6 @@ static void update_database(const char *file, const char *key) {
         fwrite(rec_string, sizeof(char), record_length, fp);
         fwrite(file_tail, sizeof(char), file_tail_size, fp);
         free(file_tail);
-      } else {
-        fseek(fp, position, SEEK_SET);
-        fwrite(rec_string, sizeof(char), record_length, fp);
       }
       free(rec_string);
       break;
@@ -93,7 +95,8 @@ static void lookup(Arguments *args) {
   Record rec;
 
   int match_score;
-  double now = (double)time(NULL), score;
+  long long now = (long long)time(NULL);
+  double score;
   char *line = NULL, *matched_str;
   size_t len;
   while (getline(&line, &len, fp) != -1) {
