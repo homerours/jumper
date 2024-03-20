@@ -4,8 +4,8 @@ Jumper is a command-line program that helps you jumping to / fuzzy-finding the d
 It uses [FZF](https://github.com/junegunn/fzf) for fuzzy-finding and is heavily inspired by [z](https://github.com/rupa/z).
 
 It differentiates itself from the plethora of similar tools on the following points:
-- It is not restricted to folders. It allows to quickly navigate files, or anything you want (you can easily create and query a new custom database).
 - Efficient ranking mechanism which combines the "frecency" of the match (as [z](https://github.com/rupa/z) does) and the accuracy of the match (as [fzf](https://github.com/junegunn/fzf) or [fzy](https://github.com/jhawthorn/fzy) do). More details [here](https://github.com/homerours/jumper/blob/master/doc/algorithm.md).
+- It is not restricted to folders. It allows to quickly navigate files, or anything you want (you can easily create and query a new custom database).
 - It allows fuzzy-finding.
 - Written in C, for speed and portability.
 
@@ -18,7 +18,7 @@ returns the top `N` entries of the `<database-file>` (this will typically be `~/
 ```bash
 jumper -f <database-file> -a <path>
 ```
-adds the `<path>` to the `<database-file>`, or updates its data (increments the visits count and updates the time stamp) if already present.
+adds the `<path>` to the `<database-file>`, or updates its record (updates the visits count and timestamp) if already present.
 From these two main functions, the shell scripts `shell/jumper.{bash,zsh,fish}` define various functions/mappings (see next section) allowing to quickly jump around
 - Folders: Folders' visits are recorded in the file `${__JUMPER_FOLDERS}` using a shell pre-command.
 - Files: Files open are recorded in the file `${__JUMPER_FILES}` by making Vim run `jumper -f ${__JUMPER_FILES} -a <current-file>` each time a file is open. This can be adapted to other editors.
@@ -71,7 +71,7 @@ to your `.bashrc`, `.zshrc` or `.config/fish/config.fish` to get access to jumpe
 > [!TIP]
 > If you were already using [z](https://github.com/rupa/z), you can `cp ~/.z ~/.jfolders` to export your database to Jumper.
 
-In order to keep track of the visited files, the function `jumper -f $__JUMPER_FILES -a <file>` has to be called each time `<file>` is visited. 
+In order to keep track of the visited files, the function `jumper -f $__JUMPER_FILES -a <file>` has to be called each time a file `<file>` is visited. 
 This can be done automatically in Vim/Neovim, see next section. For other programs, you may want to use aliases (better solutions exist, using for instance "hooks" in emacs) 
 ```bash
 function myeditor() {
@@ -88,18 +88,12 @@ A Telescope extension [telescope-jumper](https://github.com/homerours/telescope-
 Below are instructions to use jumper within Vim/Neovim without this plugin.
 
 ### Jump to directories and files
-You can add something like
-```vim
-command! -nargs=+ Z :cd `jumper -f ${__JUMPER_FOLDERS} -n 1 '<args>'`
-command! -nargs=+ Zf :edit `jumper -f ${__JUMPER_FILES} -n 1 '<args>'`
-```
-to your `.vimrc` to then change directory with `:Z <query>` or open frequently opened files with `:Zf <query>`.
 
-In order to log the files you open, add
+In order to record the files you open, add
 ```vim
 autocmd BufReadPre,BufNewFile *   silent execute '!jumper -f ${__JUMPER_FILES} -a ' .. expand('%:p')
 ```
-or, if you are using Neovim's lua api,
+or, if you are using Neovim's Lua api,
 ```lua
 vim.api.nvim_create_autocmd({ "BufNewFile", "BufReadPre" }, {
     pattern = { "*" },
@@ -114,6 +108,13 @@ vim.api.nvim_create_autocmd({ "BufNewFile", "BufReadPre" }, {
 })
 ```
 to your `.vimrc`/`init.lua`. 
+
+In order to quickly jumper to folders and files, add something like
+```vim
+command! -nargs=+ Z :cd `jumper -f ${__JUMPER_FOLDERS} -n 1 '<args>'`
+command! -nargs=+ Zf :edit `jumper -f ${__JUMPER_FILES} -n 1 '<args>'`
+```
+to your `.vimrc` to then change directory with `:Z <query>` or open frequently opened files with `:Zf <query>`.
 
 ## Combine it with your favorite tools
 
