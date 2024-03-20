@@ -12,13 +12,13 @@ It differentiates itself from the plethora of similar tools on the following poi
 ## Concept
 `jumper` operates on files whose lines are in the format `<path>|<number-of-visits>|<timestamp-of-last-visit>`. Such file is typically used to record accesses to files/directories. Given such a file, the command
 ```bash
-jumper -f <file> -n N <query>
+jumper -f <database-file> -n N <query>
 ```
-returns the top `N` entries of `<file>` that match `<query>`. Adding the `-c` flag colors the matched substring. The command
+returns the top `N` entries of the `<database-file>` (this will typically be `~/.jfolders` or `~/.jfiles`) that match `<query>`. Adding the `-c` flag colors the matched substring. The command
 ```bash
-jumper -f <file> -a <path>
+jumper -f <database-file> -a <path>
 ```
-adds the `<path>` to the `<file>`, or updates its data (increments the visits count and updates the time stamp) if already present.
+adds the `<path>` to the `<database-file>`, or updates its data (increments the visits count and updates the time stamp) if already present.
 From these two main functions, the shell scripts `shell/jumper.{bash,zsh,fish}` define various functions/mappings (see next section) allowing to quickly jump around
 - Folders: Folders' visits are recorded in the file `${__JUMPER_FOLDERS}` using a shell pre-command.
 - Files: Files open are recorded in the file `${__JUMPER_FILES}` by making Vim run `jumper -f ${__JUMPER_FILES} -a <current-file>` each time a file is open. This can be adapted to other editors.
