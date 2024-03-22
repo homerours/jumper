@@ -22,17 +22,16 @@ static const char HELP_STRING[] =
 
 static void help(const char *argv0) { printf(HELP_STRING, argv0); }
 
-static struct option longopts[] = {
-    {"file", required_argument, NULL, 'f'},
-    {"scores", no_argument, NULL, 's'},
-    {"add", no_argument, NULL, 'a'},
-    {"color", no_argument, NULL, 'c'},
-    {"beta", optional_argument, NULL, 'b'},
-    {"n-results", optional_argument, NULL, 'n'},
-    {"help", optional_argument, NULL, 'h'},
-    {NULL, 0, NULL, 0}};
+static struct option longopts[] = {{"file", required_argument, NULL, 'f'},
+                                   {"scores", no_argument, NULL, 's'},
+                                   {"add", no_argument, NULL, 'a'},
+                                   {"color", no_argument, NULL, 'c'},
+                                   {"beta", optional_argument, NULL, 'b'},
+                                   {"n-results", optional_argument, NULL, 'n'},
+                                   {"help", optional_argument, NULL, 'h'},
+                                   {NULL, 0, NULL, 0}};
 
-void args_init(Arguments *args) {
+static void args_init(Arguments *args) {
   args->file_path = NULL;
   args->key = "";
   args->n_results = MAX_HEAP_SIZE;
@@ -52,7 +51,7 @@ Arguments *parse_arguments(int argc, char **argv) {
     exit(EXIT_SUCCESS);
   }
   int c;
-  while ((c = getopt_long(argc, argv, "cashn:f:m:", longopts, NULL)) != -1) {
+  while ((c = getopt_long(argc, argv, "cashn:f:b:", longopts, NULL)) != -1) {
     switch (c) {
     case 'c':
       args->highlight = true;
@@ -61,10 +60,15 @@ Arguments *parse_arguments(int argc, char **argv) {
       args->print_scores = true;
       break;
     case 'n':
-      args->n_results = atoi(optarg);
+      if (optarg == NULL || sscanf(optarg, "%d", &args->n_results) != 1) {
+        fprintf(stderr, "ERROR: Invalid argument for -n (--n-results): %s\n",
+                optarg);
+        help(argv[0]);
+        exit(EXIT_FAILURE);
+      }
       if (args->n_results <= 0) {
         fprintf(stderr,
-                "ERROR: The number of results -n has to be positive!\n");
+                "ERROR: The number of results -n has to be positive.\n");
         exit(EXIT_FAILURE);
       }
       break;
@@ -74,8 +78,13 @@ Arguments *parse_arguments(int argc, char **argv) {
     case 'f':
       args->file_path = optarg;
       break;
-    case 'm':
-      args->beta = atof(optarg);
+    case 'b':
+      if (optarg == NULL || sscanf(optarg, "%lf", &args->beta) != 1) {
+        fprintf(stderr, "ERROR: Invalid argument for -b (--beta): %s\n",
+                optarg);
+        help(argv[0]);
+        exit(EXIT_FAILURE);
+      }
       break;
     case 'h':
       help(argv[0]);
@@ -87,7 +96,8 @@ Arguments *parse_arguments(int argc, char **argv) {
     }
   }
   if (args->file_path == NULL) {
-    fprintf(stderr, "ERROR: you must provide a data file with -f.\n");
+    fprintf(stderr, "ERROR: you must provide a database file with -f.\n");
+    help(argv[0]);
     exit(EXIT_FAILURE);
   }
   if (optind < argc - 1) {

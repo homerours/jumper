@@ -94,8 +94,8 @@ static void lookup(Arguments *args) {
   Heap *heap = new_heap(args->n_results);
   Record rec;
 
-  int match_score;
   long long now = (long long)time(NULL);
+  int match_score;
   double score;
   char *line = NULL, *matched_str;
   size_t len;
