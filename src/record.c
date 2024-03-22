@@ -11,7 +11,14 @@ static const double LONG_DECAY = 3 * 1e-7;
 void parse_record(char *string, Record *rec) {
   char *current = string;
   rec->path = strtok_r(string, "|", &current);
-  rec->n_visits = atof(strtok_r(current, "|", &current));
+  char * parsed = strtok_r(current, "|", &current);
+  if (parsed == NULL || current == NULL || *parsed == '\0' || *current == '\0') {
+    fprintf(stderr, "ERROR: Invalid line format for the database file.\n"
+                    "Lines have to be of the form "
+                    "<path>|<number-of-visits>|<timestamp>.\n");
+    exit(EXIT_FAILURE);
+  }
+  rec->n_visits = atof(parsed);
   rec->last_visit = atoll(current);
 }
 
