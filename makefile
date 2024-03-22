@@ -13,7 +13,7 @@ BINDIR=$(PREFIX)/bin
 
 install: jumper clean
 	@if [ -z $(shell which fzf) ]; then echo "WARNING: FZF not found, fuzzy finding may not work."; fi
-	mv $< $(BINDIR)
+	@if [ -d $(BINDIR) ]; then mv $< $(BINDIR); else echo "$(BINDIR) does not exist.\nYou will need to copy the binary ./jumper to a directory in your path ($(PATH))."; fi
 	@echo "Bash: Add 'source $(PWD)/shell/jumper.bash' to your bashrc."
 	@echo "Zsh : Add 'source $(PWD)/shell/jumper.zsh' to your zshrc."
 	@echo "Fish: Add 'source $(PWD)/shell/jumper.fish' to your config.fish."
