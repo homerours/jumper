@@ -22,14 +22,16 @@ typedef struct MatchingData {
   Scores *matrix;
 } MatchingData;
 
+// Bonuses
 static const int match_bonus = 10;
-static const int first_gap_penalty = 9;
-static const int gap_penalty = 1;
 static const int post_separator_bonus = 2;
-static const int after_slash_bonus = 3;
+static const int post_slash_bonus = 3;
 static const int uppercase_bonus = 3;
 static const int separator_bonus = 3;
 static const int end_of_path_bonus = 2;
+// Penalties
+static const int first_gap_penalty = 9;
+static const int gap_penalty = 1;
 
 static inline bool is_separator(char c) {
   return (c == '/' || c == '_' || c == '-' || c == '.' || c == '#' ||
@@ -39,23 +41,23 @@ static inline bool is_separator(char c) {
 static int *matching_bonus(const char *string, int n) {
   int *bonus = (int *)malloc(n * sizeof(int));
   int last_slash = -1;
-  bonus[0] = match_bonus + post_separator_bonus;
-
-  for (int i = 1; i < n; i++) {
-    if (is_separator(string[i - 1]) && isalpha(string[i])) {
-      bonus[i] = match_bonus + post_separator_bonus;
-      if (string[i - 1] == '/') {
-        bonus[i] = match_bonus + after_slash_bonus;
+  bool prev_is_sep = true;
+  for (int i = 0; i < n; i++) {
+    bonus[i] = match_bonus;
+    bool is_sep = is_separator(string[i]);
+    if (is_sep) {
+      bonus[i] += separator_bonus;
+      if (string[i] == '/') {
+        last_slash = i;
       }
-    } else {
-      bonus[i] = match_bonus;
-      if (is_separator(string[i])) {
-        bonus[i] += separator_bonus;
+    } else if (prev_is_sep) {
+      if (i > 0 && string[i - 1] == '/') {
+        bonus[i] += post_slash_bonus;
+      } else {
+        bonus[i] += post_separator_bonus;
       }
     }
-    if (string[i] == '/') {
-      last_slash = i;
-    }
+    prev_is_sep = is_sep;
   }
   if (last_slash > 0) {
     for (int i = last_slash + 1; i < n; i++) {
@@ -204,8 +206,8 @@ static bool quick_match(const char *string, const char *query) {
   return *q == 0;
 }
 
-int match(const char *string, const char *query, bool colors,
-          char **matched_string) {
+int match_accuracy(const char *string, const char *query, bool colors,
+                   char **matched_string) {
   if (*query == 0) {
     *matched_string = strdup(string);
     return 1;
