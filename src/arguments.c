@@ -26,8 +26,8 @@ static struct option longopts[] = {{"file", required_argument, NULL, 'f'},
                                    {"scores", no_argument, NULL, 's'},
                                    {"add", no_argument, NULL, 'a'},
                                    {"color", no_argument, NULL, 'c'},
-                                   {"beta", optional_argument, NULL, 'b'},
-                                   {"n-results", optional_argument, NULL, 'n'},
+                                   {"beta", required_argument, NULL, 'b'},
+                                   {"n-results", required_argument, NULL, 'n'},
                                    {"help", optional_argument, NULL, 'h'},
                                    {NULL, 0, NULL, 0}};
 
@@ -60,7 +60,7 @@ Arguments *parse_arguments(int argc, char **argv) {
       args->print_scores = true;
       break;
     case 'n':
-      if (optarg == NULL || sscanf(optarg, "%d", &args->n_results) != 1) {
+      if (sscanf(optarg, "%d", &args->n_results) != 1) {
         fprintf(stderr, "ERROR: Invalid argument for -n (--n-results): %s\n",
                 optarg);
         help(argv[0]);
@@ -79,7 +79,7 @@ Arguments *parse_arguments(int argc, char **argv) {
       args->file_path = optarg;
       break;
     case 'b':
-      if (optarg == NULL || sscanf(optarg, "%lf", &args->beta) != 1) {
+      if (sscanf(optarg, "%lf", &args->beta) != 1) {
         fprintf(stderr, "ERROR: Invalid argument for -b (--beta): %s\n",
                 optarg);
         help(argv[0]);
@@ -108,7 +108,7 @@ Arguments *parse_arguments(int argc, char **argv) {
     args->key = argv[argc - 1];
   }
   if (*(args->key) == 0 && args->mode == MODE_add) {
-    fprintf(stderr, "ERROR: no query.\n");
+    fprintf(stderr, "ERROR: nothing to add to the database.\n");
     exit(EXIT_FAILURE);
   }
   return args;
