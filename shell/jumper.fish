@@ -3,7 +3,16 @@ set __JUMPER_FILES ~/.jfiles
 set __JUMPER_MAX_RESULTS 150
 
 function jumper_update_db --on-event fish_postexec
-    jumper -f {$__JUMPER_FOLDERS} -a "$PWD"
+    if set -q __jumper_current_folder
+        if [ $__jumper_current_folder != $PWD ]
+            # working directory has changed, this visit has more weight
+            jumper -f {$__JUMPER_FOLDERS} -w 1.0 -a "$PWD"
+        else
+            # working directory has not changed
+            jumper -f {$__JUMPER_FOLDERS} -w 0.3 -a "$PWD"
+        end
+    end
+    set -g __jumper_current_folder "$PWD"
 end
 
 function z -d "Jump to folder"

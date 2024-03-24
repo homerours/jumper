@@ -11,24 +11,28 @@
 static const char HELP_STRING[] =
     "Usage: %s [OPTIONS] QUERY\n"
     " -f, --file=FILE_PATH      Path to the database file.\n"
-    " -a, --add                 Add the query to the database or\n"
-    "                           update its record.\n"
+    " -h, --help                Display this help and exit.\n\n"
+    "Search:\n"
     " -n, --n-results=N         Maximum number of results to show.\n"
     " -c, --color               Highlight matches in outputs.\n"
     " -s, --scores              Print the scores of the matches.\n"
     " -b, --beta=BETA           Specify an inverse temperature\n"
-    "                           when computing the score (default=1.0).\n"
-    " -h, --help                Display this help and exit.\n";
+    "                           when computing the score (default=1.0).\n\n"
+    "Update the database:\n"
+    " -a, --add                 Add the query to the database or\n"
+    "                           update its record.\n"
+    " -w, --weight=WEIGHT       Weight of the visit (default=1.0).\n";
 
 static void help(const char *argv0) { printf(HELP_STRING, argv0); }
 
 static struct option longopts[] = {{"file", required_argument, NULL, 'f'},
-                                   {"scores", no_argument, NULL, 's'},
                                    {"add", no_argument, NULL, 'a'},
+                                   {"weight", required_argument, NULL, 'w'},
+                                   {"scores", no_argument, NULL, 's'},
                                    {"color", no_argument, NULL, 'c'},
                                    {"beta", required_argument, NULL, 'b'},
                                    {"n-results", required_argument, NULL, 'n'},
-                                   {"help", optional_argument, NULL, 'h'},
+                                   {"help", no_argument, NULL, 'h'},
                                    {NULL, 0, NULL, 0}};
 
 static void args_init(Arguments *args) {
@@ -39,6 +43,7 @@ static void args_init(Arguments *args) {
   args->print_scores = false;
   args->mode = MODE_search;
   args->beta = 1.0;
+  args->weight = 1.0;
 }
 
 Arguments *parse_arguments(int argc, char **argv) {
@@ -51,8 +56,14 @@ Arguments *parse_arguments(int argc, char **argv) {
     exit(EXIT_SUCCESS);
   }
   int c;
-  while ((c = getopt_long(argc, argv, "cashn:f:b:", longopts, NULL)) != -1) {
+  while ((c = getopt_long(argc, argv, "cashf:n:w:b:", longopts, NULL)) != -1) {
     switch (c) {
+    case 'f':
+      args->file_path = optarg;
+      break;
+    case 'a':
+      args->mode = MODE_add;
+      break;
     case 'c':
       args->highlight = true;
       break;
@@ -72,17 +83,24 @@ Arguments *parse_arguments(int argc, char **argv) {
         exit(EXIT_FAILURE);
       }
       break;
-    case 'a':
-      args->mode = MODE_add;
-      break;
-    case 'f':
-      args->file_path = optarg;
-      break;
     case 'b':
       if (sscanf(optarg, "%lf", &args->beta) != 1) {
         fprintf(stderr, "ERROR: Invalid argument for -b (--beta): %s\n",
                 optarg);
         help(argv[0]);
+        exit(EXIT_FAILURE);
+      }
+      break;
+    case 'w':
+      if (sscanf(optarg, "%lf", &args->weight) != 1) {
+        fprintf(stderr, "ERROR: Invalid argument for -w (--weight): %s\n",
+                optarg);
+        help(argv[0]);
+        exit(EXIT_FAILURE);
+      }
+      if (args->weight < 0) {
+        fprintf(stderr,
+                "ERROR: The weight a visit (-w option) can't be negative.\n");
         exit(EXIT_FAILURE);
       }
       break;

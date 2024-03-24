@@ -8,11 +8,12 @@ enum MODE {
 typedef struct Arguments {
   const char *file_path;
   const char *key;
-  enum MODE mode;
-  int n_results;
+  double beta;
+  double weight;
   bool highlight;
   bool print_scores;
-  double beta;
+  int n_results;
+  enum MODE mode;
 } Arguments;
 
 Arguments *parse_arguments(int argc, char **argv);

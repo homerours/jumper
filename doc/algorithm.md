@@ -8,7 +8,7 @@ The frecency of a match measures the frequency and recency of the visits of the 
 ```math
 \text{frecency}(t) = \log\left(1 + 10 \, e^{- \alpha_1 (t - T_0)} + \sum_{i=0}^n e^{-\alpha_2 (t-T_i)} \right)
 ```
-Here $\alpha_1 = 10^{-4}$, $\alpha_2 = 3 \times 10^{-7}$ and all times are expressed in seconds. These values are chosen so that $e^{-\alpha_1 {\rm \ 2 \ hours}} \simeq 1 / 2$ and  $e^{-\alpha_2 {\rm \ 1\ month}} \simeq 1 / 2$.
+Here $\alpha_1 = 5 \times 10^{-5}$, $\alpha_2 = 3 \times 10^{-7}$ and all times are expressed in seconds. These values are chosen so that $e^{-\alpha_1 {\rm \ 4 \ hours}} \simeq 1 / 2$ and  $e^{-\alpha_2 {\rm \ 1\ month}} \simeq 1 / 2$.
 
 Let us now motivate a bit the definition of frecency above. 
 Let us first consider an item that has not been visited within the last 10 hours, so that we can neglect the term $10 e^{- \alpha_1 (t - T_0)}$. 
@@ -28,6 +28,11 @@ In the case where the item has just been visited, the frecency above gets an inc
 As we can see from the plot above, the frecency will typically be a number in the range $[0,5]$. Many other definitions for frecency are possible. We chose this one for the following reasons:
 - It does not diverge at time goes. [z](https://github.com/rupa/z) uses something like `number-of-visits / time-since-last-visit`, which potentially diverges over time (and therefore require some "aging" mechanism).
 - It only requires to keep track of the "adjusted" number of visits $\sum_i e^{-\alpha_2 (t-T_i)}$ and the time of last visit to be computed.
+
+> [!NOTE]
+> We presented above the frecency in the case where all visits had the same weight 1. However, Jumper can attribute different weights for different types of visit (using the `-w` option). Everytime a command is executed by the user, Jumper adds a visit of weight $w_i = 1$ to the current working directory (cwd) if the command has changed the cwd, and a visit of weight $w_i = 0.3$ otherwise.
+> Then, the frecency is computed using the weighted sum $\sum_i w_i e^{-\alpha_2 (t-T_i)}$.
+
 
 ## Match accuracy
 

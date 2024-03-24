@@ -49,9 +49,18 @@ __jumper_ffile() {
 }
 
 
-# Add folder to database
+# Database's update
 __jumper_update_db() {
-    jumper -f "${__JUMPER_FOLDERS}" -a "$PWD"
+    if [[ ! -z $__jumper_current_folder ]]; then
+        if [[ $__jumper_current_folder != $PWD ]]; then
+            # working directory has changed, this visit has more weight
+            jumper -f "${__JUMPER_FOLDERS}" -w 1.0 -a "$PWD"
+        else
+            # working directory has not changed
+            jumper -f "${__JUMPER_FOLDERS}" -w 0.3 -a "$PWD"
+        fi
+    fi
+    __jumper_current_folder=$PWD
 }
 
 # Clean simlinks

@@ -8,7 +8,7 @@ typedef struct Record {
 
 void parse_record(char *string, Record *rec);
 
-void update_record(Record *rec, long long now);
+void update_record(Record *rec, long long now, double weight);
 
 char *record_to_string(Record *rec);
 
