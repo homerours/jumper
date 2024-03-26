@@ -45,7 +45,7 @@ The ranking of a path at time $t$ is based on the following score
 ```math
 \text{score}(\text{query}, \text{path}) =  \text{frecency}(t, \text{path}) + \beta \times \text{accuracy}(\text{query}, \text{path})
 ```
-where $\beta = 1.0$ by default, but can be updated with the flag `-b <value>`. 
+where $\beta = 0.5$ by default, but can be updated with the flag `-b <value>`. 
 More details about the scoring mechanism are given [here](https://github.com/homerours/jumper/blob/master/doc/algorithm.md).
 
 ## Installation process

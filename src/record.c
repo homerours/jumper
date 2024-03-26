@@ -11,8 +11,9 @@ static const double LONG_DECAY = 3 * 1e-7;
 void parse_record(char *string, Record *rec) {
   char *current = string;
   rec->path = strtok_r(string, "|", &current);
-  char * parsed = strtok_r(current, "|", &current);
-  if (parsed == NULL || current == NULL || *parsed == '\0' || *current == '\0') {
+  char *parsed = strtok_r(current, "|", &current);
+  if (parsed == NULL || current == NULL || *parsed == '\0' ||
+      *current == '\0') {
     fprintf(stderr, "ERROR: Invalid line format for the database file.\n"
                     "Lines have to be of the form "
                     "<path>|<number-of-visits>|<timestamp>.\n");
@@ -36,6 +37,7 @@ char *record_to_string(Record *rec) {
 }
 
 double frecency(double n_visits, double delta) {
-  return log(1.0 + 10 * exp(-SHORT_DECAY * delta) +
-             exp(-LONG_DECAY * delta) * n_visits);
+  // log(0.1)  ~ -2.3, so we add 2.4 to ensure frecency is > 0
+  return 2.4 + log(0.01 + 10 * exp(-SHORT_DECAY * delta) +
+                   exp(-LONG_DECAY * delta) * n_visits);
 }

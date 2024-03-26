@@ -6,9 +6,9 @@ The main idea is that, when only a few (say <=2) characters have been entered by
 ## Frecency
 The frecency of a match measures the frequency and recency of the visits of the match. Assume that a match has been visited at times $T_0 > \cdots > T_n$, then at time $t$, we define
 ```math
-\text{frecency}(t) = \log\left(1 + 10 \, e^{- \alpha_1 (t - T_0)} + \sum_{i=0}^n e^{-\alpha_2 (t-T_i)} \right)
+\text{frecency}(t) = \log\left( \epsilon + 10 \, e^{- \alpha_1 (t - T_0)} + \sum_{i=0}^n e^{-\alpha_2 (t-T_i)} \right)
 ```
-Here $\alpha_1 = 5 \times 10^{-5}$, $\alpha_2 = 3 \times 10^{-7}$ and all times are expressed in seconds. These values are chosen so that $e^{-\alpha_1 {\rm \ 4 \ hours}} \simeq 1 / 2$ and  $e^{-\alpha_2 {\rm \ 1\ month}} \simeq 1 / 2$.
+Here $\alpha_1 = 5 \times 10^{-5}$, $\alpha_2 = 3 \times 10^{-7}$ and all times are expressed in seconds. These values are chosen so that $e^{-\alpha_1 {\rm \ 4 \ hours}} \simeq 1 / 2$ and  $e^{-\alpha_2 {\rm \ 1\ month}} \simeq 1 / 2$. $\epsilon = 0.1$ enforces that the frecency remains bounded from below.
 
 Let us now motivate a bit the definition of frecency above. 
 Let us first consider an item that has not been visited within the last 10 hours, so that we can neglect the term $10 e^{- \alpha_1 (t - T_0)}$. 
@@ -16,8 +16,8 @@ Let's set $t=0$ as the origin of times.
 Assume moreover that this item is typically visited every $T$ seconds, so that $T_i = - i T$ for $i=0,1,2, \dots$. Therefore
 ```math
 \text{frecency}(t) 
-\simeq \log\left(1 + \sum_{i=0}^{\infty} e^{-\alpha_2 i T} \right)
- =  \log\left(1 + \frac{1}{1 - e^{-\alpha_2 T}} \right)
+\simeq \log\left( \sum_{i=0}^{\infty} e^{-\alpha_2 i T} \right)
+ =  \log\left( \frac{1}{1 - e^{-\alpha_2 T}} \right)
 ```
 We plot this function below:
 
@@ -25,7 +25,7 @@ We plot this function below:
 
 In the case where the item has just been visited, the frecency above gets an increase of $+10$ inside of the $\log$, leading to the dashed curve. This allows directories that have been very recently visited but that do not have a long history of visits (think for instance at a newly created directory) to compete with older directories that have been visited for a very long time.
 
-As we can see from the plot above, the frecency will typically be a number in the range $[0,5]$. Many other definitions for frecency are possible. We chose this one for the following reasons:
+As we can see from the plot above, the frecency will typically be a number in the range $[0,6]$. Many other definitions for frecency are possible. We chose this one for the following reasons:
 - It does not diverge at time goes. [z](https://github.com/rupa/z) uses something like `number-of-visits / time-since-last-visit`, which potentially diverges over time (and therefore require some "aging" mechanism).
 - It only requires to keep track of the "adjusted" number of visits $\sum_i e^{-\alpha_2 (t-T_i)}$ and the time of last visit to be computed.
 
@@ -37,7 +37,7 @@ As we can see from the plot above, the frecency will typically be a number in th
 ## Match accuracy
 
 The match accuracy evaluates how well the query entered by the user matches the path stored in the database.
-Similarly to the fuzzy-finders [fzf](https://github.com/junegunn/fzf) or [fzy](https://github.com/jhawthorn/fzy), this is done using the variant of the [Needleman-Wunsch algorith](https://en.wikipedia.org/wiki/Needleman–Wunsch_algorithm).
+Similarly to the fuzzy-finders [fzf](https://github.com/junegunn/fzf) or [fzy](https://github.com/jhawthorn/fzy), this is done using a variant of the [Needleman-Wunsch algorith](https://en.wikipedia.org/wiki/Needleman–Wunsch_algorithm).
 
 This finds the match that maximizes
 ```
@@ -53,9 +53,9 @@ where the maximum is computed over all matches of `query` in `path`. We call "ma
 ## Final score
 Based on these two numbers, Jumper ranks paths using
 ```math
-\text{score}(\text{query}, \text{path}, t) =  \text{frecency}(\text{path}, t) + \frac{\beta}{2} \, \text{accuracy}(\text{query}, \text{path}).
+\text{score}(\text{query}, \text{path}, t) =  \text{frecency}(\text{path}, t) + \beta \, \text{accuracy}(\text{query}, \text{path}).
 ```
-where $\beta = 1.0$ by default, and be updated with the flag `-b <value>`. 
+where $\beta = 0.5$ by default, and be updated with the flag `-b <value>`. 
 This additive definition is motivated by the following.
 
 Suppose that one is fuzzy-finding a path, adding one character to the `query` at a time.
@@ -75,7 +75,7 @@ We give below more details about this Bayesian model.
 
 **Prior distribution:** Assume that the visits of a given path is a self-exciting point process, with conditional intensity
 ```math
-\lambda(t, \text{path}) = 1 + 10 e^{-\alpha_1 (t - T_0)} + \sum_{T_k \leq t} e^{-\alpha_2 (t - T_k)}
+\lambda(t, \text{path}) = \epsilon +  10 e^{-\alpha_1 (t - T_0)} + \sum_{T_k \leq t} e^{-\alpha_2 (t - T_k)}
 ```
 independently from the visits to the other folders.
 
@@ -84,12 +84,12 @@ The user gave his query to the algorithm, which can be seen as a noisy observati
 
 **Conditional distribution:** We model
 ```math
-P(\text{query}|\text{path}) = \frac{1}{Z} \exp\Big(\frac{\beta}{2} \, \text{accuracy}(\text{query},\text{path})\Big)
+P(\text{query}|\text{path}) = \frac{1}{Z} \exp\Big(\beta \, \text{accuracy}(\text{query},\text{path})\Big)
 ```
 ($Z$ being here the appropriate normalizing constant) meaning that the user is more likely make query that have a large accuracy.
 
 The posterior probability is therefore proportional to
 ```math
-P(\text{path}|\text{query}) \propto \lambda(t, \text{path}) \exp\Big(\frac{\beta}{2} \,  \text{accuracy}(\text{query},\text{path})\Big)
+P(\text{path}|\text{query}) \propto \lambda(t, \text{path}) \exp\Big(\beta \,  \text{accuracy}(\text{query},\text{path})\Big)
 ```
 The ranking algorithm simply ranks the paths according to their $\log$-posterior probability.

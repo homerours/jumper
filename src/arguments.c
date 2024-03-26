@@ -17,7 +17,7 @@ static const char HELP_STRING[] =
     " -c, --color               Highlight matches in outputs.\n"
     " -s, --scores              Print the scores of the matches.\n"
     " -b, --beta=BETA           Specify an inverse temperature\n"
-    "                           when computing the score (default=1.0).\n\n"
+    "                           when computing the score (default=0.5).\n\n"
     "Update the database:\n"
     " -a, --add                 Add the query to the database or\n"
     "                           update its record.\n"
@@ -42,7 +42,9 @@ static void args_init(Arguments *args) {
   args->highlight = false;
   args->print_scores = false;
   args->mode = MODE_search;
-  args->beta = 1.0;
+  // frecency(path visited every day) ~ frecency(path visited every two days) + 1
+  // a beta of 0.5 enforces that this corresponds to a diffence of +2 in matching score.
+  args->beta = 0.5; 
   args->weight = 1.0;
 }
 
@@ -100,7 +102,7 @@ Arguments *parse_arguments(int argc, char **argv) {
       }
       if (args->weight < 0) {
         fprintf(stderr,
-                "ERROR: The weight a visit (-w option) can't be negative.\n");
+                "ERROR: The weight of a visit (-w option) can't be negative.\n");
         exit(EXIT_FAILURE);
       }
       break;
