@@ -82,14 +82,12 @@ function myeditor() {
 
 ## Vim/Neovim
 
-### Telescope extension
-A Telescope extension [telescope-jumper](https://github.com/homerours/telescope-jumper) allows to fuzzy-find jumper results within Neovim. 
+Jumper can be used in Vim and Neovim. Depending on your configuration, you can use it
+- without any plugin (works for both Vim/Neovim). Here you won't be able to do any fuzzy-finding.
+- using [fzf "native" vim plugin](https://github.com/junegunn/fzf/blob/master/README-VIM.md) (works for both Vim/Neovim).
+- using [Telescope](https://github.com/nvim-telescope/telescope.nvim) + the [telescope-jumper](https://github.com/homerours/telescope-jumper) extension (Neovim only).
 
-Below are instructions to use jumper within Vim/Neovim without this plugin.
-
-### Jump to directories and files
-
-In order to record the files you open, add
+In any case, you have to keep track of the files you open by adding to your `.vimrc`/`init.lua`
 ```vim
 autocmd BufReadPre,BufNewFile *   silent execute '!jumper -f ${__JUMPER_FILES} -a ' .. expand('%:p')
 ```
@@ -107,14 +105,33 @@ vim.api.nvim_create_autocmd({ "BufNewFile", "BufReadPre" }, {
     end
 })
 ```
-to your `.vimrc`/`init.lua`. 
 
-In order to quickly jumper to folders and files, add something like
+### Jump to directories and files without any plugin
+
+In order to quickly jumper to folders and files, add
 ```vim
 command! -nargs=+ Z :cd `jumper -f ${__JUMPER_FOLDERS} -n 1 '<args>'`
 command! -nargs=+ Zf :edit `jumper -f ${__JUMPER_FILES} -n 1 '<args>'`
 ```
 to your `.vimrc` to then change directory with `:Z <query>` or open frequently opened files with `:Zf <query>`.
+
+### Fzf-based fuzzy-finding
+
+If you use [fzf "native" vim plugin](https://github.com/junegunn/fzf/blob/master/README-VIM.md) `junegunn/fzf`, you can add
+```vim
+command! JumperFiles call fzf#run(fzf#wrap({'source': 'jumper -f ${__JUMPER_FILES} -n 150', 'options': '--reverse --ansi --disabled --bind "change:reload:sleep 0.05; jumper -f ${__JUMPER_FILES} -n 150 -c {q} || true"'}))
+command! JumperFolders call fzf#run(fzf#wrap({'source': 'jumper -f ${__JUMPER_FOLDERS} -n 150', 'options': '--reverse --ansi --disabled --bind "change:reload:sleep 0.05; jumper -f ${__JUMPER_FOLDERS} -n 150 -c {q} || true"'}))
+
+" Ctrl-U to find files, Ctrl-Y to find folders
+nnoremap <C-u> :JumperFiles<CR>
+nnoremap <C-y> :JumperFolders<CR>
+```
+to your `.vimrc` to enable files/folders fuzzy-finding with `Ctrl-U` and `Ctrl-Y`.
+
+### Telescope extension (Neovim only)
+
+Use the Telescope extension [telescope-jumper](https://github.com/homerours/telescope-jumper) to fuzzy-find Jumper's results within Neovim. 
+
 
 ## Combine it with your favorite tools
 

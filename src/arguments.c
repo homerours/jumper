@@ -43,7 +43,7 @@ static void args_init(Arguments *args) {
   args->print_scores = false;
   args->mode = MODE_search;
   // frecency(path visited every day) ~ frecency(path visited every two days) + 1
-  // a beta of 0.5 enforces that this corresponds to a diffence of +2 in matching score.
+  // a beta of 0.5 makes this correspond to a difference of +2 in matching score.
   args->beta = 0.5; 
   args->weight = 1.0;
 }
