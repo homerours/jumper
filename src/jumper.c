@@ -44,16 +44,21 @@ static void update_database(const char *file, const char *key, double weight) {
     if (strcmp(rec.path, key) == 0) {
       update_record(&rec, now, weight);
       char *rec_string = record_to_string(&rec);
-      const int record_length = strlen(rec_string);
+      int record_length = strlen(rec_string);
       long int new_position = ftell(fp);
 
-      if (record_length == new_position - position - 1) {
-        // New record has the same length as the current one
+      if (record_length <= new_position - position - 1) {
+        // New record has the same length or is shorter than the current one
         // one can simply overwrite the corresponding chars
         fseek(fp, position, SEEK_SET);
         fwrite(rec_string, sizeof(char), record_length, fp);
+        // and add some padding if needed
+        while (record_length < new_position - position - 1) {
+          fwrite(" ", sizeof(char), 1, fp);
+          record_length++;
+        }
       } else {
-        // New record is longer/shorter than the current one
+        // New record is longer than the current one
         // We have to copy the rest of the file
         fseek(fp, new_position - 1, SEEK_SET);
         size_t file_tail_size;
