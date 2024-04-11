@@ -48,7 +48,11 @@ The `bonuses` above give additional points if matches happen at special places, 
 ```math
 \text{accuracy}(\text{query}, \text{path}) = \max_{\text{match}} U(\text{match}).
 ```
-where the maximum is computed over all matches of `query` in `path`. We call "match" every (possibly non-contiguous) substring of `path` whose characters are the ones of `query`, in the same order (but with possibly with different case).
+where the maximum is computed over all matches of `query` in `path`. We call "match" every (possibly non-contiguous) substring of `path` whose characters are the ones of `query`, in the same order.
+
+### Case-sensitivity
+
+By default, matches are "case-semi-sensitive". This means that a lower case character `a` can match both `a` and `A`, but an upper case character `A` can only match `A`. Matches can be set to be case-sensitive or case-semi-sensitive using the flags `-S` and `-I`.
 
 ## Final score
 Based on these two numbers, Jumper ranks paths using

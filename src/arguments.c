@@ -17,7 +17,9 @@ static const char HELP_STRING[] =
     " -c, --color               Highlight matches in outputs.\n"
     " -s, --scores              Print the scores of the matches.\n"
     " -b, --beta=BETA           Specify an inverse temperature\n"
-    "                           when computing the score (default=0.5).\n\n"
+    "                           when computing the score (default=0.5).\n"
+    " -I, --case-insensitive    Make the search case-insenstitive.\n"
+    " -S, --case-sensitive      Make the search case-senstitive.\n\n"
     "Update the database:\n"
     " -a, --add                 Add the query to the database or\n"
     "                           update its record.\n"
@@ -30,6 +32,8 @@ static struct option longopts[] = {{"file", required_argument, NULL, 'f'},
                                    {"weight", required_argument, NULL, 'w'},
                                    {"scores", no_argument, NULL, 's'},
                                    {"color", no_argument, NULL, 'c'},
+                                   {"case-insenstitive", no_argument, NULL, 'I'},
+                                   {"case-sensitive", no_argument, NULL, 'S'},
                                    {"beta", required_argument, NULL, 'b'},
                                    {"n-results", required_argument, NULL, 'n'},
                                    {"help", no_argument, NULL, 'h'},
@@ -42,6 +46,7 @@ static void args_init(Arguments *args) {
   args->highlight = false;
   args->print_scores = false;
   args->mode = MODE_search;
+  args->case_mode = CASE_MODE_semi_sensitive;
   // frecency(path visited every day) ~ frecency(path visited every two days) + 1
   // a beta of 0.5 makes this correspond to a difference of +2 in matching score.
   args->beta = 0.5; 
@@ -58,13 +63,19 @@ Arguments *parse_arguments(int argc, char **argv) {
     exit(EXIT_SUCCESS);
   }
   int c;
-  while ((c = getopt_long(argc, argv, "cashf:n:w:b:", longopts, NULL)) != -1) {
+  while ((c = getopt_long(argc, argv, "cashISf:n:w:b:", longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       args->file_path = optarg;
       break;
     case 'a':
       args->mode = MODE_add;
+      break;
+    case 'I':
+      args->case_mode = CASE_MODE_insensitive;
+      break;
+    case 'S':
+      args->case_mode = CASE_MODE_sensitive;
       break;
     case 'c':
       args->highlight = true;

@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "matching.h"
+
 static const char COLOR_GREEN[] = "\x1b[32m";
 static const char COLOR_RESET[] = "\x1b[0m";
 
@@ -20,6 +22,7 @@ typedef struct MatchingData {
   int m;
   int *bonus;
   Scores *matrix;
+  enum CASE_MODE case_mode;
 } MatchingData;
 
 // Bonuses
@@ -32,6 +35,20 @@ static const int end_of_path_bonus = 2;
 // Penalties
 static const int first_gap_penalty = 9;
 static const int gap_penalty = 1;
+
+static inline bool match_char(char a, char b, enum CASE_MODE case_mode) {
+  if (tolower(a) != tolower(b)) {
+    return false;
+  }
+  if (case_mode == CASE_MODE_insensitive) {
+    return true;
+  }
+  if (case_mode == CASE_MODE_sensitive) {
+    return (a == b);
+  }
+  // Default, semi_sensitive mode
+  return islower(b) || (a == b);
+}
 
 static inline bool is_separator(char c) {
   return (c == '/' || c == '_' || c == '-' || c == '.' || c == '#' ||
@@ -71,7 +88,7 @@ static int match_score(MatchingData *data, int i, int j) {
   const char a = data->query[j - 1];
   char b = data->string[i - 1];
   int bonus = data->bonus[i - 1];
-  if (tolower(a) == tolower(b)) {
+  if (match_char(b, a, data->case_mode)) {
     if (isupper(b) && a == b) {
       return bonus + uppercase_bonus;
     }
@@ -80,7 +97,8 @@ static int match_score(MatchingData *data, int i, int j) {
   return -1;
 }
 
-static MatchingData *make_data(const char *string, const char *query) {
+static MatchingData *make_data(const char *string, const char *query,
+                               enum CASE_MODE case_mode) {
   const int n = strlen(string) + 1;
   const int m = strlen(query) + 1;
   const int h = n - m + 2;
@@ -101,6 +119,7 @@ static MatchingData *make_data(const char *string, const char *query) {
   data->query = query;
   data->matrix = matrix;
   data->bonus = matching_bonus(string, n - 1);
+  data->case_mode = case_mode;
   return data;
 }
 
@@ -194,11 +213,12 @@ static char *extract_matching(MatchingData *data, int imax) {
   return new_string;
 }
 
-static bool quick_match(const char *string, const char *query) {
+static bool quick_match(const char *string, const char *query,
+                        enum CASE_MODE case_mode) {
   const char *t = string;
   const char *q = query;
   while (*t != 0 && *q != 0) {
-    if (tolower(*t) == tolower(*q)) {
+    if (match_char(*t, *q, case_mode)) {
       q++;
     }
     t++;
@@ -207,16 +227,16 @@ static bool quick_match(const char *string, const char *query) {
 }
 
 int match_accuracy(const char *string, const char *query, bool colors,
-                   char **matched_string) {
+                   char **matched_string, enum CASE_MODE case_mode) {
   if (*query == 0) {
     *matched_string = strdup(string);
     return 1;
   }
-  if (!quick_match(string, query)) {
+  if (!quick_match(string, query, case_mode)) {
     *matched_string = (char *)string;
     return 0;
   }
-  MatchingData *data = make_data(string, query);
+  MatchingData *data = make_data(string, query, case_mode);
   const int n = data->n;
   const int m = data->m;
   const int h = n - m + 2;

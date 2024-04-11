@@ -1,4 +1,7 @@
+#pragma once
+
 #include <stdbool.h>
+#include "matching.h"
 
 enum MODE {
   MODE_search,
@@ -14,6 +17,7 @@ typedef struct Arguments {
   bool print_scores;
   int n_results;
   enum MODE mode;
+  enum CASE_MODE case_mode;
 } Arguments;
 
 Arguments *parse_arguments(int argc, char **argv);

@@ -107,7 +107,7 @@ static void lookup(Arguments *args) {
   while (getline(&line, &len, fp) != -1) {
     parse_record(line, &rec);
     match_score =
-        match_accuracy(rec.path, args->key, args->highlight, &matched_str);
+        match_accuracy(rec.path, args->key, args->highlight, &matched_str, args->case_mode);
     if (match_score > 0) {
       score = args->beta * match_score +
               frecency(rec.n_visits, now - rec.last_visit);
