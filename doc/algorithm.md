@@ -52,7 +52,7 @@ where the maximum is computed over all matches of `query` in `path`. We call "ma
 
 ### Case-sensitivity
 
-By default, matches are "case-semi-sensitive". This means that a lower case character `a` can match both `a` and `A`, but an upper case character `A` can only match `A`. Matches can be set to be case-sensitive or case-semi-sensitive using the flags `-S` and `-I`.
+By default, matches are "case-semi-sensitive". This means that a lower case character `a` can match both `a` and `A`, but an upper case character `A` can only match `A`. Matches can be set to be case-sensitive or case-insensitive using the flags `-S` and `-I`.
 
 ## Final score
 Based on these two numbers, Jumper ranks paths using
