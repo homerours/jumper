@@ -38,6 +38,6 @@ char *record_to_string(Record *rec) {
 
 double frecency(double n_visits, double delta) {
   // log(0.1)  ~ -2.3, so we add 2.4 to ensure frecency is > 0
-  return 2.4 + log(0.01 + 10 * exp(-SHORT_DECAY * delta) +
+  return 2.4 + log(0.1 + 10 * exp(-SHORT_DECAY * delta) +
                    exp(-LONG_DECAY * delta) * n_visits);
 }

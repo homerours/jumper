@@ -30,7 +30,6 @@ static const int match_bonus = 10;
 static const int post_separator_bonus = 2;
 static const int post_slash_bonus = 3;
 static const int uppercase_bonus = 3;
-static const int separator_bonus = 3;
 static const int end_of_path_bonus = 2;
 // Penalties
 static const int first_gap_penalty = 9;
@@ -63,7 +62,6 @@ static int *matching_bonus(const char *string, int n) {
     bonus[i] = match_bonus;
     bool is_sep = is_separator(string[i]);
     if (is_sep) {
-      bonus[i] += separator_bonus;
       if (string[i] == '/') {
         last_slash = i;
       }
