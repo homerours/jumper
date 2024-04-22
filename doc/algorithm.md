@@ -34,13 +34,13 @@ As we can see from the plot above, the frecency will typically be a number in th
 
 In its [original implementation](https://web.archive.org/web/20210421120120/https://developer.mozilla.org/en-US/docs/Mozilla/Tech/Places/Frecency_algorithm), Mozilla defines frecency as
 ```math
-\text{original_frecency}(t)
+\texttt{original\_frecency}(t)
  = N \frac{\sum_{i \in \text{last 10 visits}} w_i f(T_i)}{min(N,10)}
 ```
 where $N$ denotes the total number of visits, $w_i$ is a weight associated to visit $i$ and $T_i$ is the time of the visit. The function $f$ is piecewise constant: $f(t) = 100$ for $t \leq 4h$, $f(t)=80$ for $t \in [4h, 24h]$ ...
 This definition has then been [updated](https://wiki.mozilla.org/User:Jesse/NewFrecency) to something very similar to what jumper is using
 ```math
-\text{new_frecency}(t) = \sum_{i=0}^n w_i e^{-\alpha_2 (t-T_i)} \right)
+\texttt{new\_ frecency}(t) = \sum_{i=0}^n w_i e^{-\alpha_2 (t-T_i)} \right)
 ```
 Jumper adds a term $10 / (1 + \alpha_1 (t - T_0))$ to favor very recently accessed entries, and takes the $\log$ for reasons presented in the next sections.
 
