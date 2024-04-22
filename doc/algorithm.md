@@ -92,7 +92,7 @@ We give below more details about this Bayesian model.
 
 **Prior distribution:** Assume that the visits of a given path is a self-exciting point process, with conditional intensity
 ```math
-\lambda(t, \text{path}) = \epsilon +  10 e^{-\alpha_1 (t - T_0)} + \sum_{T_k \leq t} e^{-\alpha_2 (t - T_k)}
+\lambda(t, \text{path}) = \epsilon +  \frac{10}{1 + \alpha_1 (t - T_0)} + \sum_{T_k \leq t} e^{-\alpha_2 (t - T_k)}
 ```
 independently from the visits to the other folders.
 
