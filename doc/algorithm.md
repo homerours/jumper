@@ -10,7 +10,7 @@ Assume that a match has been visited at times $T_0 > \cdots > T_n$, then at time
 ```math
 \text{frecency}(t) = \log\left( \epsilon + \frac{10}{1 + \alpha_1 (t - T_0)} + \sum_{i=0}^n e^{-\alpha_2 (t-T_i)} \right)
 ```
-Here $\alpha_1 = 2 \times 10^{-5}$, $\alpha_2 = 3 \times 10^{-7}$ and all times are expressed in seconds. These values are chosen so that $\alpha_1 \times {\rm 14 \ hours}} \simeq 1$ and  $e^{-\alpha_2 {\rm \ 1\ month}} \simeq 1 / 2$. $\epsilon = 0.1$ enforces that the frecency remains bounded from below.
+Here $\alpha_1 = 2 \times 10^{-5}$, $\alpha_2 = 3 \times 10^{-7}$ and all times are expressed in seconds. These values are chosen so that $\alpha_1 \times {\rm 14 \ hours} \simeq 1$ and  $e^{-\alpha_2 {\rm \ 1\ month}} \simeq 1 / 2$. $\epsilon = 0.1$ enforces that the frecency remains bounded from below.
 
 Let us now motivate a bit the definition of frecency above. 
 Let us first consider an item that has not been visited for a few days, so that we can neglect the term $10 / (1 + \alpha_1 (t - T_0))$. 
