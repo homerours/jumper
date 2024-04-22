@@ -31,23 +31,21 @@ As we can see from the plot above, the frecency will typically be a number in th
 - It does not diverge at time goes. [z](https://github.com/rupa/z) uses something like `number-of-visits / time-since-last-visit`, which potentially diverges over time (and therefore require some "aging" mechanism).
 - It only requires to keep track of the "adjusted" number of visits $\sum_i e^{-\alpha_2 (t-T_i)}$ and the time of last visit to be computed.
 
-
-In its [original implementation](https://web.archive.org/web/20210421120120/https://developer.mozilla.org/en-US/docs/Mozilla/Tech/Places/Frecency_algorithm), Mozilla defines frecency as
-```math
-\texttt{original\_frecency}(t)
- = N \frac{\sum_{i \in \text{last 10 visits}} w_i f(T_i)}{min(N,10)}
-```
-where $N$ denotes the total number of visits, $w_i$ is a weight associated to visit $i$ and $T_i$ is the time of the visit. The function $f$ is piecewise constant: $f(t) = 100$ for $t \leq 4h$, $f(t)=80$ for $t \in [4h, 24h]$ ...
-This definition has then been [updated](https://wiki.mozilla.org/User:Jesse/NewFrecency) to something very similar to what jumper is using
-```math
-\texttt{new\_ frecency}(t) = \sum_{i=0}^n w_i e^{-\alpha_2 (t-T_i)}
-```
-Jumper adds a term $10 / (1 + \alpha_1 (t - T_0))$ to favor very recently accessed entries, and takes the $\log$ for reasons presented in the next sections.
-
 > [!NOTE]
 > We presented above the frecency in the case where all visits had the same weight 1. However, Jumper can attribute different weights for different types of visit (using the `-w` option). Everytime a command is executed by the user, Jumper adds a visit of weight $w_i = 1$ to the current working directory (cwd) if the command has changed the cwd, and a visit of weight $w_i = 0.3$ otherwise.
 > Then, the frecency is computed using the weighted sum $\sum_i w_i e^{-\alpha_2 (t-T_i)}$.
 
+In its [original implementation](https://web.archive.org/web/20210421120120/https://developer.mozilla.org/en-US/docs/Mozilla/Tech/Places/Frecency_algorithm), Mozilla defines frecency as
+```math
+\texttt{original\_frecency}(t)
+ = N \times \frac{\sum_{i \in \{\text{last 10 visits} \}} w_i f(t - T_i)}{\min(N,10)}
+```
+where $N$ denotes the total number of visits, $w_i$ is a weight associated to visit $i$ and $T_i$ is the time of the visit. The function $f$ is piecewise constant: $f(t) = 100$ for $t \leq 4h$, $f(t)=80$ for $t \in [4h, 24h]$ ...
+This definition has then been [updated](https://wiki.mozilla.org/User:Jesse/NewFrecency) to something very similar to what jumper is using
+```math
+\texttt{new\_frecency}(t) = \sum_{i=0}^n w_i e^{-\alpha_2 (t-T_i)}
+```
+Jumper adds a term $10 / (1 + \alpha_1 (t - T_0))$ to favor very recently accessed entries, and takes the $\log$ for reasons presented in the next sections.
 
 ## Match accuracy
 
