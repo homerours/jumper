@@ -4,14 +4,16 @@ Jumper uses both frecency (frequency+recency at which items have been visited) a
 The main idea is that, when only a few (say <=2) characters have been entered by the user (when fuzzy-finding a path), Jumper will mostly rank matches based on their frecency since these few characters contain very little information for picking the right match. However, as more characters are added, the user's prompt contains more information that can be used the improve the ranking: Jumper will put progressively more emphasis on match accuracy.
 
 ## Frecency
-The frecency of a match measures the frequency and recency of the visits of the match. Assume that a match has been visited at times $T_0 > \cdots > T_n$, then at time $t$, we define
+
+Frecency is an heuristic introduced by Mozilla that combines the frequency and recency.
+Assume that a match has been visited at times $T_0 > \cdots > T_n$, then at time $t$, we define
 ```math
-\text{frecency}(t) = \log\left( \epsilon + 10 \, e^{- \alpha_1 (t - T_0)} + \sum_{i=0}^n e^{-\alpha_2 (t-T_i)} \right)
+\text{frecency}(t) = \log\left( \epsilon + \frac{10}{1 + \alpha_1 (t - T_0)} + \sum_{i=0}^n e^{-\alpha_2 (t-T_i)} \right)
 ```
-Here $\alpha_1 = 5 \times 10^{-5}$, $\alpha_2 = 3 \times 10^{-7}$ and all times are expressed in seconds. These values are chosen so that $e^{-\alpha_1 {\rm \ 4 \ hours}} \simeq 1 / 2$ and  $e^{-\alpha_2 {\rm \ 1\ month}} \simeq 1 / 2$. $\epsilon = 0.1$ enforces that the frecency remains bounded from below.
+Here $\alpha_1 = 2 \times 10^{-5}$, $\alpha_2 = 3 \times 10^{-7}$ and all times are expressed in seconds. These values are chosen so that $\alpha_1 \times {\rm 14 \ hours}} \simeq 1$ and  $e^{-\alpha_2 {\rm \ 1\ month}} \simeq 1 / 2$. $\epsilon = 0.1$ enforces that the frecency remains bounded from below.
 
 Let us now motivate a bit the definition of frecency above. 
-Let us first consider an item that has not been visited within the last 10 hours, so that we can neglect the term $10 e^{- \alpha_1 (t - T_0)}$. 
+Let us first consider an item that has not been visited for a few days, so that we can neglect the term $10 / (1 + \alpha_1 (t - T_0))$. 
 Let's set $t=0$ as the origin of times.
 Assume moreover that this item is typically visited every $T$ seconds, so that $T_i = - i T$ for $i=0,1,2, \dots$. Therefore
 ```math
@@ -28,6 +30,19 @@ In the case where the item has just been visited, the frecency above gets an inc
 As we can see from the plot above, the frecency will typically be a number in the range $[0,6]$. Many other definitions for frecency are possible. We chose this one for the following reasons:
 - It does not diverge at time goes. [z](https://github.com/rupa/z) uses something like `number-of-visits / time-since-last-visit`, which potentially diverges over time (and therefore require some "aging" mechanism).
 - It only requires to keep track of the "adjusted" number of visits $\sum_i e^{-\alpha_2 (t-T_i)}$ and the time of last visit to be computed.
+
+
+In its [original implementation](https://web.archive.org/web/20210421120120/https://developer.mozilla.org/en-US/docs/Mozilla/Tech/Places/Frecency_algorithm), Mozilla defines frecency as
+```math
+\text{original_frecency}(t)
+ = N \frac{\sum_{i \in \text{last 10 visits}} w_i f(T_i)}{min(N,10)}
+```
+where $N$ denotes the total number of visits, $w_i$ is a weight associated to visit $i$ and $T_i$ is the time of the visit. The function $f$ is piecewise constant: $f(t) = 100$ for $t \leq 4h$, $f(t)=80$ for $t \in [4h, 24h]$ ...
+This definition has then been [updated](https://wiki.mozilla.org/User:Jesse/NewFrecency) to something very similar to what jumper is using
+```math
+\text{new_frecency}(t) = \sum_{i=0}^n w_i e^{-\alpha_2 (t-T_i)} \right)
+```
+Jumper adds a term $10 / (1 + \alpha_1 (t - T_0))$ to favor very recently accessed entries, and takes the $\log$ for reasons presented in the next sections.
 
 > [!NOTE]
 > We presented above the frecency in the case where all visits had the same weight 1. However, Jumper can attribute different weights for different types of visit (using the `-w` option). Everytime a command is executed by the user, Jumper adds a visit of weight $w_i = 1$ to the current working directory (cwd) if the command has changed the cwd, and a visit of weight $w_i = 0.3$ otherwise.

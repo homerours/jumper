@@ -1,7 +1,17 @@
 # Common to bash and zsh
-export __JUMPER_FOLDERS=~/.jfolders
-export __JUMPER_FILES=~/.jfiles
-export __JUMPER_MAX_RESULTS=150
+[[ -n $__JUMPER_FOLDERS ]] || export __JUMPER_FOLDERS=~/.jfolders
+[[ -n $__JUMPER_FILES ]] || export __JUMPER_FILES=~/.jfiles
+[[ -n $__JUMPER_MAX_RESULTS ]] || export __JUMPER_MAX_RESULTS=150
+
+if [[ -z $__JUMPER_FZF_FILES_PREVIEW ]]; then
+    if [[ -n $(which bat) ]]; then
+        __JUMPER_FZF_FILES_PREVIEW='bat --color=always'
+    else
+        __JUMPER_FZF_FILES_PREVIEW='cat'
+    fi
+fi
+[[ -n $__JUMPER_FZF_FOLDERS_PREVIEW ]] || __JUMPER_FZF_FOLDERS_PREVIEW='ls -1UpC --color=always'
+[[ -n $__JUMPER_TOGGLE_PREVIEW ]] || __JUMPER_TOGGLE_PREVIEW='ctrl-p'
 
 [[ -f ${__JUMPER_FOLDERS} ]] || touch "${__JUMPER_FOLDERS}"
 [[ -f ${__JUMPER_FILES} ]] || touch "${__JUMPER_FILES}"
@@ -33,7 +43,9 @@ __jumper_fdir() {
 	__JUMPER="jumper -c -f ${__JUMPER_FOLDERS} -n ${__JUMPER_MAX_RESULTS}"
 	fzf --height=70% --layout=reverse \
         --keep-right \
-		--ansi --disabled --query '' \
+		--ansi --disabled --query "$1" \
+        --preview "${__JUMPER_FZF_FOLDERS_PREVIEW} {}" \
+        --preview-window=hidden --bind "${__JUMPER_TOGGLE_PREVIEW}:toggle-preview" \
 		--bind "start:reload:${__JUMPER} {q}" \
 		--bind "change:reload:sleep 0.05; ${__JUMPER} {q} || true"
 }
@@ -43,11 +55,12 @@ __jumper_ffile() {
 	__JUMPER="jumper -c -f ${__JUMPER_FILES} -n ${__JUMPER_MAX_RESULTS}"
 	fzf --height=70% --layout=reverse \
         --keep-right \
-		--ansi --disabled --query '' \
+		--ansi --disabled --query "$1" \
+        --preview "${__JUMPER_FZF_FILES_PREVIEW} {}" \
+        --preview-window=hidden --bind "${__JUMPER_TOGGLE_PREVIEW}:toggle-preview" \
 		--bind "start:reload:${__JUMPER} {q}" \
 		--bind "change:reload:sleep 0.05; ${__JUMPER} {q} || true"
 }
-
 
 # Database's update
 __jumper_update_db() {
@@ -126,7 +139,7 @@ __jumper_clean_files_db() {
 }
 
 # For Bash
-run-fz() {
+jumper-find-dir() {
     selected=$(__jumper_fdir)
     pre="${READLINE_LINE:0:$READLINE_POINT}"
     if [[ -z $pre ]] && [[ ! -z ${selected} ]]; then
@@ -136,7 +149,7 @@ run-fz() {
         READLINE_POINT=$(( READLINE_POINT + ${#selected} ))
     fi
 }
-run-fz-file() {
+jumper-find-file() {
     selected=$(__jumper_ffile)
     pre="${READLINE_LINE:0:$READLINE_POINT}"
     READLINE_LINE="${pre}$selected${READLINE_LINE:$READLINE_POINT}"
@@ -144,11 +157,11 @@ run-fz-file() {
 }
 
 # Bindings
-bind -x '"\C-y": run-fz'
+bind -x '"\C-y": jumper-find-dir'
 # In some terminals, C-u is bind to kill
 # and can not be remapped.
 stty kill undef
-bind -x '"\C-u": run-fz-file'
+bind -x '"\C-u": jumper-find-file'
 
 # Update db
 PROMPT_COMMAND="__jumper_update_db;$PROMPT_COMMAND"

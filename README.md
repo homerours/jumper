@@ -9,20 +9,6 @@ It differentiates itself from the plethora of similar tools on the following poi
 - It allows fuzzy-finding.
 - Written in C, for speed and portability.
 
-## Concept
-`jumper` operates on files whose lines are in the format `<path>|<number-of-visits>|<timestamp-of-last-visit>`. Such file is typically used to record accesses to files/directories. Given such a file, the command
-```bash
-jumper -f <database-file> -n N <query>
-```
-returns the top `N` entries of the `<database-file>` (this will typically be `~/.jfolders` or `~/.jfiles`) that match `<query>`. Adding the `-c` flag colors the matched substring. The command
-```bash
-jumper -f <database-file> -a <path>
-```
-adds the `<path>` to the `<database-file>`, or updates its record (updates the visits count and timestamp) if already present.
-From these two main functions, the shell scripts `shell/jumper.{bash,zsh,fish}` define various functions/mappings (see next section) allowing to quickly jump around
-- Folders: Folders' visits are recorded in the file `${__JUMPER_FOLDERS}` using a shell pre-command.
-- Files: Files open are recorded in the file `${__JUMPER_FILES}` by making Vim run `jumper -f ${__JUMPER_FILES} -a <current-file>` each time a file is open. This can be adapted to other editors.
-
 ### Usage
 - Use `z <something>` to jump to the most frequent/recent directories matching `<something>`.
 - Use `zf <something>` to open (in `$EDITOR`) the most frequent/recent file matching `<something>`.
@@ -47,6 +33,20 @@ The ranking of a path at time $t$ is based on the following score
 ```
 where $\beta = 0.5$ by default, but can be updated with the flag `-b <value>`. 
 More details about the scoring mechanism are given [here](https://github.com/homerours/jumper/blob/master/doc/algorithm.md).
+
+## Concept
+`jumper` operates on files whose lines are in the format `<path>|<number-of-visits>|<timestamp-of-last-visit>`. Such file is typically used to record accesses to files/directories. Given such a file, the command
+```bash
+jumper -f <database-file> -n N <query>
+```
+returns the top `N` entries of the `<database-file>` (this will typically be `~/.jfolders` or `~/.jfiles`) that match `<query>`. Adding the `-c` flag colors the matched substring. The command
+```bash
+jumper -f <database-file> -a <path>
+```
+adds the `<path>` to the `<database-file>`, or updates its record (updates the visits count and timestamp) if already present.
+From these two main functions, the shell scripts `shell/jumper.{bash,zsh,fish}` define various functions/mappings (see next section) allowing to quickly jump around
+- Folders: Folders' visits are recorded in the file `${__JUMPER_FOLDERS}` using a shell pre-command.
+- Files: Files open are recorded in the file `${__JUMPER_FILES}` by making Vim run `jumper -f ${__JUMPER_FILES} -a <current-file>` each time a file is open. This can be adapted to other editors.
 
 ## Installation process
 
@@ -80,12 +80,37 @@ function myeditor() {
 }
 ```
 
+### Configuration
+
+The default keybindings and "database-files" can be updated if needed. Here is a sample configuration (for bash)
+```bash
+# Change default folders/files database-files (defaults are ~/.jfolders and ~/.jfiles):
+export __JUMPER_FOLDERS='/path/to/custom/database_for_folders'
+export __JUMPER_FILES='/path/to/custom/database_for_files'
+
+# Change the default binding (ctrl-p) to toggle preview:
+__JUMPER_TOGGLE_PREVIEW='ctrl-o'
+
+# Change default files' previewer (default: bat or cat):
+__JUMPER_FZF_FILES_PREVIEW='head -n 30'
+
+# Change default folders' previewer (default: 'ls -1UpC --color=always'):
+__JUMPER_FZF_FOLDERS_PREVIEW='ls -lah --color=always'
+
+# IMPORTANT: this has to be after the configuration above:
+source /path/to/jumper/shell/jumper.bash
+
+# Change default (ctrl-y and ctrl-u) bindings:
+bind -x '"\C-d": jumper-find-dir'
+bind -x '"\C-f": jumper-find-file'
+```
+
 ## Vim/Neovim
 
 Jumper can be used in Vim and Neovim. Depending on your configuration, you can either use it
 - without any plugin, see below. However, you won't be able to do any fuzzy-finding.
-- using [jumper.vim](https://github.com/homerours/jumper.vim) plugin (works for both Vim/Neovim). This uses [fzf "native" plugin](https://github.com/junegunn/fzf/blob/master/README-VIM.md) for fuzzy-finding.
-- using [Telescope](https://github.com/nvim-telescope/telescope.nvim) and the [telescope-jumper](https://github.com/homerours/telescope-jumper) extension (Neovim only).
+- using the [jumper.vim](https://github.com/homerours/jumper.vim) plugin (works for both Vim/Neovim). This uses [fzf "native" plugin](https://github.com/junegunn/fzf/blob/master/README-VIM.md) for fuzzy-finding.
+- using the [jumper.nvim](https://github.com/homerours/jumper.nvim) plugin. This uses either [Telescope](https://github.com/nvim-telescope/telescope.nvim) or [fzf-lua](https://github.com/ibhagwan/fzf-lua) as backend for fuzzy-finding.
 
 ### Without plugins
 
@@ -132,4 +157,3 @@ fu() {
 }
 ```
 which allows to "live-grep" (using here [ripgrep](https://github.com/BurntSushi/ripgrep)) the files of jumper's database.
-This is also available in the Telescope extension [telescope-jumper](https://github.com/homerours/telescope-jumper).
