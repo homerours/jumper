@@ -9,7 +9,7 @@ It differentiates itself from the plethora of similar tools on the following poi
 - It allows fuzzy-finding.
 - Written in C, for speed and portability.
 
-[Usage](#usage) - [Installation](#installation) - [Vim/Neovim](#vim)
+[Usage](#usage) - [Installation](#installation) - [Vim-Neovim](#vim)
 
 ## Usage
 
@@ -83,7 +83,8 @@ function myeditor() {
 
 ### Configuration
 
-The default keybindings, previewers and "database-files" can be updated if needed. Here is a sample configuration (for bash)
+One typically only needs to add `source <path-to>/shell/jumper.{bash, zsh, or fish}` in ones `.bashrc`, `.zshrc` or `.config/fish/config.fish`.
+However, the default keybindings, previewers and "database-files" can still be configured if desired. Here is a sample configuration (for bash)
 ```bash
 # Change default folders/files database-files (defaults are ~/.jfolders and ~/.jfiles):
 export __JUMPER_FOLDERS='/path/to/custom/database_for_folders'
@@ -112,7 +113,7 @@ bind -x '"\C-f": jumper-find-file'
 - Use `__jumper_clean_files_db` to remove from the database files that do not exist anymore.
 
 
-## Vim/Neovim
+## Vim-Neovim
 
 Jumper can be used in Vim and Neovim. Depending on your configuration, you can either use it
 - without any plugin, see below. However, you won't be able to do any fuzzy-finding.
