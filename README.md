@@ -30,7 +30,7 @@ The ranking of a path at time $t$ is based on the following score
 ```math
 \text{score}(\text{query}, \text{path}) =  \text{frecency}(t, \text{path}) + \beta \times \text{accuracy}(\text{query}, \text{path})
 ```
-where $\beta = 0.5$ by default, but can be updated with the flag `-b <value>`. 
+where $\beta = 1.0$ by default, but can be updated with the flag `-b <value>`. 
 More details about the scoring mechanism are given [here](https://github.com/homerours/jumper/blob/master/doc/algorithm.md).
 
 ### Concept
@@ -47,6 +47,23 @@ adds the `<path>` to the `<database-file>`, or updates its record (i.e. updates 
 From these two main functions, the shell scripts `shell/jumper.{bash,zsh,fish}` define various functions/mappings (see [Usage](#usage) above) allowing to quickly jump around
 - **Folders**: Folders' visits are recorded in the file `${__JUMPER_FOLDERS}` using a shell pre-command.
 - **Files**: Files open are recorded in the file `${__JUMPER_FILES}` by making Vim run `jumper -f ${__JUMPER_FILES} -a <current-file>` each time a file is open. This can be adapted to other editors.
+
+### Search syntax
+
+By default jumper uses a simpler version of fzf's "extended search-mode". One can search for multiple tokens separated by spaces, which have to be found in the same order in order to have a match. The full [fzf-syntax](https://github.com/junegunn/fzf?tab=readme-ov-file#search-syntax) is not implemented yet, only the following token are implemented.
+
+| Token     | Match type                 | Description                          |
+| --------- | -------------------------- | ------------------------------------ |
+| `dotfvi`  | fuzzy-match                | Items that match `dotfvi`            |
+| `'wild`   | exact-match (quoted)       | Items that include `wild`            |
+| `^music`  | prefix-exact-match         | Items that start with `music`        |
+| `.lua$`   | suffix-exact-match         | Items that end with `.lua`           |
+
+The syntax mode can be changed to `fuzzy` (use only fuzzy-matches, the characters `^`, `$` and `'` are interpreted as standard characters) or `exact` (exact matches only), with the `--syntax` flag.
+
+### Case sensitivity
+
+By default, matches are "case-semi-sensitive". This means that a lower case character `a` can match both `a` and `A`, but an upper case character `A` can only match `A`. Matches can be set to be case-sensitive or case-insensitive using the flags `-S` and `-I`.
 
 ## Installation
 
@@ -90,6 +107,10 @@ However, the default keybindings, previewers and "database-files" can still be c
 export __JUMPER_FOLDERS='/path/to/custom/database_for_folders'
 export __JUMPER_FILES='/path/to/custom/database_for_files'
 
+# Update the options used when fuzzy-finding
+# Default: '-c -n 500' (colors the matches + print only the top 500 entries)
+__JUMPER_FLAGS='-c -n 1000 --syntax=fuzzy --case-insensitive'
+
 # Change the default binding (ctrl-p) to toggle preview:
 __JUMPER_TOGGLE_PREVIEW='ctrl-o'
 
@@ -111,14 +132,14 @@ bind -x '"\C-f": jumper-find-file'
 
 - Use `__jumper_clean_folders_db` to remove from the database directories that do not exist anymore.
 - Use `__jumper_clean_files_db` to remove from the database files that do not exist anymore.
-
+For more advanced maintenance, the files `~/.jfolders` and `~/.jfiles` can be edited directly.
 
 ## Vim-Neovim
 
 Jumper can be used in Vim and Neovim. Depending on your configuration, you can either use it
 - without any plugin, see below. However, you won't be able to do any fuzzy-finding.
+- with the [jumper.nvim](https://github.com/homerours/jumper.nvim) plugin (prefered). This uses either [Telescope](https://github.com/nvim-telescope/telescope.nvim) or [fzf-lua](https://github.com/ibhagwan/fzf-lua) as backend for fuzzy-finding.
 - with the [jumper.vim](https://github.com/homerours/jumper.vim) plugin (works for both Vim/Neovim). This uses [fzf "native" plugin](https://github.com/junegunn/fzf/blob/master/README-VIM.md) for fuzzy-finding.
-- with the [jumper.nvim](https://github.com/homerours/jumper.nvim) plugin. This uses either [Telescope](https://github.com/nvim-telescope/telescope.nvim) or [fzf-lua](https://github.com/ibhagwan/fzf-lua) as backend for fuzzy-finding.
 
 ### Without any plugins
 

@@ -98,6 +98,7 @@ static void lookup(Arguments *args) {
 
   Heap *heap = new_heap(args->n_results);
   Record rec;
+  Query query = parse_query(args->key, args->syntax);
 
   long long now = (long long)time(NULL);
   int match_score;
@@ -106,10 +107,10 @@ static void lookup(Arguments *args) {
   size_t len;
   while (getline(&line, &len, fp) != -1) {
     parse_record(line, &rec);
-    match_score =
-        match_accuracy(rec.path, args->key, args->highlight, &matched_str, args->case_mode);
+    match_score = match_accuracy(rec.path, query, args->highlight, &matched_str,
+                                 args->case_mode);
     if (match_score > 0) {
-      score = args->beta * match_score +
+      score = args->beta * 0.25 * match_score +
               frecency(rec.n_visits, now - rec.last_visit);
       insert(heap, score, matched_str);
     }

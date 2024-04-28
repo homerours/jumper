@@ -1,7 +1,7 @@
 # Common to bash and zsh
 [[ -n $__JUMPER_FOLDERS ]] || export __JUMPER_FOLDERS=~/.jfolders
 [[ -n $__JUMPER_FILES ]] || export __JUMPER_FILES=~/.jfiles
-[[ -n $__JUMPER_MAX_RESULTS ]] || export __JUMPER_MAX_RESULTS=150
+[[ -n $__JUMPER_FLAGS ]] || __JUMPER_FLAGS='-c -n 500'
 
 if [[ -z $__JUMPER_FZF_FILES_PREVIEW ]]; then
     if [[ -n $(which bat) ]]; then
@@ -40,7 +40,7 @@ zf() {
 
 # Fuzzy-find directories
 __jumper_fdir() {
-	__JUMPER="jumper -c -f ${__JUMPER_FOLDERS} -n ${__JUMPER_MAX_RESULTS}"
+	__JUMPER="jumper -c -f ${__JUMPER_FOLDERS} ${__JUMPER_FLAGS}"
 	fzf --height=70% --layout=reverse \
         --keep-right \
 		--ansi --disabled --query "$1" \
@@ -52,7 +52,7 @@ __jumper_fdir() {
 
 # Fuzzy-find files
 __jumper_ffile() {
-	__JUMPER="jumper -c -f ${__JUMPER_FILES} -n ${__JUMPER_MAX_RESULTS}"
+	__JUMPER="jumper -c -f ${__JUMPER_FILES} ${__JUMPER_FLAGS}"
 	fzf --height=70% --layout=reverse \
         --keep-right \
 		--ansi --disabled --query "$1" \

@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -18,24 +19,25 @@ typedef struct Scores {
 typedef struct MatchingData {
   const char *string;
   const char *query;
+  bool *jump_allowed;
   int n;
   int m;
   int *bonus;
   Scores *matrix;
-  enum CASE_MODE case_mode;
+  CASE_MODE case_mode;
 } MatchingData;
 
 // Bonuses
-static const int match_bonus = 10;
-static const int post_separator_bonus = 2;
-static const int post_slash_bonus = 3;
-static const int uppercase_bonus = 3;
-static const int end_of_path_bonus = 2;
+static const int match_bonus = 20;
+static const int post_separator_bonus = 4;
+static const int post_slash_bonus = 6;
+static const int uppercase_bonus = 6;
+static const int end_of_path_bonus = 3;
 // Penalties
-static const int first_gap_penalty = 9;
+static const int first_gap_penalty = 19;
 static const int gap_penalty = 1;
 
-static inline bool match_char(char a, char b, enum CASE_MODE case_mode) {
+static inline bool match_char(char a, char b, CASE_MODE case_mode) {
   if (tolower(a) != tolower(b)) {
     return false;
   }
@@ -95,10 +97,10 @@ static int match_score(MatchingData *data, int i, int j) {
   return -1;
 }
 
-static MatchingData *make_data(const char *string, const char *query,
-                               enum CASE_MODE case_mode) {
+static MatchingData *make_data(const char *string, Query query,
+                               CASE_MODE case_mode) {
   const int n = strlen(string) + 1;
-  const int m = strlen(query) + 1;
+  const int m = query.length + 1;
   const int h = n - m + 2;
   Scores *matrix = (Scores *)malloc(h * m * sizeof(struct Scores));
   for (int i = 0; i < h; i++) {
@@ -114,7 +116,8 @@ static MatchingData *make_data(const char *string, const char *query,
   data->n = n;
   data->m = m;
   data->string = string;
-  data->query = query;
+  data->query = query.query;
+  data->jump_allowed = query.gap_allowed;
   data->matrix = matrix;
   data->bonus = matching_bonus(string, n - 1);
   data->case_mode = case_mode;
@@ -135,15 +138,18 @@ static Scores *compute_scores(MatchingData *data, int i, int j) {
   Scores *scores = get_scores(data, i, j);
   Scores *top = get_scores(data, i - 1, j);
   Scores *top_left = get_scores(data, i - 1, j - 1);
-  int g = max(top->gap - gap_penalty, top->match - first_gap_penalty);
-  scores->gap = max(g, -1);
+  if (!data->jump_allowed[j]) {
+    scores->gap = -1;
+  } else {
+    int g = max(top->gap - gap_penalty, top->match - first_gap_penalty);
+    scores->gap = max(g, -1);
 
-  if ((top->gap != -1 || top->match != -1) && scores->gap == -1) {
-    scores->gap = 0;
+    if ((top->gap != -1 || top->match != -1) && scores->gap == -1) {
+      scores->gap = 0;
+    }
   }
-
   int mscore = match_score(data, i, j);
-  if (mscore > 0) {
+  if (mscore > 0 && (j > 1 || i == 1 || data->jump_allowed[0])) {
     int max_score = max(top_left->gap, top_left->match);
     if (max_score >= 0) {
       scores->match = max_score + mscore;
@@ -212,7 +218,7 @@ static char *extract_matching(MatchingData *data, int imax) {
 }
 
 static bool quick_match(const char *string, const char *query,
-                        enum CASE_MODE case_mode) {
+                        CASE_MODE case_mode) {
   const char *t = string;
   const char *q = query;
   while (*t != 0 && *q != 0) {
@@ -224,13 +230,71 @@ static bool quick_match(const char *string, const char *query,
   return *q == 0;
 }
 
-int match_accuracy(const char *string, const char *query, bool colors,
-                   char **matched_string, enum CASE_MODE case_mode) {
-  if (*query == 0) {
+// Parse a query, figuring out where gaps are allowed
+Query parse_query(const char *query, SYNTAX syntax) {
+  Query squery;
+  int n = strlen(query);
+  squery.query = (char *)malloc(n * sizeof(char));
+  squery.gap_allowed = (bool *)malloc((n + 1) * sizeof(bool));
+  if (syntax != SYNTAX_extended) {
+    squery.length = n;
+    squery.query = strcpy(squery.query, query);
+    squery.gap_allowed[0] = true;
+    squery.gap_allowed[n] = true;
+    for (int i = 1; i < n; i++) {
+      squery.gap_allowed[i] = (syntax == SYNTAX_fuzzy);
+    }
+  } else {
+    char *q = squery.query;
+    const char *block_start = query;
+    const char *next_space;
+    int block_size;
+    int j = 1;
+    squery.gap_allowed[0] = (*query != '^');
+    while (*block_start != '\0') {
+      bool gap_allowed = true;
+      // find start of next block (defaults to end of string)
+      next_space = strchr(block_start, ' ');
+      if (next_space == NULL) {
+        next_space = query + n;
+      }
+
+      if (*block_start == '\'' || (j == 1 && *block_start == '^')) {
+        gap_allowed = false;
+        block_start++;
+      }
+      block_size = next_space - block_start;
+      if (*(next_space - 1) == '$' &&
+          (*next_space == '\0' || *(next_space + 1) == '\0')) {
+        gap_allowed = false;
+        block_size--;
+        squery.gap_allowed[j + block_size - 1] = false;
+      } else {
+        squery.gap_allowed[j + block_size - 1] = true;
+      }
+      for (int i = 0; i < block_size - 1; i++) {
+        squery.gap_allowed[j + i] = gap_allowed;
+      }
+      strncpy(q, block_start, block_size);
+      q += block_size;
+      j += block_size;
+      block_start = next_space;
+      while (*block_start == ' ') {
+        block_start++;
+      }
+    }
+    squery.length = j - 1;
+  }
+  return squery;
+}
+
+int match_accuracy(const char *string, Query query, bool colors,
+                   char **matched_string, CASE_MODE case_mode) {
+  if (*query.query == 0) {
     *matched_string = strdup(string);
     return 1;
   }
-  if (!quick_match(string, query, case_mode)) {
+  if (!quick_match(string, query.query, case_mode)) {
     *matched_string = (char *)string;
     return 0;
   }
@@ -240,14 +304,22 @@ int match_accuracy(const char *string, const char *query, bool colors,
   const int h = n - m + 2;
   int imax = 0, maximum = -1, i;
   Scores *scores;
+  int jmax = 0; // max accessible column
   for (int ii = 1; ii < h; ii++) {
     for (int j = 1; j < m; j++) {
       i = ii + j - 1;
       scores = compute_scores(data, i, j);
       if (scores->match == -1 && scores->gap == -1) {
-        break;
+        // Cell (i,j) is not accessible
+        // j >= jmax, one can not access any cell beyond (i,j):
+        if (j >= jmax)
+          break;
+      } else {
+        // Cell (i,j) is accessible, update the value of jmax
+        jmax = max(j, jmax);
       }
-      if (j == (m - 1) && scores->match >= maximum) {
+      if (j == (m - 1) && scores->match >= maximum &&
+          (data->jump_allowed[m - 1] || i == n - 1)) {
         imax = i;
         maximum = scores->match;
       }

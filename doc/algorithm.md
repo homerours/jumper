@@ -63,16 +63,12 @@ The `bonuses` above give additional points if matches happen at special places, 
 ```
 where the maximum is computed over all matches of `query` in `path`. We call "match" every (possibly non-contiguous) substring of `path` whose characters are the ones of `query`, in the same order.
 
-### Case-sensitivity
-
-By default, matches are "case-semi-sensitive". This means that a lower case character `a` can match both `a` and `A`, but an upper case character `A` can only match `A`. Matches can be set to be case-sensitive or case-insensitive using the flags `-S` and `-I`.
-
 ## Final score
 Based on these two numbers, Jumper ranks paths using
 ```math
 \text{score}(\text{query}, \text{path}, t) =  \text{frecency}(\text{path}, t) + \beta \, \text{accuracy}(\text{query}, \text{path}).
 ```
-where $\beta = 0.5$ by default, and be updated with the flag `-b <value>`. 
+where $\beta = 1.0$ by default, and be updated with the flag `-b <value>`. 
 This additive definition is motivated by the following.
 
 Suppose that one is fuzzy-finding a path, adding one character to the `query` at a time.

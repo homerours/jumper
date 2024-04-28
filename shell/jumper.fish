@@ -4,8 +4,8 @@ end
 if not set -q __JUMPER_FILES
     set __JUMPER_FILES ~/.jfiles
 end
-if not set -q __JUMPER_MAX_RESULTS
-    set __JUMPER_MAX_RESULTS 150
+if not set -q __JUMPER_FLAGS
+    set __JUMPER_FLAGS '-c -n 500'
 end
 
 if not set -q __JUMPER_FZF_FILES_PREVIEW
@@ -65,7 +65,7 @@ end
 function jumper-find-dir -d "Fuzzy-find directories"
     set -l commandline (commandline -t)
     set -l prefix (string match -r -- '^-[^\s=]+=' $commandline)
-    set -l __JUMPER "jumper -c -f $__JUMPER_FOLDERS -n $__JUMPER_MAX_RESULTS"
+    set -l __JUMPER "jumper -c -f $__JUMPER_FOLDERS $__JUMPER_FLAGS"
     set result (
     fzf --height=70% --layout=reverse \
         --keep-right \
@@ -83,7 +83,7 @@ end
 function jumper-find-file -d "Fuzzy-find files"
     set -l commandline (commandline -t)
     set -l prefix (string match -r -- '^-[^\s=]+=' $commandline)
-    set -l __JUMPER "jumper -c -f $__JUMPER_FILES -n $__JUMPER_MAX_RESULTS"
+    set -l __JUMPER "jumper -c -f $__JUMPER_FILES $__JUMPER_FLAGS"
     set result (
     fzf --height=70% --layout=reverse \
         --keep-right \

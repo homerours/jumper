@@ -17,7 +17,8 @@ static const char HELP_STRING[] =
     " -c, --color               Highlight matches in outputs.\n"
     " -s, --scores              Print the scores of the matches.\n"
     " -b, --beta=BETA           Specify an inverse temperature\n"
-    "                           when computing the score (default=0.5).\n"
+    "                           when computing the score (default=1.0).\n"
+    " -x, --syntax=syntax       Query syntax (default: extended).\n"
     " -I, --case-insensitive    Make the search case-insenstitive.\n"
     " -S, --case-sensitive      Make the search case-senstitive.\n\n"
     "Update the database:\n"
@@ -27,17 +28,19 @@ static const char HELP_STRING[] =
 
 static void help(const char *argv0) { printf(HELP_STRING, argv0); }
 
-static struct option longopts[] = {{"file", required_argument, NULL, 'f'},
-                                   {"add", no_argument, NULL, 'a'},
-                                   {"weight", required_argument, NULL, 'w'},
-                                   {"scores", no_argument, NULL, 's'},
-                                   {"color", no_argument, NULL, 'c'},
-                                   {"case-insenstitive", no_argument, NULL, 'I'},
-                                   {"case-sensitive", no_argument, NULL, 'S'},
-                                   {"beta", required_argument, NULL, 'b'},
-                                   {"n-results", required_argument, NULL, 'n'},
-                                   {"help", no_argument, NULL, 'h'},
-                                   {NULL, 0, NULL, 0}};
+static struct option longopts[] = {
+    {"file", required_argument, NULL, 'f'},
+    {"add", no_argument, NULL, 'a'},
+    {"weight", required_argument, NULL, 'w'},
+    {"scores", no_argument, NULL, 's'},
+    {"color", no_argument, NULL, 'c'},
+    {"case-insenstitive", no_argument, NULL, 'I'},
+    {"case-sensitive", no_argument, NULL, 'S'},
+    {"beta", required_argument, NULL, 'b'},
+    {"n-results", required_argument, NULL, 'n'},
+    {"syntax", required_argument, NULL, 'x'},
+    {"help", no_argument, NULL, 'h'},
+    {NULL, 0, NULL, 0}};
 
 static void args_init(Arguments *args) {
   args->file_path = NULL;
@@ -46,11 +49,26 @@ static void args_init(Arguments *args) {
   args->highlight = false;
   args->print_scores = false;
   args->mode = MODE_search;
+  args->syntax = SYNTAX_extended;
   args->case_mode = CASE_MODE_semi_sensitive;
-  // frecency(path visited every day) ~ frecency(path visited every two days) + 1
-  // a beta of 0.5 makes this correspond to a difference of +2 in matching score.
-  args->beta = 0.5; 
+  // frecency(path visited every day) ~ frecency(path visited every two days) +
+  // 1 a beta of 1.0 makes this correspond to a difference of +2 in matching
+  // score.
+  args->beta = 1.0;
   args->weight = 1.0;
+}
+
+static SYNTAX parse_syntax(const char *syntax) {
+  if (strcmp(syntax, "extended") == 0) {
+    return SYNTAX_extended;
+  } else if (strcmp(syntax, "fuzzy") == 0) {
+    return SYNTAX_fuzzy;
+  } else if (strcmp(syntax, "exact") == 0) {
+    return SYNTAX_exact;
+  }
+  fprintf(stderr, "ERROR: Invalid argument for -x (--syntax): %s\n", syntax);
+  fprintf(stderr, "Accepted arguments: extended, fuzzy, exact.\n");
+  exit(EXIT_FAILURE);
 }
 
 Arguments *parse_arguments(int argc, char **argv) {
@@ -63,7 +81,8 @@ Arguments *parse_arguments(int argc, char **argv) {
     exit(EXIT_SUCCESS);
   }
   int c;
-  while ((c = getopt_long(argc, argv, "cashISf:n:w:b:", longopts, NULL)) != -1) {
+  while ((c = getopt_long(argc, argv, "cashISf:n:w:b:x:", longopts, NULL)) !=
+         -1) {
     switch (c) {
     case 'f':
       args->file_path = optarg;
@@ -79,6 +98,9 @@ Arguments *parse_arguments(int argc, char **argv) {
       break;
     case 'c':
       args->highlight = true;
+      break;
+    case 'x':
+      args->syntax = parse_syntax(optarg);
       break;
     case 's':
       args->print_scores = true;
@@ -112,8 +134,9 @@ Arguments *parse_arguments(int argc, char **argv) {
         exit(EXIT_FAILURE);
       }
       if (args->weight < 0) {
-        fprintf(stderr,
-                "ERROR: The weight of a visit (-w option) can't be negative.\n");
+        fprintf(
+            stderr,
+            "ERROR: The weight of a visit (-w option) can't be negative.\n");
         exit(EXIT_FAILURE);
       }
       break;
