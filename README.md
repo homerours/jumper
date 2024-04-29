@@ -109,7 +109,7 @@ export __JUMPER_FILES='/path/to/custom/database_for_files'
 
 # Update the options used when fuzzy-finding
 # Default: '-c -n 500' (colors the matches + print only the top 500 entries)
-__JUMPER_FLAGS='-c -n 1000 --syntax=fuzzy --case-insensitive'
+__JUMPER_FLAGS='-c -n 1000 --syntax=fuzzy --case-insensitive --beta=0.5'
 
 # Change the default binding (ctrl-p) to toggle preview:
 __JUMPER_TOGGLE_PREVIEW='ctrl-o'

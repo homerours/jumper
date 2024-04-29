@@ -117,6 +117,7 @@ static void lookup(Arguments *args) {
   }
   print_heap(heap, args->print_scores);
   fclose(fp);
+  free_query(query);
   if (line) {
     free(line);
   }

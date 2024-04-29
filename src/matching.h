@@ -22,5 +22,7 @@ typedef struct Query {
 
 struct Query parse_query(const char *query, SYNTAX syntax);
 
+void free_query(Query query);
+
 int match_accuracy(const char *string, Query query, bool colors,
                    char **matched_string, CASE_MODE case_mode);

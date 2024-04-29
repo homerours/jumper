@@ -234,17 +234,17 @@ static bool quick_match(const char *string, const char *query,
 Query parse_query(const char *query, SYNTAX syntax) {
   Query squery;
   int n = strlen(query);
-  squery.query = (char *)malloc(n * sizeof(char));
   squery.gap_allowed = (bool *)malloc((n + 1) * sizeof(bool));
   if (syntax != SYNTAX_extended) {
     squery.length = n;
-    squery.query = strcpy(squery.query, query);
+    squery.query = strdup(query);
     squery.gap_allowed[0] = true;
     squery.gap_allowed[n] = true;
     for (int i = 1; i < n; i++) {
       squery.gap_allowed[i] = (syntax == SYNTAX_fuzzy);
     }
   } else {
+    squery.query = (char *)malloc((n + 1) * sizeof(char));
     char *q = squery.query;
     const char *block_start = query;
     const char *next_space;
@@ -283,9 +283,15 @@ Query parse_query(const char *query, SYNTAX syntax) {
         block_start++;
       }
     }
+    squery.query[j - 1] = '\0';
     squery.length = j - 1;
   }
   return squery;
+}
+
+void free_query(Query query) {
+  free(query.query);
+  free(query.gap_allowed);
 }
 
 int match_accuracy(const char *string, Query query, bool colors,
