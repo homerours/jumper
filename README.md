@@ -1,12 +1,12 @@
 # Jumper
 
-Jumper is a command-line program that helps you jumping to (and fuzzy-finding) the directories and files that you frequently visit.
+Jumper is a command-line program that helps you jumping to the directories and files that you frequently visit.
 It relies on [fzf](https://github.com/junegunn/fzf) for fuzzy-finding and is heavily inspired by [z](https://github.com/rupa/z).
 
 It differentiates itself from the plethora of similar tools on the following points:
 - Efficient ranking mechanism which combines the "frecency" of the match (as [z](https://github.com/rupa/z) does) and the accuracy of the match (as [fzf](https://github.com/junegunn/fzf) or [fzy](https://github.com/jhawthorn/fzy) do). This allows to find files/folders accurately in very few keystrokes. More details [here](https://github.com/homerours/jumper/blob/master/doc/algorithm.md).
 - It is not restricted to folders. It allows to quickly navigate files, or anything you want (you can easily create and query a new custom database).
-- It allows fuzzy-finding.
+- It can be run in "interactive mode".
 - Written in C, for speed and portability.
 
 [Usage](#usage) - [Installation](#installation) - [Vim-Neovim](#vim)
@@ -15,8 +15,8 @@ It differentiates itself from the plethora of similar tools on the following poi
 
 - Use `z <something>` to jump to the most frequent/recent directories matching `<something>`.
 - Use `zf <something>` to open (in `$EDITOR`) the most frequent/recent file matching `<something>`.
-- Use `Ctrl+Y` to fuzzy-find directories matching a query (`fzf` required).
-- Use `Ctrl+U` to fuzzy-find files matching a query (`fzf` required).
+- Use `Ctrl+Y` to fuzzy-find directories matching a query interactively (`fzf` required).
+- Use `Ctrl+U` to fuzzy-find files matching a query interactively (`fzf` required).
 
 All these mappings can be updated, see [Configuration](#configuration) below.
 
@@ -70,7 +70,7 @@ By default, matches are "case-semi-sensitive". This means that a lower case char
 ### Requirements
 - A C compiler for installation. The makefile uses `gcc`.
 - Bash (>=4.0), Zsh or Fish.
-- [fzf](https://github.com/junegunn/fzf). This is not mandatory, but you will need it for fuzzy-finding.
+- [fzf](https://github.com/junegunn/fzf). This is not mandatory, but you will need it for running queries interactively.
 
 ### Installation process
 
@@ -107,7 +107,7 @@ However, the default keybindings, previewers and "database-files" can still be c
 export __JUMPER_FOLDERS='/path/to/custom/database_for_folders'
 export __JUMPER_FILES='/path/to/custom/database_for_files'
 
-# Update the options used when fuzzy-finding
+# Update jumper's options
 # Default: '-c -n 500' (colors the matches + print only the top 500 entries)
 __JUMPER_FLAGS='-c -n 1000 --syntax=fuzzy --case-insensitive --beta=0.5'
 
@@ -132,14 +132,14 @@ bind -x '"\C-f": jumper-find-file'
 
 - Use `__jumper_clean_folders_db` to remove from the database directories that do not exist anymore.
 - Use `__jumper_clean_files_db` to remove from the database files that do not exist anymore.
-For more advanced maintenance, the files `~/.jfolders` and `~/.jfiles` can be edited directly.
+For more advanced/custom maintenance, the files `~/.jfolders` and `~/.jfiles` can be edited directly.
 
 ## Vim-Neovim
 
 Jumper can be used in Vim and Neovim. Depending on your configuration, you can either use it
-- without any plugin, see below. However, you won't be able to do any fuzzy-finding.
-- with the [jumper.nvim](https://github.com/homerours/jumper.nvim) plugin (prefered). This uses either [Telescope](https://github.com/nvim-telescope/telescope.nvim) or [fzf-lua](https://github.com/ibhagwan/fzf-lua) as backend for fuzzy-finding.
-- with the [jumper.vim](https://github.com/homerours/jumper.vim) plugin (works for both Vim/Neovim). This uses [fzf "native" plugin](https://github.com/junegunn/fzf/blob/master/README-VIM.md) for fuzzy-finding.
+- without any plugin, see below. However, you won't be able to do run queries interactively.
+- with the [jumper.nvim](https://github.com/homerours/jumper.nvim) plugin (prefered). This uses either [Telescope](https://github.com/nvim-telescope/telescope.nvim) or [fzf-lua](https://github.com/ibhagwan/fzf-lua) as backend for the UI.
+- with the [jumper.vim](https://github.com/homerours/jumper.vim) plugin (works for both Vim/Neovim). This uses [fzf "native" plugin](https://github.com/junegunn/fzf/blob/master/README-VIM.md) as UI.
 
 ### Without any plugins
 
@@ -156,8 +156,7 @@ vim.api.nvim_create_autocmd({ "BufNewFile", "BufReadPre" }, {
         local filename = vim.api.nvim_buf_get_name(ev.buf)
         -- do not log .git files, and buffers opened by plugins (which often contain some ':')
         if not (string.find(filename, "/.git") or string.find(filename, ":")) then
-            local cmd = "jumper -f ${__JUMPER_FILES} -a '" .. filename .. "'" 
-            os.execute(cmd)
+            vim.fn.system({ "jumper", "-f", os.getenv("__JUMPER_FILES"),  "-a", filename })
         end
     end
 })
