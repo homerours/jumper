@@ -62,6 +62,20 @@ __jumper_ffile() {
 		--bind "change:reload:sleep 0.05; ${__JUMPER} {q} || true"
 }
 
+zi() {
+	new_path=$(__jumper_fdir)
+	if [[ -n $new_path ]]; then
+		cd "$new_path"
+	fi
+}
+
+zfi() {
+    file=$(__jumper_ffile)
+	if [[ -n $file ]]; then
+		$EDITOR "$file"
+	fi
+}
+
 # Database's update
 __jumper_update_db() {
     if [[ ! -z $__jumper_current_folder ]]; then

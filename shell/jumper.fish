@@ -62,11 +62,8 @@ function zf -d "Jump to file"
     end
 end
 
-function jumper-find-dir -d "Fuzzy-find directories"
-    set -l commandline (commandline -t)
-    set -l prefix (string match -r -- '^-[^\s=]+=' $commandline)
+function __jumper_fdir -d "run fzf on jumper's directories"
     set -l __JUMPER "jumper -c -f $__JUMPER_FOLDERS $__JUMPER_FLAGS"
-    set result (
     fzf --height=70% --layout=reverse \
         --keep-right \
         --ansi --disabled --query "$argv" \
@@ -74,7 +71,38 @@ function jumper-find-dir -d "Fuzzy-find directories"
         --preview-window=hidden --bind "$__JUMPER_TOGGLE_PREVIEW:toggle-preview" \
         --bind "start:reload:$__JUMPER {q}" \
         --bind "change:reload:sleep 0.05; $__JUMPER {q} || true"
-    )
+end
+
+function __jumper_ffile -d "run fzf on jumper's files"
+    set -l __JUMPER "jumper -c -f $__JUMPER_FILES $__JUMPER_FLAGS"
+    fzf --height=70% --layout=reverse \
+        --keep-right \
+        --ansi --disabled --query "$argv" \
+        --preview "$__JUMPER_FZF_FILES_PREVIEW {}" \
+        --preview-window=hidden --bind "$__JUMPER_TOGGLE_PREVIEW:toggle-preview" \
+        --bind "start:reload:$__JUMPER {q}" \
+        --bind "change:reload:sleep 0.05; $__JUMPER {q} || true"
+end
+
+function zi -d "Interactive jump to folder"
+	set new_path (__jumper_fdir)
+	if [ -n "$new_path" ]
+		cd "$new_path"
+	end
+end
+
+function zfi -d "Interactive jump to file"
+    set file (__jumper_ffile)
+	if [ -n "$file" ]
+		eval "$EDITOR '$file'"
+	end
+end
+
+function jumper-find-dir -d "Fuzzy-find directories"
+    set -l commandline (commandline -t)
+    set -l prefix (string match -r -- '^-[^\s=]+=' $commandline)
+    set -l __JUMPER "jumper -c -f $__JUMPER_FOLDERS $__JUMPER_FLAGS"
+    set result (__jumper_fdir)
     commandline -it -- $prefix
     commandline -it -- (string escape $result)
     commandline -f repaint
@@ -83,16 +111,7 @@ end
 function jumper-find-file -d "Fuzzy-find files"
     set -l commandline (commandline -t)
     set -l prefix (string match -r -- '^-[^\s=]+=' $commandline)
-    set -l __JUMPER "jumper -c -f $__JUMPER_FILES $__JUMPER_FLAGS"
-    set result (
-    fzf --height=70% --layout=reverse \
-        --keep-right \
-        --ansi --disabled --query "$argv" \
-        --preview "$__JUMPER_FZF_FILES_PREVIEW {}" \
-        --preview-window=hidden --bind "$__JUMPER_TOGGLE_PREVIEW:toggle-preview" \
-        --bind "start:reload:$__JUMPER {q}" \
-        --bind "change:reload:sleep 0.05; $__JUMPER {q} || true"
-    )
+    set result (__jumper_ffile)
     commandline -it -- $prefix
     commandline -it -- (string escape $result)
     commandline -f repaint
