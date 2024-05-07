@@ -19,7 +19,7 @@ typedef struct Scores {
 typedef struct MatchingData {
   const char *string;
   const char *query;
-  bool *jump_allowed;
+  bool *gap_allowed;
   int n;
   int m;
   int *bonus;
@@ -31,10 +31,11 @@ typedef struct MatchingData {
 static const int match_bonus = 20;
 static const int post_separator_bonus = 4;
 static const int post_slash_bonus = 6;
+static const int camelcase_bonus = 2;
 static const int uppercase_bonus = 6;
-static const int end_of_path_bonus = 3;
+static const int end_of_path_bonus = 4;
 // Penalties
-static const int first_gap_penalty = 19;
+static const int first_gap_penalty = 16;
 static const int gap_penalty = 1;
 
 static inline bool match_char(char a, char b, CASE_MODE case_mode) {
@@ -61,7 +62,10 @@ static int *matching_bonus(const char *string, int n) {
   int last_slash = -1;
   bool prev_is_sep = true;
   for (int i = 0; i < n; i++) {
-    bonus[i] = match_bonus;
+    bonus[i] = 0;
+    if (i > 0 && islower(string[i - 1]) && isupper(string[i])) {
+      bonus[i] += camelcase_bonus;
+    }
     bool is_sep = is_separator(string[i]);
     if (is_sep) {
       if (string[i] == '/') {
@@ -87,12 +91,16 @@ static int *matching_bonus(const char *string, int n) {
 static int match_score(MatchingData *data, int i, int j) {
   const char a = data->query[j - 1];
   char b = data->string[i - 1];
-  int bonus = data->bonus[i - 1];
   if (match_char(b, a, data->case_mode)) {
+    int bonus = data->bonus[i - 1];
+    int score = match_bonus + bonus;
     if (isupper(b) && a == b) {
-      return bonus + uppercase_bonus;
+      score += uppercase_bonus;
     }
-    return bonus;
+    if (j == 1 && bonus > 0) {
+      score += 2;
+    }
+    return score;
   }
   return -1;
 }
@@ -117,7 +125,7 @@ static MatchingData *make_data(const char *string, Query query,
   data->m = m;
   data->string = string;
   data->query = query.query;
-  data->jump_allowed = query.gap_allowed;
+  data->gap_allowed = query.gap_allowed;
   data->matrix = matrix;
   data->bonus = matching_bonus(string, n - 1);
   data->case_mode = case_mode;
@@ -138,7 +146,7 @@ static Scores *compute_scores(MatchingData *data, int i, int j) {
   Scores *scores = get_scores(data, i, j);
   Scores *top = get_scores(data, i - 1, j);
   Scores *top_left = get_scores(data, i - 1, j - 1);
-  if (!data->jump_allowed[j]) {
+  if (!data->gap_allowed[j]) {
     scores->gap = -1;
   } else {
     int g = max(top->gap - gap_penalty, top->match - first_gap_penalty);
@@ -149,7 +157,7 @@ static Scores *compute_scores(MatchingData *data, int i, int j) {
     }
   }
   int mscore = match_score(data, i, j);
-  if (mscore > 0 && (j > 1 || i == 1 || data->jump_allowed[0])) {
+  if (mscore > 0 && (j > 1 || i == 1 || data->gap_allowed[0])) {
     int max_score = max(top_left->gap, top_left->match);
     if (max_score >= 0) {
       scores->match = max_score + mscore;
@@ -325,7 +333,7 @@ int match_accuracy(const char *string, Query query, bool colors,
         jmax = max(j, jmax);
       }
       if (j == (m - 1) && scores->match >= maximum &&
-          (data->jump_allowed[m - 1] || i == n - 1)) {
+          (data->gap_allowed[m - 1] || i == n - 1)) {
         imax = i;
         maximum = scores->match;
       }
