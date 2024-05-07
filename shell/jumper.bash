@@ -1,7 +1,7 @@
 # Common to bash and zsh
 [[ -n $__JUMPER_FOLDERS ]] || export __JUMPER_FOLDERS=~/.jfolders
 [[ -n $__JUMPER_FILES ]] || export __JUMPER_FILES=~/.jfiles
-[[ -n $__JUMPER_FLAGS ]] || __JUMPER_FLAGS='-c -n 500'
+[[ -n $__JUMPER_FLAGS ]] || __JUMPER_FLAGS='-cH -n 500'
 
 if [[ -z $__JUMPER_FZF_FILES_PREVIEW ]]; then
     if [[ -n $(which bat) ]]; then
@@ -76,20 +76,6 @@ zfi() {
 	fi
 }
 
-# Database's update
-__jumper_update_db() {
-    if [[ ! -z $__jumper_current_folder ]]; then
-        if [[ $__jumper_current_folder != $PWD ]]; then
-            # working directory has changed, this visit has more weight
-            jumper -f "${__JUMPER_FOLDERS}" -w 1.0 -a "$PWD"
-        else
-            # working directory has not changed
-            jumper -f "${__JUMPER_FOLDERS}" -w 0.3 -a "$PWD"
-        fi
-    fi
-    __jumper_current_folder=$PWD
-}
-
 # Clean simlinks
 __jumper_delete_duplicate_symlinks(){
     tempfile="${__JUMPER_FOLDERS}_temp"
@@ -126,30 +112,47 @@ __jumper_clean_symlinks(){
 __jumper_clean_folders_db() {
     tempfile="${__JUMPER_FOLDERS}_temp"
     [[ -f ${tempfile} ]] && rm ${tempfile}
-    while IFS= read -r line ; do
-        entry="${line%%|*}"
+    while IFS=\| read -r entry visits timestamp; do
         if [[ -d $entry ]]; then
-            echo "$line" >> ${tempfile}
-        else
-            echo "Removing $entry from database."
+            echo "$entry|$visits|$timestamp" >> ${tempfile}
         fi
     done < "${__JUMPER_FOLDERS}"
-    mv "${tempfile}" "${__JUMPER_FOLDERS}"
+    [[ -f ${tempfile} ]] && mv "${tempfile}" "${__JUMPER_FOLDERS}"
 }
 
 # Remove entries for which the file does not exist anymore
 __jumper_clean_files_db() {
     tempfile="${__JUMPER_FILES}_temp"
     [[ -f ${tempfile} ]] && rm ${tempfile}
-    while IFS= read -r line ; do
-        entry="${line%%|*}"
+    while IFS=\| read -r entry visits timestamp; do
         if [[ -f $entry ]]; then
-            echo "$line" >> ${tempfile}
-        else
-            echo "Removing $entry from database."
+            echo "$entry|$visits|$timestamp" >> ${tempfile}
         fi
     done < "${__JUMPER_FILES}"
-    mv "${tempfile}" "${__JUMPER_FILES}"
+    [[ -f ${tempfile} ]] && mv "${tempfile}" "${__JUMPER_FILES}"
+}
+
+_jumper_clean() {
+    (__jumper_clean_files_db > /dev/null 2>&1 && __jumper_clean_folders_db > /dev/null 2>&1 &)
+}
+
+# Database's update
+__jumper_update_db() {
+    if [[ ! -z $__jumper_current_folder ]]; then
+        if [[ $__jumper_current_folder != $PWD ]]; then
+            # working directory has changed, this visit has more weight
+            jumper -f "${__JUMPER_FOLDERS}" -w 1.0 -a "$PWD"
+        else
+            # working directory has not changed
+            jumper -f "${__JUMPER_FOLDERS}" -w 0.3 -a "$PWD"
+        fi
+    fi
+    __jumper_current_folder=$PWD
+
+    # Remove files and folders that do not exist anymore
+    if [[ -n $__JUMPER_CLEAN_FREQ ]] && [[ $(( RANDOM % __JUMPER_CLEAN_FREQ )) == 0 ]]; then
+        _jumper_clean
+    fi
 }
 
 # For Bash

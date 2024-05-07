@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 const int MAX_HEAP_SIZE = 50000;
 
@@ -84,7 +85,7 @@ void free_heap(Heap *heap) {
   free(heap);
 }
 
-void print_heap(Heap *heap, bool print_scores) {
+void print_heap(Heap *heap, bool print_scores, bool tilde) {
   const int n = heap->n_items;
   if (n != heap->size) {
     heapify(heap);
@@ -94,11 +95,23 @@ void print_heap(Heap *heap, bool print_scores) {
     swap(heap->items, heap->items + heap->n_items);
     bubble_down(heap, 0);
   }
+  const char *home_folder;
+  int home_len = 0;
+  const char *path;
+  if (tilde) {
+    home_folder = getenv("HOME");
+    home_len = strlen(home_folder);
+  }
   for (int i = 0; i < n; i++) {
     if (print_scores) {
-      printf("%.3f  %s\n", heap->items[i].value, heap->items[i].path);
+      printf("%.3f  ", heap->items[i].value);
+    }
+    path = heap->items[i].path;
+    if (tilde && strncmp(path, home_folder, home_len) == 0 &&
+        path[home_len] == '/') {
+      printf("~%s\n", path + home_len);
     } else {
-      printf("%s\n", heap->items[i].path);
+      printf("%s\n", path);
     }
     free(heap->items[i].path);
   }

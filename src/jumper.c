@@ -115,7 +115,7 @@ static void lookup(Arguments *args) {
       insert(heap, score, matched_str);
     }
   }
-  print_heap(heap, args->print_scores);
+  print_heap(heap, args->print_scores, args->home_tilde);
   fclose(fp);
   free_query(query);
   if (line) {

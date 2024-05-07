@@ -34,6 +34,7 @@ static struct option longopts[] = {
     {"weight", required_argument, NULL, 'w'},
     {"scores", no_argument, NULL, 's'},
     {"color", no_argument, NULL, 'c'},
+    {"home-tilde", no_argument, NULL, 'H'},
     {"case-insenstitive", no_argument, NULL, 'I'},
     {"case-sensitive", no_argument, NULL, 'S'},
     {"beta", required_argument, NULL, 'b'},
@@ -48,6 +49,7 @@ static void args_init(Arguments *args) {
   args->n_results = MAX_HEAP_SIZE;
   args->highlight = false;
   args->print_scores = false;
+  args->home_tilde = false;
   args->mode = MODE_search;
   args->syntax = SYNTAX_extended;
   args->case_mode = CASE_MODE_semi_sensitive;
@@ -81,7 +83,7 @@ Arguments *parse_arguments(int argc, char **argv) {
     exit(EXIT_SUCCESS);
   }
   int c;
-  while ((c = getopt_long(argc, argv, "cashISf:n:w:b:x:", longopts, NULL)) !=
+  while ((c = getopt_long(argc, argv, "cashHISf:n:w:b:x:", longopts, NULL)) !=
          -1) {
     switch (c) {
     case 'f':
@@ -98,6 +100,9 @@ Arguments *parse_arguments(int argc, char **argv) {
       break;
     case 'c':
       args->highlight = true;
+      break;
+    case 'H':
+      args->home_tilde = true;
       break;
     case 'x':
       args->syntax = parse_syntax(optarg);

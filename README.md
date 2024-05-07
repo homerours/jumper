@@ -108,7 +108,7 @@ export __JUMPER_FOLDERS='/path/to/custom/database_for_folders'
 export __JUMPER_FILES='/path/to/custom/database_for_files'
 
 # Update jumper's options
-# Default: '-c -n 500' (colors the matches + print only the top 500 entries)
+# Default: '-cH -n 500' (colors the matches, replace $HOME with ~/ and print only the top 500 entries)
 __JUMPER_FLAGS='-c -n 1000 --syntax=fuzzy --case-insensitive --beta=0.5'
 
 # Change the default binding (ctrl-p) to toggle preview:

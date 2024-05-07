@@ -5,7 +5,7 @@ if not set -q __JUMPER_FILES
     set __JUMPER_FILES ~/.jfiles
 end
 if not set -q __JUMPER_FLAGS
-    set __JUMPER_FLAGS '-c -n 500'
+    set __JUMPER_FLAGS '-cH -n 500'
 end
 
 if not set -q __JUMPER_FZF_FILES_PREVIEW

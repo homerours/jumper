@@ -15,6 +15,7 @@ typedef struct Arguments {
   double weight;
   bool highlight;
   bool print_scores;
+  bool home_tilde;
   int n_results;
   MODE mode;
   SYNTAX syntax;
