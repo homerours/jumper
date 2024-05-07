@@ -46,7 +46,7 @@ jumper -f <database-file> -a <path>
 adds the `<path>` to the `<database-file>`, or updates its record (i.e. updates the visits count and timestamp) if already present.
 From these two main functions, the shell scripts `shell/jumper.{bash,zsh,fish}` define various functions/mappings (see [Usage](#usage) above) allowing to quickly jump around
 - **Folders**: Folders' visits are recorded in the file `${__JUMPER_FOLDERS}` using a shell pre-command.
-- **Files**: Files open are recorded in the file `${__JUMPER_FILES}` by making Vim run `jumper -f ${__JUMPER_FILES} -a <current-file>` each time a file is open. This can be adapted to other editors.
+- **Files**: Files open are recorded in the file `${__JUMPER_FILES}` by making Vim run `jumper -f ${__JUMPER_FILES} -a <current-file>` each time a file is opened. This can be adapted to other editors.
 
 ### Search syntax
 
@@ -130,9 +130,32 @@ bind -x '"\C-f": jumper-find-file'
 
 #### Database maintenance
 
-- Use `__jumper_clean_folders_db` to remove from the database directories that do not exist anymore.
-- Use `__jumper_clean_files_db` to remove from the database files that do not exist anymore.
+Use the function `_jumper_clean` to remove from the databases the files and directories that do not exist anymore. To clean the files' or folders' database only, use `__jumper_clean_files_db` or `__jumper_clean_folders_db`.
+
+This cleaning can be done automatically by setting the variable `__JUMPER_CLEAN_FREQ` to some integer value `N`. In such case, the function `_jumper_clean` will be called on average every `N` command run in the terminal.
+
 For more advanced/custom maintenance, the files `~/.jfolders` and `~/.jfiles` can be edited directly.
+
+#### Performance
+
+Querying and updating `jumper`'s database is very fast. On my old 2012 laptop, these operations (over a database with 1000 entries) run in about 4ms:
+```bash
+$ time for i in {1..100}; do jumper -f ~/.jfolders hello > /dev/null; done
+real    0m0.432s
+user    0m0.165s
+sys     0m0.198s
+$ time for i in {1..100}; do ./jumper -f ~/.jfolders -a test; done
+real    0m0.383s
+user    0m0.118s
+sys     0m0.209s
+```
+For comparison: 
+```bash
+$ time for i in {1..100}; do wc -l ~/.jfolders > /dev/null; done
+real    0m0.357s
+user    0m0.117s
+sys     0m0.233s
+```
 
 ## Vim-Neovim
 
