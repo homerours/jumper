@@ -16,6 +16,7 @@ static const char HELP_STRING[] =
     " -n, --n-results=N         Maximum number of results to show.\n"
     " -c, --color               Highlight matches in outputs.\n"
     " -s, --scores              Print the scores of the matches.\n"
+    " -H, --home-tilde          Replace $HOME with ~ when printing results.\n"
     " -b, --beta=BETA           Specify an inverse temperature\n"
     "                           when computing the score (default=1.0).\n"
     " -x, --syntax=syntax       Query syntax (default: extended).\n"
