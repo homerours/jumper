@@ -120,7 +120,7 @@ Arguments *parse_arguments(int argc, char **argv) {
         optarg = argv[optind++];
       }
       if (optarg == NULL) {
-        const size_t max_cwd_len = 100;
+        const size_t max_cwd_len = 256;
         char *cwd = (char *)malloc(max_cwd_len * sizeof(char));
         args->relative_to = getcwd(cwd, max_cwd_len);
       } else {

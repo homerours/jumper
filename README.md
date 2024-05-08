@@ -148,7 +148,7 @@ $ time for i in {1..100}; do jumper -f ~/.jfolders hello > /dev/null; done
 real    0m0.432s
 user    0m0.165s
 sys     0m0.198s
-$ time for i in {1..100}; do ./jumper -f ~/.jfolders -a test; done
+$ time for i in {1..100}; do jumper -f ~/.jfolders -a test; done
 real    0m0.383s
 user    0m0.118s
 sys     0m0.209s

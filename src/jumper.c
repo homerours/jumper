@@ -127,7 +127,6 @@ int main(int argc, char **argv) {
   Arguments *args = parse_arguments(argc, argv);
   if (args->mode == MODE_search) {
     lookup(args);
-    // printf("r: %s\n", args->relative_to);
   } else {
     update_database(args->file_path, args->key, args->weight);
   }
