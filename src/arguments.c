@@ -16,12 +16,14 @@ static const char HELP_STRING[] =
     " -n, --n-results=N         Maximum number of results to show.\n"
     " -c, --color               Highlight matches in outputs.\n"
     " -s, --scores              Print the scores of the matches.\n"
-    " -H, --home-tilde          Replace $HOME with ~ when printing results.\n"
     " -b, --beta=BETA           Specify an inverse temperature\n"
     "                           when computing the score (default=1.0).\n"
     " -x, --syntax=syntax       Query syntax (default: extended).\n"
     " -I, --case-insensitive    Make the search case-insenstitive.\n"
-    " -S, --case-sensitive      Make the search case-senstitive.\n\n"
+    " -S, --case-sensitive      Make the search case-senstitive.\n"
+    " -H, --home-tilde          Substitute $HOME with ~ when printing results.\n"
+    " -r, --relative=[PATH]     Outputs relative paths to PATH if\n"
+    "                           specified (defaults to current directory).\n\n"
     "Update the database:\n"
     " -a, --add                 Add the query to the database or\n"
     "                           update its record.\n"
@@ -38,6 +40,7 @@ static struct option longopts[] = {
     {"home-tilde", no_argument, NULL, 'H'},
     {"case-insenstitive", no_argument, NULL, 'I'},
     {"case-sensitive", no_argument, NULL, 'S'},
+    {"relative", optional_argument, NULL, 'r'},
     {"beta", required_argument, NULL, 'b'},
     {"n-results", required_argument, NULL, 'n'},
     {"syntax", required_argument, NULL, 'x'},
@@ -51,6 +54,7 @@ static void args_init(Arguments *args) {
   args->highlight = false;
   args->print_scores = false;
   args->home_tilde = false;
+  args->relative_to = NULL;
   args->mode = MODE_search;
   args->syntax = SYNTAX_extended;
   args->case_mode = CASE_MODE_semi_sensitive;
@@ -84,8 +88,8 @@ Arguments *parse_arguments(int argc, char **argv) {
     exit(EXIT_SUCCESS);
   }
   int c;
-  while ((c = getopt_long(argc, argv, "cashHISf:n:w:b:x:", longopts, NULL)) !=
-         -1) {
+  while ((c = getopt_long(argc, argv, "cashHISf:n:w:b:x:r::", longopts,
+                          NULL)) != -1) {
     switch (c) {
     case 'f':
       args->file_path = optarg;
@@ -110,6 +114,18 @@ Arguments *parse_arguments(int argc, char **argv) {
       break;
     case 's':
       args->print_scores = true;
+      break;
+    case 'r':
+      if (optarg == NULL && optind < argc && argv[optind][0] == '/') {
+        optarg = argv[optind++];
+      }
+      if (optarg == NULL) {
+        const size_t max_cwd_len = 100;
+        char *cwd = (char *)malloc(max_cwd_len * sizeof(char));
+        args->relative_to = getcwd(cwd, max_cwd_len);
+      } else {
+        args->relative_to = optarg;
+      }
       break;
     case 'n':
       if (sscanf(optarg, "%d", &args->n_results) != 1) {

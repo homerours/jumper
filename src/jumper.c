@@ -115,7 +115,7 @@ static void lookup(Arguments *args) {
       insert(heap, score, matched_str);
     }
   }
-  print_heap(heap, args->print_scores, args->home_tilde);
+  print_heap(heap, args->print_scores, args->relative_to, args->home_tilde);
   fclose(fp);
   free_query(query);
   if (line) {
@@ -127,9 +127,10 @@ int main(int argc, char **argv) {
   Arguments *args = parse_arguments(argc, argv);
   if (args->mode == MODE_search) {
     lookup(args);
+    // printf("r: %s\n", args->relative_to);
   } else {
     update_database(args->file_path, args->key, args->weight);
   }
   free(args);
-  return 0;
+  return EXIT_SUCCESS;
 }

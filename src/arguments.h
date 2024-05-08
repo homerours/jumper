@@ -17,6 +17,7 @@ typedef struct Arguments {
   bool print_scores;
   bool home_tilde;
   int n_results;
+  const char *relative_to;
   MODE mode;
   SYNTAX syntax;
   CASE_MODE case_mode;

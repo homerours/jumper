@@ -85,7 +85,8 @@ void free_heap(Heap *heap) {
   free(heap);
 }
 
-void print_heap(Heap *heap, bool print_scores, bool tilde) {
+void print_heap(Heap *heap, bool print_scores, const char *relative_to,
+                bool tilde) {
   const int n = heap->n_items;
   if (n != heap->size) {
     heapify(heap);
@@ -97,18 +98,22 @@ void print_heap(Heap *heap, bool print_scores, bool tilde) {
   }
   const char *home_folder;
   int home_len = 0;
-  const char *path;
   if (tilde) {
     home_folder = getenv("HOME");
     home_len = strlen(home_folder);
   }
+  const int relative_len = (relative_to == NULL) ? 0 : strlen(relative_to);
+  const char *path;
   for (int i = 0; i < n; i++) {
     if (print_scores) {
       printf("%.3f  ", heap->items[i].value);
     }
     path = heap->items[i].path;
-    if (tilde && strncmp(path, home_folder, home_len) == 0 &&
-        path[home_len] == '/') {
+    if (relative_len > 0 && strncmp(path, relative_to, relative_len) == 0 &&
+        path[relative_len] == '/') {
+      printf("%s\n", path + relative_len + 1);
+    } else if (tilde && strncmp(path, home_folder, home_len) == 0 &&
+               path[home_len] == '/') {
       printf("~%s\n", path + home_len);
     } else {
       printf("%s\n", path);
