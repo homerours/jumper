@@ -56,8 +56,8 @@ In 1894, Fusakichi Omori showed empirically that the frequency of aftershocks de
 ```math
 y(t) = \frac{k}{h + t}
 ```
-<div align="center">
 ![omori](omori_law.png)
+<div align="center">
 ** From Omori (1894), "On the aftershocks of earthquakes". **
 </div>
 
