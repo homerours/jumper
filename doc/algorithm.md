@@ -35,17 +35,31 @@ As we can see from the plot above, the frecency will typically be a number in th
 > We presented above the frecency in the case where all visits had the same weight 1. However, Jumper can attribute different weights for different types of visit (using the `-w` option). Everytime a command is executed by the user, Jumper adds a visit of weight $w_i = 1$ to the current working directory (cwd) if the command has changed the cwd, and a visit of weight $w_i = 0.3$ otherwise.
 > Then, the frecency is computed using the weighted sum $\sum_i w_i e^{-\alpha_2 (t-T_i)}$.
 
+### Mozilla's original frecency
+
 In its [original implementation](https://web.archive.org/web/20210421120120/https://developer.mozilla.org/en-US/docs/Mozilla/Tech/Places/Frecency_algorithm), Mozilla defines frecency as
 ```math
 \texttt{original\_frecency}(t)
  = N \times \frac{\sum_{i \in \{\text{last 10 visits} \}} w_i f(t - T_i)}{\min(N,10)}
 ```
 where $N$ denotes the total number of visits, $w_i$ is a weight associated to visit $i$ and $T_i$ is the time of the visit. The function $f$ is piecewise constant: $f(t) = 100$ for $t \leq 4h$, $f(t)=80$ for $t \in [4h, 24h]$ ...
-This definition has then been [updated](https://wiki.mozilla.org/User:Jesse/NewFrecency) to something very similar to what jumper is using
+This definition has then been [updated](https://wiki.mozilla.org/User:Jesse/NewFrecency) to something very similar to what jumper is using:
 ```math
 \texttt{new\_frecency}(t) = \sum_{i=0}^n w_i e^{-\alpha_2 (t-T_i)}
 ```
 Jumper adds a term $10 / (1 + \alpha_1 (t - T_0))$ to favor very recently accessed entries, and takes the $\log$ for reasons presented in the next sections.
+
+### Omori's law
+
+The following is a bit off topic, but it may still be interesting.
+In 1894, Fusakichi Omori showed empirically that the frequency of aftershocks decreases roughtly as the inverse of the time after an earthquake's main shock. More precisely, he stated that the daily number of aftershocks evolves as
+```math
+y(t) = \frac{k}{h + t}
+```
+![alt text](omori_law.png)
+* From Omori (1894), "On the aftershocks of earthquakes". *
+
+The term $10 / (1 + \alpha_1 (t - T_0))$ in the definition of the frecency has the same shape. Note that this is not supported by any kind of empirical evidence. The main motivation for this hyperbolic behavior is that I was looking for a function that decays quickly but is "small" (e.g. < 1) only after a week.
 
 ## Match accuracy
 
@@ -54,7 +68,7 @@ Similarly to the fuzzy-finders [fzf](https://github.com/junegunn/fzf) or [fzy](h
 
 This finds the match that maximizes
 ```
-U(match) = 10 * len(query) - 9 * (number-of-splits - 1) - total-length-of-gaps + bonuses(match)
+U(match) = - 4 * number-of-splits - 0.25 * total-length-of-gaps + bonuses(match)
 ```
 The `bonuses` above give additional points if matches happen at special places, such at the end of the path, or beginning of words. Then the accuracy is
 
