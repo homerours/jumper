@@ -23,7 +23,7 @@ Assume moreover that this item is typically visited every $T$ seconds, so that $
 ```
 We plot this function below:
 
-![alt text](frecency.png)
+![frecency](frecency.png)
 
 In the case where the item has just been visited, the frecency above gets an increase of $+10$ inside of the $\log$, leading to the dashed curve. This allows directories that have been very recently visited but that do not have a long history of visits (think for instance at a newly created directory) to compete with older directories that have been visited for a very long time.
 
@@ -56,10 +56,12 @@ In 1894, Fusakichi Omori showed empirically that the frequency of aftershocks de
 ```math
 y(t) = \frac{k}{h + t}
 ```
-![alt text](omori_law.png)
-* From Omori (1894), "On the aftershocks of earthquakes". *
+<div align="center">
+![omori](omori_law.png)
+** From Omori (1894), "On the aftershocks of earthquakes". **
+</div>
 
-The term $10 / (1 + \alpha_1 (t - T_0))$ in the definition of the frecency has the same shape. Note that this is not supported by any kind of empirical evidence. The main motivation for this hyperbolic behavior is that I was looking for a function that decays quickly but is "small" (e.g. < 1) only after a week.
+The term $10 / (1 + \alpha_1 (t - T_0))$ in the definition of the frecency is of a similar shape. Note that this is not supported by any kind of empirical evidence. The main motivation for this hyperbolic behavior is that I was looking for a function that decays quickly but is "small" (e.g. < 1) only after a week.
 
 ## Match accuracy
 
