@@ -44,7 +44,7 @@ __jumper_fdir() {
 	fzf --height=70% --layout=reverse \
         --keep-right \
 		--ansi --disabled --query "$1" \
-        --preview "${__JUMPER_FZF_FOLDERS_PREVIEW} {}" \
+        --preview "${__JUMPER_FZF_FOLDERS_PREVIEW} '{}'" \
         --preview-window=hidden --bind "${__JUMPER_TOGGLE_PREVIEW}:toggle-preview" \
 		--bind "start:reload:${__JUMPER} {q}" \
 		--bind "change:reload:sleep 0.05; ${__JUMPER} {q} || true"
@@ -56,7 +56,7 @@ __jumper_ffile() {
 	fzf --height=70% --layout=reverse \
         --keep-right \
 		--ansi --disabled --query "$1" \
-        --preview "${__JUMPER_FZF_FILES_PREVIEW} {}" \
+        --preview "${__JUMPER_FZF_FILES_PREVIEW} '{}'" \
         --preview-window=hidden --bind "${__JUMPER_TOGGLE_PREVIEW}:toggle-preview" \
 		--bind "start:reload:${__JUMPER} {q}" \
 		--bind "change:reload:sleep 0.05; ${__JUMPER} {q} || true"

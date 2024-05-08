@@ -9,7 +9,7 @@ if not set -q __JUMPER_FLAGS
 end
 
 if not set -q __JUMPER_FZF_FILES_PREVIEW
-    if type -q $bat
+    if type -q bat
         set __JUMPER_FZF_FILES_PREVIEW 'bat --color=always'
     else
         set __JUMPER_FZF_FILES_PREVIEW 'cat'
@@ -29,6 +29,23 @@ if not test -f $__JUMPER_FOLDERS
 end
 if not test -f $__JUMPER_FILES
     touch "$__JUMPER_FILES"
+end
+
+function __jumper_clean_folders_db -d "clean jumper's folders database"
+    set tempfile "{$__JUMPER_FOLDERS}_temp"
+    if test -f $tempfile
+        rm $tempfile
+    end
+    while read -r entry;
+        echo $entry
+        # set folder (string split '|' $entry)[1]
+        # echo $folder
+        # if not test -d $entry
+        #     echo "$entry|$visits|$timestamp"
+        # end
+            # echo "$entry|$visits|$timestamp" >> ${tempfile}
+    end < "$__JUMPER_FOLDERS"
+    # [[ -f ${tempfile} ]] && mv "${tempfile}" "${__JUMPER_FOLDERS}"
 end
 
 function jumper_update_db --on-event fish_postexec
@@ -67,7 +84,7 @@ function __jumper_fdir -d "run fzf on jumper's directories"
     fzf --height=70% --layout=reverse \
         --keep-right \
         --ansi --disabled --query "$argv" \
-        --preview "$__JUMPER_FZF_FOLDERS_PREVIEW {}" \
+        --preview "$__JUMPER_FZF_FOLDERS_PREVIEW '{}'" \
         --preview-window=hidden --bind "$__JUMPER_TOGGLE_PREVIEW:toggle-preview" \
         --bind "start:reload:$__JUMPER {q}" \
         --bind "change:reload:sleep 0.05; $__JUMPER {q} || true"
@@ -78,7 +95,7 @@ function __jumper_ffile -d "run fzf on jumper's files"
     fzf --height=70% --layout=reverse \
         --keep-right \
         --ansi --disabled --query "$argv" \
-        --preview "$__JUMPER_FZF_FILES_PREVIEW {}" \
+        --preview "$__JUMPER_FZF_FILES_PREVIEW '{}'" \
         --preview-window=hidden --bind "$__JUMPER_TOGGLE_PREVIEW:toggle-preview" \
         --bind "start:reload:$__JUMPER {q}" \
         --bind "change:reload:sleep 0.05; $__JUMPER {q} || true"
