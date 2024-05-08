@@ -108,8 +108,12 @@ export __JUMPER_FOLDERS='/path/to/custom/database_for_folders'
 export __JUMPER_FILES='/path/to/custom/database_for_files'
 
 # Update jumper's options
-# Default: '-cH -n 500' (colors the matches, replace $HOME with ~/ and print only the top 500 entries)
+# Default: '-cH -n 500' (colors the matches, replace $HOME with ~/ and print only the top 500 entries, see all options by running 'jumper --help')
 __JUMPER_FLAGS='-c -n 1000 --syntax=fuzzy --case-insensitive --beta=0.5'
+
+# FZF options for interactive search
+# Default: --height=70% --layout=reverse --keep-right --preview-window=hidden --ansi
+__JUMPER_FZF_OPTS='--height=30 --keep-right --preview-window=hidden --ansi'
 
 # Change the default binding (ctrl-p) to toggle preview:
 __JUMPER_TOGGLE_PREVIEW='ctrl-o'
@@ -138,7 +142,7 @@ For more advanced/custom maintenance, the files `~/.jfolders` and `~/.jfiles` ca
 
 #### Performance
 
-Querying and updating `jumper`'s database is very fast. On my old 2012 laptop, these operations (over a database with 1000 entries) run in about 4ms:
+Querying and updating `jumper`'s database is very fast and shouldn't cause any latency. On an old 2012 laptop, these operations (over a database with 1000 entries) run in about 4ms:
 ```bash
 $ time for i in {1..100}; do jumper -f ~/.jfolders hello > /dev/null; done
 real    0m0.432s

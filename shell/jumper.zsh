@@ -2,6 +2,7 @@
 [[ -n $__JUMPER_FOLDERS ]] || export __JUMPER_FOLDERS=~/.jfolders
 [[ -n $__JUMPER_FILES ]] || export __JUMPER_FILES=~/.jfiles
 [[ -n $__JUMPER_FLAGS ]] || __JUMPER_FLAGS='-cH -n 500'
+[[ -n $__JUMPER_FZF_OPTS ]] || __JUMPER_FZF_OPTS=(--height=70% --layout=reverse --keep-right --preview-window=hidden --ansi)
 
 if [[ -z $__JUMPER_FZF_FILES_PREVIEW ]]; then
     if [[ -n $(which bat) ]]; then
@@ -41,11 +42,9 @@ zf() {
 # Fuzzy-find directories
 __jumper_fdir() {
 	__JUMPER="jumper -c -f ${__JUMPER_FOLDERS} ${__JUMPER_FLAGS}"
-	fzf --height=70% --layout=reverse \
-        --keep-right \
-		--ansi --disabled --query "$1" \
+	fzf ${__JUMPER_FZF_OPTS} --disabled --query "$1" \
         --preview "${__JUMPER_FZF_FOLDERS_PREVIEW} '{}'" \
-        --preview-window=hidden --bind "${__JUMPER_TOGGLE_PREVIEW}:toggle-preview" \
+        --bind "${__JUMPER_TOGGLE_PREVIEW}:toggle-preview" \
 		--bind "start:reload:${__JUMPER} {q}" \
 		--bind "change:reload:sleep 0.05; ${__JUMPER} {q} || true"
 }
@@ -53,11 +52,9 @@ __jumper_fdir() {
 # Fuzzy-find files
 __jumper_ffile() {
 	__JUMPER="jumper -c -f ${__JUMPER_FILES} ${__JUMPER_FLAGS}"
-	fzf --height=70% --layout=reverse \
-        --keep-right \
-		--ansi --disabled --query "$1" \
+	fzf $__JUMPER_FZF_OPTS --disabled --query "$1" \
         --preview "${__JUMPER_FZF_FILES_PREVIEW} '{}'" \
-        --preview-window=hidden --bind "${__JUMPER_TOGGLE_PREVIEW}:toggle-preview" \
+        --bind "${__JUMPER_TOGGLE_PREVIEW}:toggle-preview" \
 		--bind "start:reload:${__JUMPER} {q}" \
 		--bind "change:reload:sleep 0.05; ${__JUMPER} {q} || true"
 }

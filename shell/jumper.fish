@@ -7,6 +7,9 @@ end
 if not set -q __JUMPER_FLAGS
     set __JUMPER_FLAGS '-cH -n 500'
 end
+if not set -q __JUMPER_FZF_OPTS
+    set __JUMPER_FZF_OPTS --height=70% --layout=reverse --keep-right --preview-window=hidden --ansi
+end
 
 if not set -q __JUMPER_FZF_FILES_PREVIEW
     if type -q bat
@@ -31,21 +34,40 @@ if not test -f $__JUMPER_FILES
     touch "$__JUMPER_FILES"
 end
 
-function __jumper_clean_folders_db -d "clean jumper's folders database"
-    set tempfile "{$__JUMPER_FOLDERS}_temp"
+function __jumper_clean_folders_db -d "clean jumper's folders' database"
+    set tempfile {$__JUMPER_FOLDERS}_temp
     if test -f $tempfile
         rm $tempfile
     end
-    while read -r entry;
-        echo $entry
-        # set folder (string split '|' $entry)[1]
-        # echo $folder
-        # if not test -d $entry
-        #     echo "$entry|$visits|$timestamp"
-        # end
-            # echo "$entry|$visits|$timestamp" >> ${tempfile}
+    while read -l line;
+        set folder (string split -m1 '|' $line)[1]
+        if test -d $folder
+            echo "$line" >> {$tempfile}
+        end
     end < "$__JUMPER_FOLDERS"
-    # [[ -f ${tempfile} ]] && mv "${tempfile}" "${__JUMPER_FOLDERS}"
+    if test -f $tempfile
+        mv {$tempfile} {$__JUMPER_FOLDERS}
+    end
+end
+
+function __jumper_clean_files_db -d "clean jumper's files' database"
+    set tempfile {$__JUMPER_FILES}_temp
+    if test -f $tempfile
+        rm $tempfile
+    end
+    while read -l line;
+        set folder (string split -m1 '|' $line)[1]
+        if test -f $folder
+            echo "$line" >> {$tempfile}
+        end
+    end < "$__JUMPER_FILES"
+    if test -f $tempfile
+        mv {$tempfile} {$__JUMPER_FILES}
+    end
+end
+
+function __jumper_clean -d "clean jumper's files' and folders' databases"
+    __jumper_clean_files_db > /dev/null 2>&1 && __jumper_clean_folders_db > /dev/null 2>&1 &
 end
 
 function jumper_update_db --on-event fish_postexec
@@ -59,6 +81,9 @@ function jumper_update_db --on-event fish_postexec
         end
     end
     set -g __jumper_current_folder "$PWD"
+    if [ -n "$__JUMPER_CLEAN_FREQ" ] && [ (math (random) % $__JUMPER_CLEAN_FREQ) -eq 0 ]
+        __jumper_clean
+    end
 end
 
 function z -d "Jump to folder"
@@ -81,22 +106,18 @@ end
 
 function __jumper_fdir -d "run fzf on jumper's directories"
     set -l __JUMPER "jumper -c -f $__JUMPER_FOLDERS $__JUMPER_FLAGS"
-    fzf --height=70% --layout=reverse \
-        --keep-right \
-        --ansi --disabled --query "$argv" \
+    fzf $__JUMPER_FZF_OPTS --disabled --query "$argv" \
         --preview "$__JUMPER_FZF_FOLDERS_PREVIEW '{}'" \
-        --preview-window=hidden --bind "$__JUMPER_TOGGLE_PREVIEW:toggle-preview" \
+        --bind "$__JUMPER_TOGGLE_PREVIEW:toggle-preview" \
         --bind "start:reload:$__JUMPER {q}" \
         --bind "change:reload:sleep 0.05; $__JUMPER {q} || true"
 end
 
 function __jumper_ffile -d "run fzf on jumper's files"
     set -l __JUMPER "jumper -c -f $__JUMPER_FILES $__JUMPER_FLAGS"
-    fzf --height=70% --layout=reverse \
-        --keep-right \
-        --ansi --disabled --query "$argv" \
+    fzf $__JUMPER_FZF_OPTS --disabled --query "$argv" \
         --preview "$__JUMPER_FZF_FILES_PREVIEW '{}'" \
-        --preview-window=hidden --bind "$__JUMPER_TOGGLE_PREVIEW:toggle-preview" \
+        --bind "$__JUMPER_TOGGLE_PREVIEW:toggle-preview" \
         --bind "start:reload:$__JUMPER {q}" \
         --bind "change:reload:sleep 0.05; $__JUMPER {q} || true"
 end
@@ -121,7 +142,7 @@ function jumper-find-dir -d "Fuzzy-find directories"
     set -l __JUMPER "jumper -c -f $__JUMPER_FOLDERS $__JUMPER_FLAGS"
     set result (__jumper_fdir)
     commandline -it -- $prefix
-    commandline -it -- (string escape $result)
+    commandline -it -- $result
     commandline -f repaint
 end
 
@@ -130,7 +151,7 @@ function jumper-find-file -d "Fuzzy-find files"
     set -l prefix (string match -r -- '^-[^\s=]+=' $commandline)
     set result (__jumper_ffile)
     commandline -it -- $prefix
-    commandline -it -- (string escape $result)
+    commandline -it -- $result
     commandline -f repaint
 end
 
