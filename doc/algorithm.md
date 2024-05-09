@@ -15,27 +15,30 @@ Here $\alpha_1 = 2 \times 10^{-5}$, $\alpha_2 = 3 \times 10^{-7}$ and all times 
 Let us now motivate a bit the definition of frecency above. 
 Let us first consider an item that has not been visited for a few days, so that we can neglect the term $10 / (1 + \alpha_1 (t - T_0))$. 
 Let's set $t=0$ as the origin of times.
-Assume moreover that this item is typically visited every $T$ seconds, so that $T_i = - i T$ for $i=0,1,2, \dots$. Therefore
+Assume moreover that this item is typically visited every $\Delta_T$ seconds, so that $T_i = - i \Delta_T$ for $i=0,1,2, \dots$. Therefore
 ```math
 \text{frecency}(t) 
-\simeq \log\left( \sum_{i=0}^{\infty} e^{-\alpha_2 i T} \right)
- =  \log\left( \frac{1}{1 - e^{-\alpha_2 T}} \right)
+\simeq \log\left( \sum_{i=0}^{\infty} e^{-\alpha_2 i \Delta_T} \right)
+ =  \log\left( \frac{1}{1 - e^{-\alpha_2 \Delta_T}} \right)
 ```
 We plot this function below:
 
+<div align="center">
 ![frecency](frecency.png)
+</div>
 
 In the case where the item has just been visited, the frecency above gets an increase of $+10$ inside of the $\log$, leading to the dashed curve. This allows directories that have been very recently visited but that do not have a long history of visits (think for instance at a newly created directory) to compete with older directories that have been visited for a very long time.
 
-As we can see from the plot above, the frecency will typically be a number in the range $[0,6]$. Many other definitions for frecency are possible. We chose this one for the following reasons:
+As we can see from the plot above, the frecency will typically be a number in the range $[0,8]$. Many other definitions for frecency are possible. We chose this one for the following reasons:
 - It does not diverge at time goes. [z](https://github.com/rupa/z) uses something like `number-of-visits / time-since-last-visit`, which potentially diverges over time (and therefore require some "aging" mechanism).
 - It only requires to keep track of the "adjusted" number of visits $\sum_i e^{-\alpha_2 (t-T_i)}$ and the time of last visit to be computed.
+- One can give it some statistical interpretation (see below).
 
 > [!NOTE]
 > We presented above the frecency in the case where all visits had the same weight 1. However, Jumper can attribute different weights for different types of visit (using the `-w` option). Everytime a command is executed by the user, Jumper adds a visit of weight $w_i = 1$ to the current working directory (cwd) if the command has changed the cwd, and a visit of weight $w_i = 0.3$ otherwise.
 > Then, the frecency is computed using the weighted sum $\sum_i w_i e^{-\alpha_2 (t-T_i)}$.
 
-### Mozilla's original frecency
+### Mozilla's original frecency definition
 
 In its [original implementation](https://web.archive.org/web/20210421120120/https://developer.mozilla.org/en-US/docs/Mozilla/Tech/Places/Frecency_algorithm), Mozilla defines frecency as
 ```math
@@ -58,7 +61,7 @@ y(t) = \frac{k}{h + t}
 ```
 ![omori](omori_law.png)
 <div align="center">
-** From Omori (1894), "On the aftershocks of earthquakes". **
+From Omori (1894), "On the aftershocks of earthquakes".
 </div>
 
 The term $10 / (1 + \alpha_1 (t - T_0))$ in the definition of the frecency is of a similar shape. Note that this is not supported by any kind of empirical evidence. The main motivation for this hyperbolic behavior is that I was looking for a function that decays quickly but is "small" (e.g. < 1) only after a week.
@@ -87,7 +90,7 @@ Based on these two numbers, Jumper ranks paths using
 where $\beta = 1.0$ by default, and be updated with the flag `-b <value>`. 
 This additive definition is motivated by the following.
 
-Suppose that one is fuzzy-finding a path, adding one character to the `query` at a time.
+Suppose that one is searching for a path, adding one character to the `query` at a time.
 At first, when `query` has very few character (typically <=2), all the paths containing these two characters consecutively will share the maximum `accuracy`.
 Hence the ranking will be mostly decided by the frecency.
 However, as more characters are added, the ranking will favors matches that are more accurate. The ranking will then be dominated by the accuracy of the matches.
@@ -108,8 +111,8 @@ We give below more details about this Bayesian model.
 ```
 independently from the visits to the other folders.
 
-When the user queries the database at a time $t$, he knows already the next folder he would like to visit, which is the folder whose point process has a jump at time $t$.
-The user gave his query to the algorithm, which can be seen as a noisy observation of the path of the folder he would like to visit.
+When the user queries the database at a time $t$, he knows already the next folder he would like to visit, which is the folder whose point process has a jump at time $t$ in our model.
+The user gives his query to the algorithm, which can be seen as a noisy observation of the path he is looking for.
 
 **Conditional distribution:** We model
 ```math
