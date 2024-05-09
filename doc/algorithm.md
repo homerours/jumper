@@ -23,9 +23,7 @@ Assume moreover that this item is typically visited every $\Delta_T$ seconds, so
 ```
 We plot this function below:
 
-<div align="center">
 ![frecency](frecency.png)
-</div>
 
 In the case where the item has just been visited, the frecency above gets an increase of $+10$ inside of the $\log$, leading to the dashed curve. This allows directories that have been very recently visited but that do not have a long history of visits (think for instance at a newly created directory) to compete with older directories that have been visited for a very long time.
 
