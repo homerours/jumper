@@ -62,14 +62,16 @@ __jumper_ffile() {
 zi() {
 	new_path=$(__jumper_fdir)
 	if [[ -n $new_path ]]; then
-		cd "$new_path"
+        # Manually perform tilde expansion
+		cd "${new_path/#\~/$HOME}"
 	fi
 }
 
 zfi() {
     file=$(__jumper_ffile)
 	if [[ -n $file ]]; then
-		$EDITOR "$file"
+        # Manually perform tilde expansion
+		$EDITOR "${file/#\~/$HOME}"
 	fi
 }
 

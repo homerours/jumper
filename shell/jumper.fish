@@ -125,6 +125,7 @@ end
 function zi -d "Interactive jump to folder"
 	set new_path (__jumper_fdir)
 	if [ -n "$new_path" ]
+        set new_path (string replace '~' $HOME $new_path)
 		cd "$new_path"
 	end
 end
@@ -132,6 +133,7 @@ end
 function zfi -d "Interactive jump to file"
     set file (__jumper_ffile)
 	if [ -n "$file" ]
+        set file (string replace '~' $HOME $file)
 		eval "$EDITOR '$file'"
 	end
 end
