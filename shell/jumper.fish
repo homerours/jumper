@@ -107,7 +107,7 @@ end
 function __jumper_fdir -d "run fzf on jumper's directories"
     set -l __JUMPER "jumper -c -f $__JUMPER_FOLDERS $__JUMPER_FLAGS"
     fzf $__JUMPER_FZF_OPTS --disabled --query "$argv" \
-        --preview "$__JUMPER_FZF_FOLDERS_PREVIEW '{}'" \
+        --preview "eval x={}; $__JUMPER_FZF_FOLDERS_PREVIEW \$x" \
         --bind "$__JUMPER_TOGGLE_PREVIEW:toggle-preview" \
         --bind "start:reload:$__JUMPER {q}" \
         --bind "change:reload:sleep 0.05; $__JUMPER {q} || true"
@@ -116,7 +116,7 @@ end
 function __jumper_ffile -d "run fzf on jumper's files"
     set -l __JUMPER "jumper -c -f $__JUMPER_FILES $__JUMPER_FLAGS"
     fzf $__JUMPER_FZF_OPTS --disabled --query "$argv" \
-        --preview "$__JUMPER_FZF_FILES_PREVIEW '{}'" \
+        --preview "eval x={}; $__JUMPER_FZF_FILES_PREVIEW \$x" \
         --bind "$__JUMPER_TOGGLE_PREVIEW:toggle-preview" \
         --bind "start:reload:$__JUMPER {q}" \
         --bind "change:reload:sleep 0.05; $__JUMPER {q} || true"
@@ -138,20 +138,20 @@ end
 
 function jumper-find-dir -d "Fuzzy-find directories"
     set -l commandline (commandline -t)
-    set -l prefix (string match -r -- '^-[^\s=]+=' $commandline)
     set -l __JUMPER "jumper -c -f $__JUMPER_FOLDERS $__JUMPER_FLAGS"
     set result (__jumper_fdir)
-    commandline -it -- $prefix
-    commandline -it -- $result
+    if [ -n "$result" ]
+        commandline -it -- $result
+    end
     commandline -f repaint
 end
 
 function jumper-find-file -d "Fuzzy-find files"
     set -l commandline (commandline -t)
-    set -l prefix (string match -r -- '^-[^\s=]+=' $commandline)
     set result (__jumper_ffile)
-    commandline -it -- $prefix
-    commandline -it -- $result
+    if [ -n "$result" ]
+        commandline -it -- $result
+    end
     commandline -f repaint
 end
 

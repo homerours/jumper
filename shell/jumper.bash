@@ -43,7 +43,7 @@ zf() {
 __jumper_fdir() {
 	__JUMPER="jumper -c -f ${__JUMPER_FOLDERS} ${__JUMPER_FLAGS}"
 	fzf ${__JUMPER_FZF_OPTS} --disabled --query "$1" \
-        --preview "${__JUMPER_FZF_FOLDERS_PREVIEW} '{}'" \
+        --preview "eval x={}; ${__JUMPER_FZF_FOLDERS_PREVIEW} \$x" \
         --bind "${__JUMPER_TOGGLE_PREVIEW}:toggle-preview" \
 		--bind "start:reload:${__JUMPER} {q}" \
 		--bind "change:reload:sleep 0.05; ${__JUMPER} {q} || true"
@@ -53,7 +53,7 @@ __jumper_fdir() {
 __jumper_ffile() {
 	__JUMPER="jumper -c -f ${__JUMPER_FILES} ${__JUMPER_FLAGS}"
 	fzf ${__JUMPER_FZF_OPTS} --disabled --query "$1" \
-        --preview "${__JUMPER_FZF_FILES_PREVIEW} '{}'" \
+        --preview "eval x={}; ${__JUMPER_FZF_FILES_PREVIEW} \$x" \
         --bind "${__JUMPER_TOGGLE_PREVIEW}:toggle-preview" \
 		--bind "start:reload:${__JUMPER} {q}" \
 		--bind "change:reload:sleep 0.05; ${__JUMPER} {q} || true"
