@@ -7,7 +7,6 @@
 #include <unistd.h>
 
 #include "arguments.h"
-#include "heap.h"
 
 static const char HELP_STRING[] =
     "Usage: %s [OPTIONS] QUERY\n"
@@ -22,7 +21,8 @@ static const char HELP_STRING[] =
     " -x, --syntax=syntax       Query syntax (default: extended).\n"
     " -I, --case-insensitive    Make the search case-insenstitive.\n"
     " -S, --case-sensitive      Make the search case-senstitive.\n"
-    " -H, --home-tilde          Substitute $HOME with ~ when printing results.\n"
+    " -H, --home-tilde          Substitute $HOME with ~ when printing "
+    "results.\n"
     " -r, --relative=[PATH]     Outputs relative paths to PATH if\n"
     "                           specified (defaults to current directory).\n\n"
     "Update the database:\n"
@@ -51,7 +51,7 @@ static struct option longopts[] = {
 static void args_init(Arguments *args) {
   args->file_path = NULL;
   args->key = "";
-  args->n_results = MAX_HEAP_SIZE;
+  args->n_results = -1;
   args->highlight = false;
   args->print_scores = false;
   args->home_tilde = false;

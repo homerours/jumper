@@ -26,10 +26,10 @@ static char *file_to_buffer(FILE *fp, size_t *size) {
   return buffer;
 }
 
-static void update_database(const char *file, const char *key, double weight) {
-  FILE *fp = fopen(file, "r+");
+static void update_database(Arguments *args) {
+  FILE *fp = fopen(args->file_path, "r+");
   if (fp == NULL) {
-    fprintf(stderr, "ERROR: File %s not found\n", file);
+    fprintf(stderr, "ERROR: File %s not found\n", args->file_path);
     exit(EXIT_FAILURE);
   }
 
@@ -41,8 +41,8 @@ static void update_database(const char *file, const char *key, double weight) {
 
   while (getline(&line, &len, fp) != -1) {
     parse_record(line, &rec);
-    if (strcmp(rec.path, key) == 0) {
-      update_record(&rec, now, weight);
+    if (strcmp(rec.path, args->key) == 0) {
+      update_record(&rec, now, args->weight);
       char *rec_string = record_to_string(&rec);
       int record_length = strlen(rec_string);
       long int new_position = ftell(fp);
@@ -74,8 +74,8 @@ static void update_database(const char *file, const char *key, double weight) {
     position = ftell(fp);
   }
   if (feof(fp)) {
-    rec.n_visits = weight;
-    rec.path = key;
+    rec.n_visits = args->weight;
+    rec.path = args->key;
     rec.last_visit = now;
     char *rec_string = record_to_string(&rec);
     const int record_length = strlen(rec_string);
@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
   if (args->mode == MODE_search) {
     lookup(args);
   } else {
-    update_database(args->file_path, args->key, args->weight);
+    update_database(args);
   }
   free(args);
   return EXIT_SUCCESS;

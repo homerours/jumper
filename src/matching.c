@@ -38,6 +38,70 @@ static const int end_of_path_bonus = 4;
 static const int first_gap_penalty = 16;
 static const int gap_penalty = 1;
 
+void free_query(Query query) {
+  free(query.query);
+  free(query.gap_allowed);
+}
+
+// Parse a query, figuring out where gaps are allowed
+Query parse_query(const char *query, SYNTAX syntax) {
+  Query squery;
+  int n = strlen(query);
+  squery.gap_allowed = (bool *)malloc((n + 1) * sizeof(bool));
+  if (syntax != SYNTAX_extended) {
+    squery.length = n;
+    squery.query = strdup(query);
+    squery.gap_allowed[0] = true;
+    squery.gap_allowed[n] = true;
+    for (int i = 1; i < n; i++) {
+      squery.gap_allowed[i] = (syntax == SYNTAX_fuzzy);
+    }
+  } else {
+    squery.query = (char *)malloc((n + 1) * sizeof(char));
+    char *q = squery.query;
+    const char *block_start = query;
+    const char *next_space;
+    int block_size;
+    int j = 1;
+    squery.gap_allowed[0] = (*query != '^');
+    while (*block_start != '\0') {
+      bool gap_allowed = true;
+      // find start of next block (defaults to end of string)
+      next_space = strchr(block_start, ' ');
+      if (next_space == NULL) {
+        next_space = query + n;
+      }
+
+      if (*block_start == '\'' || (j == 1 && *block_start == '^')) {
+        gap_allowed = false;
+        block_start++;
+      }
+      block_size = next_space - block_start;
+      if (*(next_space - 1) == '$' &&
+          (*next_space == '\0' || *(next_space + 1) == '\0')) {
+        gap_allowed = false;
+        block_size--;
+        squery.gap_allowed[j + block_size - 1] = false;
+      } else {
+        squery.gap_allowed[j + block_size - 1] = true;
+      }
+      for (int i = 0; i < block_size - 1; i++) {
+        squery.gap_allowed[j + i] = gap_allowed;
+      }
+      strncpy(q, block_start, block_size);
+      q += block_size;
+      j += block_size;
+      block_start = next_space;
+      while (*block_start == ' ') {
+        block_start++;
+      }
+    }
+    squery.query[j - 1] = '\0';
+    squery.length = j - 1;
+  }
+  return squery;
+}
+
 static inline bool match_char(char a, char b, CASE_MODE case_mode) {
   if (tolower(a) != tolower(b)) {
     return false;
@@ -225,81 +289,19 @@ static char *extract_matching(MatchingData *data, int imax) {
   return new_string;
 }
 
-static bool quick_match(const char *string, const char *query,
-                        CASE_MODE case_mode) {
+static bool quick_match(const char *string, Query query, CASE_MODE case_mode) {
   const char *t = string;
-  const char *q = query;
+  const char *q = query.query;
   while (*t != 0 && *q != 0) {
     if (match_char(*t, *q, case_mode)) {
       q++;
+    } else if (!query.gap_allowed[q - query.query]) {
+      // the char *q is not matched and a gap is not allowed there
+      return false;
     }
     t++;
   }
-  return *q == 0;
-}
-
-// Parse a query, figuring out where gaps are allowed
-Query parse_query(const char *query, SYNTAX syntax) {
-  Query squery;
-  int n = strlen(query);
-  squery.gap_allowed = (bool *)malloc((n + 1) * sizeof(bool));
-  if (syntax != SYNTAX_extended) {
-    squery.length = n;
-    squery.query = strdup(query);
-    squery.gap_allowed[0] = true;
-    squery.gap_allowed[n] = true;
-    for (int i = 1; i < n; i++) {
-      squery.gap_allowed[i] = (syntax == SYNTAX_fuzzy);
-    }
-  } else {
-    squery.query = (char *)malloc((n + 1) * sizeof(char));
-    char *q = squery.query;
-    const char *block_start = query;
-    const char *next_space;
-    int block_size;
-    int j = 1;
-    squery.gap_allowed[0] = (*query != '^');
-    while (*block_start != '\0') {
-      bool gap_allowed = true;
-      // find start of next block (defaults to end of string)
-      next_space = strchr(block_start, ' ');
-      if (next_space == NULL) {
-        next_space = query + n;
-      }
-
-      if (*block_start == '\'' || (j == 1 && *block_start == '^')) {
-        gap_allowed = false;
-        block_start++;
-      }
-      block_size = next_space - block_start;
-      if (*(next_space - 1) == '$' &&
-          (*next_space == '\0' || *(next_space + 1) == '\0')) {
-        gap_allowed = false;
-        block_size--;
-        squery.gap_allowed[j + block_size - 1] = false;
-      } else {
-        squery.gap_allowed[j + block_size - 1] = true;
-      }
-      for (int i = 0; i < block_size - 1; i++) {
-        squery.gap_allowed[j + i] = gap_allowed;
-      }
-      strncpy(q, block_start, block_size);
-      q += block_size;
-      j += block_size;
-      block_start = next_space;
-      while (*block_start == ' ') {
-        block_start++;
-      }
-    }
-    squery.query[j - 1] = '\0';
-    squery.length = j - 1;
-  }
-  return squery;
-}
-
-void free_query(Query query) {
-  free(query.query);
-  free(query.gap_allowed);
+  return (*q == 0) && (query.gap_allowed[q - query.query] || (*t == 0));
 }
 
 int match_accuracy(const char *string, Query query, bool colors,
@@ -308,8 +310,7 @@ int match_accuracy(const char *string, Query query, bool colors,
     *matched_string = strdup(string);
     return 1;
   }
-  if (!quick_match(string, query.query, case_mode)) {
-    *matched_string = (char *)string;
+  if (!quick_match(string, query, case_mode)) {
     return 0;
   }
   MatchingData *data = make_data(string, query, case_mode);
@@ -341,7 +342,6 @@ int match_accuracy(const char *string, Query query, bool colors,
   }
   if (maximum == -1) {
     free_matching_data(data);
-    *matched_string = (char *)string;
     return 0;
   }
   // We have a match, allocate memory

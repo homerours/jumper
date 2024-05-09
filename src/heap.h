@@ -1,7 +1,5 @@
 #pragma once
 
-extern const int MAX_HEAP_SIZE;
-
 typedef struct Heap Heap;
 
 Heap *new_heap(int max_elements);

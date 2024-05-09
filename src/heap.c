@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-const int MAX_HEAP_SIZE = 50000;
+static const int MAX_HEAP_SIZE = 50000;
 
 typedef struct Item {
   double value;
@@ -30,7 +30,7 @@ typedef struct Heap {
 Heap *new_heap(int size) {
   Heap *heap = malloc(sizeof(struct Heap));
   heap->n_items = 0;
-  heap->size = size > MAX_HEAP_SIZE ? MAX_HEAP_SIZE : size;
+  heap->size = (size > MAX_HEAP_SIZE || size == -1) ? MAX_HEAP_SIZE : size;
   heap->items = (Item *)malloc(size * sizeof(Item));
   return heap;
 }
