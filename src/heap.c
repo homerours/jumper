@@ -31,7 +31,7 @@ Heap *new_heap(int size) {
   Heap *heap = malloc(sizeof(struct Heap));
   heap->n_items = 0;
   heap->size = (size > MAX_HEAP_SIZE || size == -1) ? MAX_HEAP_SIZE : size;
-  heap->items = (Item *)malloc(size * sizeof(Item));
+  heap->items = (Item *)malloc(heap->size * sizeof(Item));
   return heap;
 }
 
