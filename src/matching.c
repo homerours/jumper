@@ -295,13 +295,10 @@ static bool quick_match(const char *string, Query query, CASE_MODE case_mode) {
   while (*t != 0 && *q != 0) {
     if (match_char(*t, *q, case_mode)) {
       q++;
-    } else if (!query.gap_allowed[q - query.query]) {
-      // the char *q is not matched and a gap is not allowed there
-      return false;
     }
     t++;
   }
-  return (*q == 0) && (query.gap_allowed[q - query.query] || (*t == 0));
+  return (*q == 0);
 }
 
 int match_accuracy(const char *string, Query query, bool colors,
