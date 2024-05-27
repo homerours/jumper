@@ -51,7 +51,7 @@ static struct option longopts[] = {
 static void args_init(Arguments *args) {
   args->file_path = NULL;
   args->key = "";
-  args->n_results = -1;
+  args->n_results = 50000;
   args->highlight = false;
   args->print_scores = false;
   args->home_tilde = false;
