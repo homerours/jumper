@@ -16,13 +16,19 @@ typedef struct Scores {
   int gap;
 } Scores;
 
+typedef struct Breaks {
+  int *breaks;
+  int nbreaks;
+} Breaks;
+
 typedef struct MatchingData {
   const char *string;
   const char *query;
-  bool *gap_allowed;
   int n;
   int m;
   int *bonus;
+  int imax;
+  bool *gap_allowed;
   Scores *matrix;
   CASE_MODE case_mode;
 } MatchingData;
@@ -193,6 +199,7 @@ static MatchingData *make_data(const char *string, Query query,
   data->matrix = matrix;
   data->bonus = matching_bonus(string, n - 1);
   data->case_mode = case_mode;
+  data->imax = 0;
   return data;
 }
 
@@ -230,62 +237,65 @@ static Scores *compute_scores(MatchingData *data, int i, int j) {
   return scores;
 }
 
-static void parent(MatchingData *data, int i, int j, bool *skip) {
+static bool parent(MatchingData *data, int i, int j, bool skip) {
   Scores *scores = get_scores(data, i, j);
-  if (*skip) {
-    *skip = (scores->match - first_gap_penalty <= scores->gap - gap_penalty);
+  if (skip) {
+    return (scores->match - first_gap_penalty <= scores->gap - gap_penalty);
   } else {
-    *skip = (scores->match < scores->gap);
+    return (scores->match < scores->gap);
   }
 }
 
-static char *extract_matching(MatchingData *data, int imax) {
-  const int n = data->n;
-  int i = imax, j = data->m - 1;
-  int nbreaks = 0;
-  int *breaks = (int *)malloc(2 * data->m * sizeof(int));
-  bool is_matched = true;
-  bool skip = false;
+static Breaks extract_breaks(MatchingData *data) {
+  int i = data->imax, j = data->m - 1;
+  Breaks b = {.nbreaks = 0, .breaks = (int *)malloc(2 * data->m * sizeof(int))};
+  bool is_matched = true, skip = false;
+  b.breaks[b.nbreaks++] = i - 1;
   while (j > 0) {
-    parent(data, i, j, &skip);
+    skip = parent(data, i, j, skip);
     i--;
     if (skip) {
       if (is_matched) {
-        breaks[nbreaks++] = i;
+        b.breaks[b.nbreaks++] = i;
         is_matched = false;
       }
     } else {
       if (!is_matched) {
-        breaks[nbreaks++] = i;
+        b.breaks[b.nbreaks++] = i;
         is_matched = true;
       }
       j--;
     }
   }
-  const char *string = data->string;
-  const int new_len = 9 + n + nbreaks * 9 + 1;
+  b.breaks[b.nbreaks++] = i - 1;
+  return b;
+}
+
+static char *add_ansi_colors(MatchingData *data, Breaks b) {
+  const int new_len = data->n + (b.nbreaks / 2) * 9 + 1;
   char *new_string = (char *)malloc(new_len * sizeof(char));
-  new_string[new_len - 1] = '\0';
-  strncpy(new_string, string, i);
-  strncpy(new_string + i, COLOR_GREEN, 5);
-  int k = i + 5, sk = i;
-  for (; sk < imax; sk++) {
-    new_string[k] = string[sk];
+  int k = 0;
+  if (b.nbreaks > 0 && b.breaks[b.nbreaks - 1] == -1) {
+    strncpy(new_string + k, COLOR_GREEN, 5);
+    k += 5;
+    b.nbreaks--;
+  }
+  for (int sk = 0; sk < data->n; sk++) {
+    new_string[k] = data->string[sk];
     k++;
-    if (nbreaks > 0 && breaks[nbreaks - 1] == sk) {
-      if (nbreaks % 2 == 1) {
+    if (b.nbreaks > 0 && b.breaks[b.nbreaks - 1] == sk) {
+      if (b.nbreaks % 2 == 0) {
         strncpy(new_string + k, COLOR_GREEN, 5);
         k += 5;
       } else {
         strncpy(new_string + k, COLOR_RESET, 4);
         k += 4;
       }
-      nbreaks--;
+      b.nbreaks--;
     }
   }
-  free(breaks);
-  strncpy(new_string + k, COLOR_RESET, 4);
-  strncpy(new_string + k + 4, string + sk, n - sk);
+  new_string[k] = '\0';
+  free(b.breaks);
   return new_string;
 }
 
@@ -295,13 +305,26 @@ static bool quick_match(const char *string, Query query, CASE_MODE case_mode) {
   while (*t != 0 && *q != 0) {
     if (match_char(*t, *q, case_mode)) {
       q++;
-    } else if (!query.gap_allowed[q - query.query]) {
-      // the char *q is not matched and a gap is not allowed there
-      return false;
     }
     t++;
   }
-  return (*q == 0) && (query.gap_allowed[q - query.query] || (*t == 0));
+  return (*q == 0);
+}
+
+static int get_max_score(MatchingData *data) {
+  int score = -1;
+  int n = data->n;
+  int m = data->m;
+  int h = n - m + 2;
+  for (int ii = 1; ii < h; ii++) {
+    int i = ii + m - 2;
+    Scores *scores = get_scores(data, i, m - 1);
+    if (scores->match >= score && (data->gap_allowed[m - 1] || i == n - 1)) {
+      data->imax = i;
+      score = scores->match;
+    }
+  }
+  return score;
 }
 
 int match_accuracy(const char *string, Query query, bool colors,
@@ -317,39 +340,31 @@ int match_accuracy(const char *string, Query query, bool colors,
   const int n = data->n;
   const int m = data->m;
   const int h = n - m + 2;
-  int imax = 0, maximum = -1, i;
+  int i, j;
   Scores *scores;
   int jmax = 0; // max accessible column
   for (int ii = 1; ii < h; ii++) {
-    for (int j = 1; j < m; j++) {
+    for (j = 1; j < m; j++) {
       i = ii + j - 1;
       scores = compute_scores(data, i, j);
-      if (scores->match == -1 && scores->gap == -1) {
-        // Cell (i,j) is not accessible
-        // j >= jmax, one can not access any cell beyond (i,j):
-        if (j >= jmax)
-          break;
-      } else {
-        // Cell (i,j) is accessible, update the value of jmax
-        jmax = max(j, jmax);
-      }
-      if (j == (m - 1) && scores->match >= maximum &&
-          (data->gap_allowed[m - 1] || i == n - 1)) {
-        imax = i;
-        maximum = scores->match;
+      if (scores->match == -1 && scores->gap == -1 && j >= jmax) {
+        break;
       }
     }
+    jmax = j - 1;
   }
-  if (maximum == -1) {
+  int score = get_max_score(data);
+  if (score == -1) {
     free_matching_data(data);
     return 0;
   }
   // We have a match, allocate memory
   if (colors) {
-    *matched_string = extract_matching(data, imax);
+    Breaks b = extract_breaks(data);
+    *matched_string = add_ansi_colors(data, b);
   } else {
     *matched_string = strdup(string);
   }
   free_matching_data(data);
-  return maximum;
+  return score;
 }
