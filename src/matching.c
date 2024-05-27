@@ -26,8 +26,8 @@ typedef struct MatchingData {
   const char *query;
   int n;
   int m;
-  int *bonus;
   int imax;
+  int *bonus;
   bool *gap_allowed;
   Scores *matrix;
   CASE_MODE case_mode;
@@ -313,12 +313,12 @@ static bool quick_match(const char *string, Query query, CASE_MODE case_mode) {
 
 static int get_max_score(MatchingData *data) {
   int score = -1;
-  int n = data->n;
-  int m = data->m;
-  int h = n - m + 2;
-  for (int ii = 1; ii < h; ii++) {
+  const int n = data->n;
+  const int m = data->m;
+  Scores *scores;
+  for (int ii = 1; ii < n - m + 2; ii++) {
     int i = ii + m - 2;
-    Scores *scores = get_scores(data, i, m - 1);
+    scores = get_scores(data, i, m - 1);
     if (scores->match >= score && (data->gap_allowed[m - 1] || i == n - 1)) {
       data->imax = i;
       score = scores->match;
@@ -327,10 +327,10 @@ static int get_max_score(MatchingData *data) {
   return score;
 }
 
-int match_accuracy(const char *string, Query query, bool colors,
-                   char **matched_string, CASE_MODE case_mode) {
+int match_accuracy(const char *string, Query query, bool colors, char **output,
+                   CASE_MODE case_mode) {
   if (*query.query == 0) {
-    *matched_string = strdup(string);
+    *output = strdup(string);
     return 1;
   }
   if (!quick_match(string, query, case_mode)) {
@@ -339,14 +339,11 @@ int match_accuracy(const char *string, Query query, bool colors,
   MatchingData *data = make_data(string, query, case_mode);
   const int n = data->n;
   const int m = data->m;
-  const int h = n - m + 2;
-  int i, j;
   Scores *scores;
-  int jmax = 0; // max accessible column
-  for (int ii = 1; ii < h; ii++) {
+  int j, jmax = 0; // jmax: max accessible column
+  for (int ii = 1; ii < n - m + 2; ii++) {
     for (j = 1; j < m; j++) {
-      i = ii + j - 1;
-      scores = compute_scores(data, i, j);
+      scores = compute_scores(data, ii + j - 1, j);
       if (scores->match == -1 && scores->gap == -1 && j >= jmax) {
         break;
       }
@@ -360,10 +357,9 @@ int match_accuracy(const char *string, Query query, bool colors,
   }
   // We have a match, allocate memory
   if (colors) {
-    Breaks b = extract_breaks(data);
-    *matched_string = add_ansi_colors(data, b);
+    *output = add_ansi_colors(data, extract_breaks(data));
   } else {
-    *matched_string = strdup(string);
+    *output = strdup(string);
   }
   free_matching_data(data);
   return score;
