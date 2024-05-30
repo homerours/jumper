@@ -158,11 +158,7 @@ __jumper_update_db() {
 # For Zsh
 jumper-find-dir() {
     selected=$(__jumper_fdir)
-    if [[ -z ${LBUFFER} ]] && [[ ! -z ${selected} ]]; then
-        cd $selected
-    else
-        LBUFFER="${LBUFFER}${selected}"
-    fi
+    LBUFFER="${LBUFFER}${selected}"
     zle reset-prompt
 }
 jumper-find-file() {

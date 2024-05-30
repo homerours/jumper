@@ -158,12 +158,8 @@ __jumper_update_db() {
 jumper-find-dir() {
     selected=$(__jumper_fdir)
     pre="${READLINE_LINE:0:$READLINE_POINT}"
-    if [[ -z $pre ]] && [[ ! -z ${selected} ]]; then
-        cd "$selected"
-    else
-        READLINE_LINE="${pre}$selected${READLINE_LINE:$READLINE_POINT}"
-        READLINE_POINT=$(( READLINE_POINT + ${#selected} ))
-    fi
+    READLINE_LINE="${pre}$selected${READLINE_LINE:$READLINE_POINT}"
+    READLINE_POINT=$(( READLINE_POINT + ${#selected} ))
 }
 jumper-find-file() {
     selected=$(__jumper_ffile)
