@@ -1,18 +1,21 @@
 # Jumper
 
-Jumper is a command-line program that helps you jumping to the directories and files that you frequently visit.
-It relies on [fzf](https://github.com/junegunn/fzf) for fuzzy-finding and is heavily inspired by [z](https://github.com/rupa/z).
+Jumper is a command-line program that helps you jumping to the directories and files that you frequently visit, with minimal number of keystrokes.
+It relies on [fzf](https://github.com/junegunn/fzf) for UI and is heavily inspired by [z](https://github.com/rupa/z).
+
+https://github.com/homerours/jumper/assets/12702557/5cc45509-9f25-44ff-a69b-e413a7ce57a3
 
 It differentiates itself from the plethora of similar tools on the following points:
 - Efficient ranking mechanism which combines the "frecency" of the match (as [z](https://github.com/rupa/z) does) and the accuracy of the match (as [fzf](https://github.com/junegunn/fzf) or [fzy](https://github.com/jhawthorn/fzy) do). This allows to find files/folders accurately in very few keystrokes. More details [here](https://github.com/homerours/jumper/blob/master/doc/algorithm.md).
 - It is not restricted to folders. It allows to quickly navigate files, or anything you want (you can easily create and query a new custom database).
-- It can be run in "interactive mode".
+- It can be run in "interactive mode", relying on [fzf](https://github.com/junegunn/fzf) for the UI.
 - Written in C, for speed and portability.
 
 [Usage](#usage) - [Installation](#installation) - [Vim-Neovim](#vim)
 
 ## Usage
 
+Just move around files and folders as usual, jumper will keep track of them. Then,
 - Use `z <something>` to jump to the most frequent/recent directories matching `<something>`.
 - Use `zf <something>` to open (in `$EDITOR`) the most frequent/recent file matching `<something>`.
 - Use `Ctrl+Y` to fuzzy-find directories matching a query interactively (`fzf` required).
