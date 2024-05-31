@@ -23,7 +23,7 @@ Assume moreover that this item is typically visited every $\Delta_T$ seconds, so
 ```
 We plot this function below:
 
-![frecency](frecency.png)
+![frecency](https://github.com/homerours/jumper/assets/12702557/bc816967-92f0-4d27-a4e6-e9b8de25ca99)
 
 In the case where the item has just been visited, the frecency above gets an increase of $+10$ inside of the $\log$, leading to the dashed curve. This allows directories that have been very recently visited but that do not have a long history of visits (think for instance at a newly created directory) to compete with older directories that have been visited for a very long time.
 
@@ -57,7 +57,7 @@ In 1894, Fusakichi Omori showed empirically that the frequency of aftershocks de
 ```math
 y(t) = \frac{k}{h + t}
 ```
-![omori](omori_law.png)
+![omori_law](https://github.com/homerours/jumper/assets/12702557/e27398b7-5bfc-4f28-a6c2-086ac0ca9e6a)
 <div align="center">
 From Omori (1894), "On the aftershocks of earthquakes".
 </div>
