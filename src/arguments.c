@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #include "arguments.h"
+#include "shell.h"
 
 static const char HELP_STRING[] =
     "Usage: %s [OPTIONS] QUERY\n"
@@ -23,12 +24,15 @@ static const char HELP_STRING[] =
     " -S, --case-sensitive      Make the search case-senstitive.\n"
     " -H, --home-tilde          Substitute $HOME with ~ when printing "
     "results.\n"
-    " -r, --relative=[PATH]     Outputs relative paths to PATH if\n"
+    " -r, --relative=PATH       Outputs relative paths to PATH if\n"
     "                           specified (defaults to current directory).\n\n"
     "Update the database:\n"
     " -a, --add                 Add the query to the database or\n"
     "                           update its record.\n"
-    " -w, --weight=WEIGHT       Weight of the visit (default=1.0).\n";
+    " -w, --weight=WEIGHT       Weight of the visit (default=1.0).\n\n"
+    "Shell setup:\n"
+    " -l, --shell=SHELL         Prints the setup script for SHELL,\n"
+    "                           SHELL has to be bash, zsh or fish.\n";
 
 static void help(const char *argv0) { printf(HELP_STRING, argv0); }
 
@@ -46,6 +50,7 @@ static struct option longopts[] = {
     {"n-results", required_argument, NULL, 'n'},
     {"syntax", required_argument, NULL, 'x'},
     {"help", no_argument, NULL, 'h'},
+    {"shell", required_argument, NULL, 'l'},
     {NULL, 0, NULL, 0}};
 
 static void args_init(Arguments *args) {
@@ -89,7 +94,7 @@ Arguments *parse_arguments(int argc, char **argv) {
     exit(EXIT_SUCCESS);
   }
   int c;
-  while ((c = getopt_long(argc, argv, "cashHISf:n:w:b:x:r::", longopts,
+  while ((c = getopt_long(argc, argv, "cashHISl:f:n:w:b:x:r::", longopts,
                           NULL)) != -1) {
     switch (c) {
     case 'f':
@@ -165,6 +170,10 @@ Arguments *parse_arguments(int argc, char **argv) {
       break;
     case 'h':
       help(argv[0]);
+      exit(EXIT_SUCCESS);
+      break;
+    case 'l':
+      shell_setup(optarg);
       exit(EXIT_SUCCESS);
       break;
     default:

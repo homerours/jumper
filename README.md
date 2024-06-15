@@ -84,10 +84,19 @@ cd jumper
 make install
 ```
 to compile and move the `jumper` binary to `/usr/local/bin`. Then add 
-```bash
-source <path-to>/shell/jumper.{bash, zsh, or fish depending on the shell you use}
-```
-to your `.bashrc`, `.zshrc` or `.config/fish/config.fish` to get access to jumper's functions.
+the following to your `.bashrc`, `.zshrc` or `.config/fish/config.fish` to get access to jumper's functions:
+* bash
+  ```sh
+  eval "$(jumper --shell bash)"
+  ```
+* zsh
+  ```sh
+  source <(jumper --shell zsh)
+  ```
+* fish
+  ```fish
+  jumper --shell fish | source
+  ```
 
 > [!TIP]
 > If you were already using [z](https://github.com/rupa/z), you can `cp ~/.z ~/.jfolders` to export your database to Jumper.
