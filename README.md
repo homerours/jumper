@@ -39,11 +39,11 @@ More details about the scoring mechanism are given [here](https://github.com/hom
 ### Concept
 
 `jumper` operates on files whose lines are in the format `<path>|<number-of-visits>|<timestamp-of-last-visit>`. Such files are typically used to record accesses to files/directories. Given such a file, the command
-```bash
+```sh
 jumper -f <database-file> -n N <query>
 ```
 returns the top `N` entries of the `<database-file>` (this will typically be `~/.jfolders` or `~/.jfiles`) that match `<query>`. Adding the `-c` flag colors the matched substring. The command
-```bash
+```sh
 jumper -f <database-file> -a <path>
 ```
 adds the `<path>` to the `<database-file>`, or updates its record (i.e. updates the visits count and timestamp) if already present.
@@ -75,10 +75,17 @@ By default, matches are "case-semi-sensitive". This means that a lower case char
 - Bash (>=4.0), Zsh or Fish.
 - [fzf](https://github.com/junegunn/fzf). This is not mandatory, but you will need it for running queries interactively.
 
-### Installation process
+### Install script
 
-Run
-```bash
+You can use the install script to clone and compile jumper + set up the shell keybindings automatically:
+```sh
+sh -c "$(curl -s https://raw.githubusercontent.com/homerours/jumper/master/install.sh)"
+```
+
+### Manual installation
+
+Alternatively, you can run
+```sh
 git clone https://github.com/homerours/jumper
 cd jumper
 make install
@@ -103,7 +110,7 @@ the following to your `.bashrc`, `.zshrc` or `.config/fish/config.fish` to get a
 
 In order to keep track of the visited files, the function `jumper -f $__JUMPER_FILES -a <file>` has to be called each time a file `<file>` is opened. 
 This can be done automatically in Vim/Neovim, see next section. For other programs, you may want to use aliases (better solutions exist, using for instance "hooks" in emacs) 
-```bash
+```sh
 function myeditor() {
    jumper -f $__JUMPER_FILES -a "$1" 
    myeditor $1
@@ -112,9 +119,9 @@ function myeditor() {
 
 ### Configuration
 
-One typically only needs to add `source <path-to>/shell/jumper.{bash, zsh, or fish}` in ones `.bashrc`, `.zshrc` or `.config/fish/config.fish`.
+One typically only needs to add the lines above in ones `.bashrc`, `.zshrc` or `.config/fish/config.fish`.
 However, the default keybindings, previewers and "database-files" can still be configured if desired. Here is a sample configuration (for bash)
-```bash
+```sh
 # Change default folders/files database-files (defaults are ~/.jfolders and ~/.jfiles):
 export __JUMPER_FOLDERS='/path/to/custom/database_for_folders'
 export __JUMPER_FILES='/path/to/custom/database_for_files'
@@ -137,7 +144,7 @@ __JUMPER_FZF_FILES_PREVIEW='head -n 30'
 __JUMPER_FZF_FOLDERS_PREVIEW='ls -lah --color=always'
 
 # IMPORTANT: this has to be after the configuration above:
-source /path/to/jumper/shell/jumper.bash
+eval "$(jumper --shell bash)"
 
 # Change default (ctrl-y and ctrl-u) bindings:
 bind -x '"\C-d": jumper-find-dir'
@@ -155,7 +162,7 @@ For more advanced/custom maintenance, the files `~/.jfolders` and `~/.jfiles` ca
 #### Performance
 
 Querying and updating `jumper`'s database is very fast and shouldn't cause any latency. On an old 2012 laptop, these operations (over a database with 1000 entries) run in about 4ms:
-```bash
+```sh
 $ time for i in {1..100}; do jumper -f ~/.jfolders hello > /dev/null; done
 real    0m0.432s
 user    0m0.165s
@@ -166,7 +173,7 @@ user    0m0.118s
 sys     0m0.209s
 ```
 For comparison: 
-```bash
+```sh
 $ time for i in {1..100}; do wc -l ~/.jfolders > /dev/null; done
 real    0m0.357s
 user    0m0.117s
@@ -210,7 +217,7 @@ to your `.vimrc` to then change directory with `:Z <query>` or open files with `
 ## Combine it with other tools
 
 You can for instance define a function
-```bash
+```sh
 fu() {
     RG_PREFIX="jumper -f ${__JUMPER_FILES} '' | xargs rg -i --column --line-number --color=always "
     fzf --ansi --disabled --query '' \
