@@ -7,6 +7,7 @@ https://github.com/homerours/jumper/assets/12702557/5cc45509-9f25-44ff-a69b-e413
 
 It differentiates itself from the plethora of similar tools on the following points:
 - Efficient ranking mechanism which combines the "frecency" of the match (as [z](https://github.com/rupa/z) does) and the accuracy of the match (as [fzf](https://github.com/junegunn/fzf) or [fzy](https://github.com/jhawthorn/fzy) do). This allows to find files/folders accurately in very few keystrokes. More details [here](https://github.com/homerours/jumper/blob/master/doc/algorithm.md).
+- "Orderless" search: it can match a sequence of tokens in any order.
 - It is not restricted to folders. It allows to quickly navigate files, or anything you want (you can easily create and query a new custom database).
 - It can be run in "interactive mode", relying on [fzf](https://github.com/junegunn/fzf) for the UI.
 - Written in C, for speed and portability.
@@ -36,6 +37,7 @@ The ranking of a path at time $t$ is based on the following score
 where $\beta = 1.0$ by default, but can be updated with the flag `-b <value>`. 
 More details about the scoring mechanism are given [here](https://github.com/homerours/jumper/blob/master/doc/algorithm.md).
 
+
 ### Concept
 
 `jumper` operates on files whose lines are in the format `<path>|<number-of-visits>|<timestamp-of-last-visit>`. Such files are typically used to record accesses to files/directories. Given such a file, the command
@@ -63,6 +65,8 @@ By default jumper uses a simpler version of fzf's "extended search-mode". One ca
 | `.lua$`   | suffix-exact-match         | Items that end with `.lua`           |
 
 The syntax mode can be changed to `fuzzy` (use only fuzzy-matches, the characters `^`, `$` and `'` are interpreted as standard characters) or `exact` (exact matches only), with the `--syntax` flag.
+
+If the flag `-o` (`--orderless`, names coming from emacs' [orderless](https://github.com/oantolin/orderless) package) is provided, these tokens can be matched in any order (a higher score will be given to matches whose order is closer to the one of the query). The `--orderless` flag is turned on by default for the `z` command and interactive searches. This can be changed by editing the `__JUMPER_FLAGS` environment variable.
 
 ### Case sensitivity
 

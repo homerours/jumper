@@ -1,7 +1,7 @@
 # Common to bash and zsh
 [[ -n $__JUMPER_FOLDERS ]] || export __JUMPER_FOLDERS=~/.jfolders
 [[ -n $__JUMPER_FILES ]] || export __JUMPER_FILES=~/.jfiles
-[[ -n $__JUMPER_FLAGS ]] || __JUMPER_FLAGS='-cH -n 500'
+[[ -n $__JUMPER_FLAGS ]] || __JUMPER_FLAGS='-cHo -n 500'
 [[ -n $__JUMPER_FZF_OPTS ]] || __JUMPER_FZF_OPTS=(--height=70% --layout=reverse --keep-right --preview-window=hidden --ansi)
 
 if [[ -z $__JUMPER_FZF_FILES_PREVIEW ]]; then

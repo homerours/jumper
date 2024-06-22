@@ -8,6 +8,7 @@
 #include "arguments.h"
 #include "heap.h"
 #include "matching.h"
+#include "query.h"
 #include "record.h"
 
 static char *file_to_buffer(FILE *fp, size_t *size) {
@@ -98,17 +99,28 @@ static void lookup(Arguments *args) {
 
   Heap *heap = new_heap(args->n_results);
   Record rec;
-  Query query = parse_query(args->key, args->syntax);
+  Queries queries;
+  if (args->syntax == SYNTAX_extended) {
+    queries = make_extended_queries(args->key, args->orderless);
+  } else {
+    Query query = make_normal_query(args->key, args->syntax == SYNTAX_fuzzy);
+    queries.queries = &query;
+    queries.n = 1;
+  }
 
+  // for (int i = 0; i < queries.n; i++) {
+  //   printf("%d. %s (%f)\n", i, queries.queries[i].query,
+  //          queries.queries[i].alignment);
+  // }
   long long now = (long long)time(NULL);
-  int match_score;
+  double match_score;
   double score;
   char *line = NULL, *matched_str;
   size_t len;
   while (getline(&line, &len, fp) != -1) {
     parse_record(line, &rec);
-    match_score = match_accuracy(rec.path, query, args->highlight, &matched_str,
-                                 args->case_mode);
+    match_score = match_accuracy(rec.path, queries, args->highlight,
+                                 &matched_str, args->case_mode);
     if (match_score > 0) {
       score = args->beta * 0.25 * match_score +
               frecency(rec.n_visits, now - rec.last_visit);
@@ -117,7 +129,7 @@ static void lookup(Arguments *args) {
   }
   print_heap(heap, args->print_scores, args->relative_to, args->home_tilde);
   fclose(fp);
-  free_query(query);
+  free_queries(queries);
   if (line) {
     free(line);
   }

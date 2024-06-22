@@ -5,7 +5,7 @@
 static const char bash_variables[] =
 "[[ -n $__JUMPER_FOLDERS ]] || export __JUMPER_FOLDERS=~/.jfolders\n"
 "[[ -n $__JUMPER_FILES ]] || export __JUMPER_FILES=~/.jfiles\n"
-"[[ -n $__JUMPER_FLAGS ]] || __JUMPER_FLAGS='-cH -n 500'\n"
+"[[ -n $__JUMPER_FLAGS ]] || __JUMPER_FLAGS='-cHo -n 500'\n"
 "[[ -n $__JUMPER_FZF_OPTS ]] || __JUMPER_FZF_OPTS='--height=70%% --layout=reverse --keep-right --preview-window=hidden --ansi'\n"
 "if [[ -z $__JUMPER_FZF_FILES_PREVIEW ]]; then\n"
 "    if [[ -n $(which bat) ]]; then\n"
@@ -153,7 +153,7 @@ static const char bash_bindings[] =
 static const char zsh_variables[] =
 "[[ -n $__JUMPER_FOLDERS ]] || export __JUMPER_FOLDERS=~/.jfolders\n"
 "[[ -n $__JUMPER_FILES ]] || export __JUMPER_FILES=~/.jfiles\n"
-"[[ -n $__JUMPER_FLAGS ]] || __JUMPER_FLAGS='-cH -n 500'\n"
+"[[ -n $__JUMPER_FLAGS ]] || __JUMPER_FLAGS='-cHo -n 500'\n"
 "[[ -n $__JUMPER_FZF_OPTS ]] || __JUMPER_FZF_OPTS=(--height=70%% --layout=reverse --keep-right --preview-window=hidden --ansi)\n"
 "if [[ -z $__JUMPER_FZF_FILES_PREVIEW ]]; then\n"
 "    if [[ -n $(which bat) ]]; then\n"
@@ -312,7 +312,7 @@ static const char fish_variables[] =
 "    set __JUMPER_FILES ~/.jfiles\n"
 "end\n"
 "if not set -q __JUMPER_FLAGS\n"
-"    set __JUMPER_FLAGS '-cH -n 500'\n"
+"    set __JUMPER_FLAGS '-cHo -n 500'\n"
 "end\n"
 "if not set -q __JUMPER_FZF_OPTS\n"
 "    set __JUMPER_FZF_OPTS --height=70%% --layout=reverse --keep-right --preview-window=hidden --ansi\n"

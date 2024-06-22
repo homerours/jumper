@@ -20,6 +20,8 @@ static const char HELP_STRING[] =
     " -b, --beta=BETA           Specify an inverse temperature\n"
     "                           when computing the score (default=1.0).\n"
     " -x, --syntax=syntax       Query syntax (default: extended).\n"
+    " -o, --orderless           Orderless queries: token can be matched\n"
+    "                           in any order (only for extended syntax).\n"
     " -I, --case-insensitive    Make the search case-insenstitive.\n"
     " -S, --case-sensitive      Make the search case-senstitive.\n"
     " -H, --home-tilde          Substitute $HOME with ~ when printing "
@@ -49,6 +51,7 @@ static struct option longopts[] = {
     {"beta", required_argument, NULL, 'b'},
     {"n-results", required_argument, NULL, 'n'},
     {"syntax", required_argument, NULL, 'x'},
+    {"orderless", no_argument, NULL, 'o'},
     {"help", no_argument, NULL, 'h'},
     {"shell", required_argument, NULL, 'l'},
     {NULL, 0, NULL, 0}};
@@ -60,6 +63,7 @@ static void args_init(Arguments *args) {
   args->highlight = false;
   args->print_scores = false;
   args->home_tilde = false;
+  args->orderless = false;
   args->relative_to = NULL;
   args->mode = MODE_search;
   args->syntax = SYNTAX_extended;
@@ -94,7 +98,7 @@ Arguments *parse_arguments(int argc, char **argv) {
     exit(EXIT_SUCCESS);
   }
   int c;
-  while ((c = getopt_long(argc, argv, "cashHISl:f:n:w:b:x:r::", longopts,
+  while ((c = getopt_long(argc, argv, "cashoHISl:f:n:w:b:x:r::", longopts,
                           NULL)) != -1) {
     switch (c) {
     case 'f':
@@ -117,6 +121,9 @@ Arguments *parse_arguments(int argc, char **argv) {
       break;
     case 'x':
       args->syntax = parse_syntax(optarg);
+      break;
+    case 'o':
+      args->orderless = true;
       break;
     case 's':
       args->print_scores = true;
