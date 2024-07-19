@@ -6,6 +6,7 @@ typedef struct Permutation {
   int *values;
   int *c;
   int alignment;
+  // alignement is n (n-1) / 2 - inversions
 } Permutation;
 
 Permutation *init_permutation(int n);

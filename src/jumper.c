@@ -108,10 +108,6 @@ static void lookup(Arguments *args) {
     queries.n = 1;
   }
 
-  // for (int i = 0; i < queries.n; i++) {
-  //   printf("%d. %s (%f)\n", i, queries.queries[i].query,
-  //          queries.queries[i].alignment);
-  // }
   long long now = (long long)time(NULL);
   double match_score;
   double score;

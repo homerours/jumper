@@ -9,7 +9,7 @@ Permutation *init_permutation(int n) {
   Permutation *p = (Permutation *)malloc(sizeof(Permutation));
   p->n = n;
   p->i = 1;
-  p->alignment = (n * (n - 1)) / 2;
+  p->alignment = (n * (n - 1)) / 2; // alignement is n (n-1) / 2 - inversions
   p->values = (int *)malloc(n * sizeof(int));
   p->c = (int *)malloc(n * sizeof(int));
   for (int i = 0; i < n; i++) {
@@ -47,13 +47,6 @@ bool next_permutation(Permutation *p) {
     }
   }
   return false;
-}
-
-void print_permutation(Permutation *p) {
-  for (int i = 0; i < p->n; i++) {
-    printf("%d ", p->values[i]);
-  }
-  printf("(%d) \n", p->alignment);
 }
 
 void free_permutation(Permutation *p) {

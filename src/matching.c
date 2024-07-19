@@ -46,7 +46,7 @@ static const int first_gap_penalty = 16;
 static const int gap_penalty = 1;
 
 // For orderless queries
-static const double alignment_scaling = 40.0;
+static const double alignment_scaling = 80.0;
 
 static inline bool match_char(char a, char b, CASE_MODE case_mode) {
   if (tolower(a) != tolower(b)) {
@@ -301,7 +301,7 @@ double match_accuracy(const char *string, Queries queries, bool colors,
         jmax = j - 1;
       }
       const int score = get_max_score(data);
-      const int total_score = score + alignment_scaling * query.alignment;
+      const double total_score = score + alignment_scaling * query.alignment;
       if ((score > -1) && (total_score > best_score)) {
         best_score = total_score;
         if (best_matching_data != NULL) {

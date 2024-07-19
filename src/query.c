@@ -72,18 +72,6 @@ static Token *make_token(const char *token) {
   return t;
 }
 
-void printarray(TokenArray array) {
-  if (array.start != NULL) {
-    printf("Start: %s\n", array.start->token);
-  }
-  if (array.end != NULL) {
-    printf("End: %s\n", array.end->token);
-  }
-  for (int i = 0; i < array.length; i++) {
-    printf("%s\n", array.tokens[i]->token);
-  }
-}
-
 static TokenArray parse(const char *query) {
   char *pch;
   char *str = strdup(query);
@@ -118,23 +106,11 @@ static TokenArray parse(const char *query) {
   return array;
 }
 
-void print_query(Query query) {
-  int n = query.length;
-  printf(" %s\n", query.query);
-  for (int i = 0; i <= n; i++) {
-    if (query.gap_allowed[i]) {
-      printf("1");
-    } else {
-      printf("0");
-    }
-  }
-  printf("\n");
-}
 
 Query make_query(TokenArray array, Permutation *p) {
   Query q;
   q.alignment =
-      (p->n > 1) ? 2.0 * ((double)p->alignment) / (p->n * (p->n - 1)) : 1.0;
+      (p->n >= 1) ? ((double)p->alignment) / p->n  : 1.0;
   int n = 0;
   for (int i = 0; i < array.length; i++) {
     n += array.tokens[i]->length;
