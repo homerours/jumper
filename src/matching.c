@@ -167,10 +167,9 @@ static Scores *compute_scores(MatchingData *data, int i, int j) {
       scores->gap = 0;
     }
   }
-  int mscore = match_score(data, i, j);
+  const int mscore = match_score(data, i, j);
   if (mscore > 0 && (j > 1 || i == 1 || data->gap_allowed[0])) {
-    int max_score = max(top_left->gap, top_left->match);
-    // printf("Matching %d - %d \n", i,j);
+    const int max_score = max(top_left->gap, top_left->match);
     if (max_score >= 0) {
       scores->match = max_score + mscore;
     }
@@ -257,16 +256,10 @@ static int get_max_score(MatchingData *data) {
   const int n = data->n;
   const int m = data->m;
   Scores *scores;
-  // printf("string: %s\n", data->string);
-  // printf("query: %s\n", data->query);
-  // printf("n=%d m=%d\n", data->n, data->m);
-  // scores = get_scores(data, 47, m - 1);
-  // printf("scores: %d %d", scores->match, scores->gap);
   for (int ii = 1; ii < n - m + 2; ii++) {
     int i = ii + m - 2;
     scores = get_scores(data, i, m - 1);
     if (scores->match >= score && (data->gap_allowed[m - 1] || i == n - 1)) {
-      // printf("%d \n", i);
       data->imax = i;
       score = scores->match;
     }

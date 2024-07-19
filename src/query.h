@@ -8,13 +8,13 @@ typedef enum SYNTAX {
   SYNTAX_exact,
 } SYNTAX;
 
+// Token types
 typedef enum TTYPE {
   TTYPE_start,
   TTYPE_end,
   TTYPE_exact,
   TTYPE_fuzzy,
 } TTYPE;
-
 
 typedef struct Token {
   char *token;
@@ -36,11 +36,12 @@ typedef struct Query {
   double alignment;
 } Query;
 
+// Array of queries
 typedef struct Queries {
   Query *queries;
   int n;
 } Queries;
 
 void free_queries(Queries queries);
+Query make_standard_query(const char *query, bool gap_allowed);
 Queries make_extended_queries(const char *query, bool orderless);
-Query make_normal_query(const char *query, bool gap_allowed);

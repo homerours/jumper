@@ -6,7 +6,7 @@
 #include "permutations.h"
 #include "query.h"
 
-void free_query(Query query) {
+static void free_query(Query query) {
   free(query.query);
   free(query.gap_allowed);
 }
@@ -30,7 +30,7 @@ static void set_values(bool *array, int start, int length, bool value) {
   }
 }
 
-Query make_normal_query(const char *query, bool gap_allowed) {
+Query make_standard_query(const char *query, bool gap_allowed) {
   Query q;
   const int n = strlen(query);
   q.gap_allowed = (bool *)malloc((n + 1) * sizeof(bool));
@@ -106,11 +106,9 @@ static TokenArray parse(const char *query) {
   return array;
 }
 
-
-Query make_query(TokenArray array, Permutation *p) {
+static Query make_query(TokenArray array, Permutation *p) {
   Query q;
-  q.alignment =
-      (p->n >= 1) ? ((double)p->alignment) / p->n  : 1.0;
+  q.alignment = (p->n >= 1) ? ((double)p->alignment) / p->n : 1.0;
   int n = 0;
   for (int i = 0; i < array.length; i++) {
     n += array.tokens[i]->length;

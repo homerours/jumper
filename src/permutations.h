@@ -2,9 +2,9 @@
 
 typedef struct Permutation {
   int n;
-  int i;
+  int i; // internal index
   int *values;
-  int *c;
+  int *c; // internal array
   int alignment;
   // alignement is n (n-1) / 2 - inversions
 } Permutation;

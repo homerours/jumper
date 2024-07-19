@@ -103,7 +103,7 @@ static void lookup(Arguments *args) {
   if (args->syntax == SYNTAX_extended) {
     queries = make_extended_queries(args->key, args->orderless);
   } else {
-    Query query = make_normal_query(args->key, args->syntax == SYNTAX_fuzzy);
+    Query query = make_standard_query(args->key, args->syntax == SYNTAX_fuzzy);
     queries.queries = &query;
     queries.n = 1;
   }
