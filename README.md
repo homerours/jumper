@@ -66,7 +66,11 @@ By default jumper uses a simpler version of fzf's "extended search-mode". One ca
 
 The syntax mode can be changed to `fuzzy` (use only fuzzy-matches, the characters `^`, `$` and `'` are interpreted as standard characters) or `exact` (exact matches only), with the `--syntax` flag.
 
-If the flag `-o` (`--orderless`, name coming from emacs' [orderless](https://github.com/oantolin/orderless) package) is provided, these tokens can be matched in any order (a higher score will be given to matches whose order is closer to the one of the query). The `--orderless` flag is turned on by default for the `z` command and interactive searches. This can be changed by editing the `__JUMPER_FLAGS` environment variable.
+### Orderless
+
+If the flag `-o` (`--orderless`, name coming from emacs' [orderless](https://github.com/oantolin/orderless) package) is provided, the tokens can be matched in any order. A higher score will be given to matches whose order is closer to the one of the query. More precisely, one adds to the `matching_score` a term proportional to the number of pairs of token that are in the right order (see [inversions of a permutations](https://en.wikipedia.org/wiki/Inversion_(discrete_mathematics))).
+
+The `--orderless` flag is turned on by default for the `z` command and interactive searches. This can be changed by editing the `__JUMPER_FLAGS` environment variable.
 
 ### Case sensitivity
 
