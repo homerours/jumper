@@ -22,6 +22,12 @@ static void free_tokenarray(TokenArray t) {
     free(t.tokens[i]);
   }
   free(t.tokens);
+  if (t.start != NULL) {
+    free(t.start);
+  }
+  if (t.end != NULL) {
+    free(t.end);
+  }
 }
 
 static void set_values(bool *array, int start, int length, bool value) {
