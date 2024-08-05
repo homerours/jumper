@@ -1,8 +1,10 @@
 #include <ctype.h>
+#include <libgen.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <time.h>
 
 #include "arguments.h"
@@ -25,6 +27,62 @@ static char *file_to_buffer(FILE *fp, size_t *size) {
   }
   buffer[*size] = '\0';
   return buffer;
+}
+
+static inline bool exist(const char *path, bool is_dir) {
+  struct stat stats;
+  if (stat(path, &stats) == 0) {
+    return ((is_dir && (S_ISDIR(stats.st_mode) != 0)) ||
+            (!is_dir && (S_ISREG(stats.st_mode) != 0)));
+  }
+  return false;
+}
+
+static void clean_database(Arguments *args) {
+  FILE *fp = fopen(args->file_path, "r+");
+  if (fp == NULL) {
+    fprintf(stderr, "ERROR: File %s not found\n", args->file_path);
+    exit(EXIT_FAILURE);
+  }
+  char *tempname = dirname(strdup(args->file_path));
+  tempname = realloc(tempname, (strlen(tempname) + 20) * sizeof(char));
+  strcat(tempname, "/.jumper_XXXXXX");
+  const int temp_fd = mkstemp(tempname);
+  if (temp_fd == -1) {
+    fprintf(stderr, "ERROR: Could not create the temporary file %s\n",
+            tempname);
+    exit(EXIT_FAILURE);
+  }
+  FILE *temp = fdopen(temp_fd, "r+");
+  if (temp == NULL) {
+    fprintf(stderr,
+            "ERROR: Could not open the file descriptor %d of the temporary "
+            "file %s\n",
+            temp_fd, tempname);
+    exit(EXIT_FAILURE);
+  }
+
+  Record rec;
+  char *line = NULL;
+  size_t len;
+
+  while (getline(&line, &len, fp) != -1) {
+    parse_record(line, &rec);
+    if (exist(rec.path, args->is_dir)) {
+      char *rec_string = record_to_string(&rec);
+      const int record_length = strlen(rec_string);
+      fwrite(rec_string, sizeof(char), record_length, temp);
+      fwrite("\n", sizeof(char), 1, temp);
+      free(rec_string);
+    } 
+  }
+  fclose(fp);
+  fclose(temp);
+  rename(tempname, args->file_path);
+  free(tempname);
+  if (line) {
+    free(line);
+  }
 }
 
 static void update_database(Arguments *args) {
@@ -135,8 +193,10 @@ int main(int argc, char **argv) {
   Arguments *args = parse_arguments(argc, argv);
   if (args->mode == MODE_search) {
     lookup(args);
-  } else {
+  } else if (args->mode == MODE_update) {
     update_database(args);
+  } else {
+    clean_database(args);
   }
   free(args);
   return EXIT_SUCCESS;

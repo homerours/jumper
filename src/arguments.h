@@ -5,7 +5,8 @@
 
 typedef enum MODE {
   MODE_search,
-  MODE_add,
+  MODE_clean,
+  MODE_update,
 } MODE;
 
 typedef struct Arguments {
@@ -17,6 +18,7 @@ typedef struct Arguments {
   bool print_scores;
   bool home_tilde;
   bool orderless;
+  bool is_dir;
   int n_results;
   const char *relative_to;
   MODE mode;

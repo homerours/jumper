@@ -31,7 +31,10 @@ static const char HELP_STRING[] =
     "Update the database:\n"
     " -a, --add                 Add the query to the database or\n"
     "                           update its record.\n"
-    " -w, --weight=WEIGHT       Weight of the visit (default=1.0).\n\n"
+    " -w, --weight=WEIGHT       Weight of the visit (default=1.0).\n"
+    " -C, --clean=TYPE          Remove from the database the entries \n"
+    "                           that do not exist in the filesystem.\n"
+    "                           Set TYPE to f for files, d for directories.\n\n"
     "Shell setup:\n"
     " -l, --shell=SHELL         Prints the setup script for SHELL,\n"
     "                           SHELL has to be bash, zsh or fish.\n";
@@ -54,6 +57,7 @@ static struct option longopts[] = {
     {"orderless", no_argument, NULL, 'o'},
     {"help", no_argument, NULL, 'h'},
     {"shell", required_argument, NULL, 'l'},
+    {"clean", required_argument, NULL, 'C'},
     {NULL, 0, NULL, 0}};
 
 static void args_init(Arguments *args) {
@@ -64,6 +68,7 @@ static void args_init(Arguments *args) {
   args->print_scores = false;
   args->home_tilde = false;
   args->orderless = false;
+  args->is_dir = true;
   args->relative_to = NULL;
   args->mode = MODE_search;
   args->syntax = SYNTAX_extended;
@@ -98,14 +103,24 @@ Arguments *parse_arguments(int argc, char **argv) {
     exit(EXIT_SUCCESS);
   }
   int c;
-  while ((c = getopt_long(argc, argv, "cashoHISl:f:n:w:b:x:r::", longopts,
+  while ((c = getopt_long(argc, argv, "cashoHISl:f:n:w:b:x:r::C:", longopts,
                           NULL)) != -1) {
     switch (c) {
     case 'f':
       args->file_path = optarg;
       break;
     case 'a':
-      args->mode = MODE_add;
+      args->mode = MODE_update;
+      break;
+    case 'C':
+      if ( (strlen(optarg) != 1 || (*optarg != 'f' && *optarg != 'd'))) {
+        fprintf(stderr, "ERROR: Invalid argument for -C (--clean): %s\n",
+                optarg);
+        help(argv[0]);
+        exit(EXIT_FAILURE);
+      }
+      args->is_dir = (*optarg == 'd');
+      args->mode = MODE_clean;
       break;
     case 'I':
       args->case_mode = CASE_MODE_insensitive;
@@ -200,7 +215,7 @@ Arguments *parse_arguments(int argc, char **argv) {
   if (optind != argc) {
     args->key = argv[argc - 1];
   }
-  if (*(args->key) == 0 && args->mode == MODE_add) {
+  if (*(args->key) == 0 && args->mode == MODE_update) {
     fprintf(stderr, "ERROR: nothing to add to the database.\n");
     exit(EXIT_FAILURE);
   }
