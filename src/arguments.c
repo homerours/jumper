@@ -9,6 +9,13 @@
 #include "arguments.h"
 #include "shell.h"
 
+static const int default_n_results = 50000;
+static const size_t max_cwd_len = 256;
+static const char default_dir_database[] = "/.jfolders";
+static const char default_files_database[] = "/.jfiles";
+static const char directories_env_variable[] = "__JUMPER_FOLDERS";
+static const char files_env_variable[] = "__JUMPER_FILES";
+
 static const char HELP_STRING[] =
     "Usage: %s [MODE] [OPTIONS] ARG\n"
     "MODE has to be one of 'find', 'update', 'clean', 'status', 'shell'.\n\n"
@@ -28,15 +35,13 @@ static const char HELP_STRING[] =
     " -x, --syntax=syntax       Query syntax (default: extended).\n"
     " -o, --orderless           Orderless queries: token can be matched\n"
     "                           in any order (only for extended syntax).\n"
-    " -I, --case-insensitive    Make the search case-insenstitive.\n"
+    " -I, --case-insensitive    Make the search case-insensitive.\n"
     " -S, --case-sensitive      Make the search case-senstitive.\n"
     " -H, --home-tilde          Substitute $HOME with ~ when printing "
     "results.\n"
     " -r, --relative=PATH       Outputs relative paths to PATH if\n"
     "                           specified (defaults to current directory).\n"
     "MODE update: update the record ARG in the database\n"
-    " -a, --add                 Add the query to the database or\n"
-    "                           update its record.\n"
     " -w, --weight=WEIGHT       Weight of the visit (default=1.0).\n\n"
     "MODE clean: remove entries that do not exist anymore.\n"
     "MODE status: print databases' locations and some statistics.\n"
@@ -51,7 +56,7 @@ static struct option longopts[] = {
     {"scores", no_argument, NULL, 's'},
     {"color", no_argument, NULL, 'c'},
     {"home-tilde", no_argument, NULL, 'H'},
-    {"case-insenstitive", no_argument, NULL, 'I'},
+    {"case-insensitive", no_argument, NULL, 'I'},
     {"case-sensitive", no_argument, NULL, 'S'},
     {"relative", optional_argument, NULL, 'r'},
     {"beta", required_argument, NULL, 'b'},
@@ -65,7 +70,7 @@ static struct option longopts[] = {
 static void args_init(Arguments *args) {
   args->file_path = NULL;
   args->key = "";
-  args->n_results = 50000;
+  args->n_results = default_n_results;
   args->highlight = false;
   args->print_scores = false;
   args->home_tilde = false;
@@ -124,20 +129,21 @@ static SYNTAX parse_syntax(const char *syntax) {
 }
 
 char *get_default_database_path(bool is_dir) {
-  char *path = getenv(is_dir ? "__JUMPER_FOLDERS" : "__JUMPER_FILES");
+  char *path = getenv(is_dir ? directories_env_variable : files_env_variable);
   if (path == NULL) {
     char *home = getenv("HOME");
     if (home == NULL) {
       fprintf(stderr, "ERROR: Could not access $HOME environment variable.\n");
       fprintf(stderr,
-              "Please set the environment variables __JUMPER_FILES and "
-              "__JUMPER_FOLDERS to paths to jumper's files and folder's "
-              "databases.\n");
+              "Please set the environment variables %s and "
+              "%s to paths to jumper's files and folder's "
+              "databases.\n",
+              directories_env_variable, files_env_variable);
       exit(EXIT_FAILURE);
     }
     path = (char *)malloc((strlen(home) + 20) * sizeof(char));
     strcpy(path, home);
-    strcat(path, is_dir ? "/.jfolders" : "/.jfiles");
+    strcat(path, is_dir ? default_dir_database : default_files_database);
   }
   return path;
 }
@@ -197,7 +203,6 @@ Arguments *parse_arguments(int argc, char **argv) {
           optarg = argv[optind++];
         }
         if (optarg == NULL) {
-          const size_t max_cwd_len = 256;
           char *cwd = (char *)malloc(max_cwd_len * sizeof(char));
           args->relative_to = getcwd(cwd, max_cwd_len);
         } else {
