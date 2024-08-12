@@ -13,19 +13,19 @@
 #include "query.h"
 #include "record.h"
 
-static char *file_to_buffer(FILE *fp, size_t *size) {
+static char *file_to_buffer(FILE *fp) {
   long int position = ftell(fp);
   fseek(fp, 0, SEEK_END);
   long int end_position = ftell(fp);
   fseek(fp, position, SEEK_SET);
-  *size = end_position - position;
-  char *buffer = (char *)malloc((*size + 1) * sizeof(char));
-  size_t n_read = fread(buffer, sizeof(char), *size, fp);
-  if (n_read != *size) {
+  size_t size = end_position - position;
+  char *buffer = (char *)malloc((size + 1) * sizeof(char));
+  size_t n_read = fread(buffer, sizeof(char), size, fp);
+  if (n_read != size) {
     fprintf(stderr, "ERROR: Could not read file.");
     exit(EXIT_FAILURE);
   }
-  buffer[*size] = '\0';
+  buffer[size] = '\0';
   return buffer;
 }
 
@@ -70,9 +70,8 @@ static void clean_database(Arguments *args) {
     parse_record(line, &rec);
     if (exist(rec.path, args->is_dir)) {
       char *rec_string = record_to_string(&rec);
-      const int record_length = strlen(rec_string);
-      fwrite(rec_string, sizeof(char), record_length, temp);
-      fwrite("\n", sizeof(char), 1, temp);
+      fputs(rec_string, temp);
+      fputs("\n", temp);
       free(rec_string);
     }
   }
@@ -114,21 +113,20 @@ static void update_database(Arguments *args) {
         // New record has the same length or is shorter than the current one
         // one can simply overwrite the corresponding chars
         fseek(fp, position, SEEK_SET);
-        fwrite(rec_string, sizeof(char), record_length, fp);
+        fputs(rec_string, fp);
         // and add some padding if needed
         while (record_length < new_position - position - 1) {
-          fwrite(" ", sizeof(char), 1, fp);
+          fputs(" ", fp);
           record_length++;
         }
       } else {
         // New record is longer than the current one
         // We have to copy the rest of the file
         fseek(fp, new_position - 1, SEEK_SET);
-        size_t file_tail_size;
-        char *file_tail = file_to_buffer(fp, &file_tail_size);
+        char *file_tail = file_to_buffer(fp);
         fseek(fp, position, SEEK_SET);
-        fwrite(rec_string, sizeof(char), record_length, fp);
-        fwrite(file_tail, sizeof(char), file_tail_size, fp);
+        fputs(rec_string, fp);
+        fputs(file_tail, fp);
         free(file_tail);
       }
       free(rec_string);
@@ -141,9 +139,8 @@ static void update_database(Arguments *args) {
     rec.path = args->key;
     rec.last_visit = now;
     char *rec_string = record_to_string(&rec);
-    const int record_length = strlen(rec_string);
-    fwrite(rec_string, sizeof(char), record_length, fp);
-    fwrite("\n", sizeof(char), 1, fp);
+    fputs(rec_string, fp);
+    fputs("\n", fp);
     free(rec_string);
   }
   fclose(fp);
