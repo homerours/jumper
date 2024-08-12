@@ -24,20 +24,24 @@ void parse_record(char *string, Record *rec) {
 }
 
 void update_record(Record *rec, long long now, double weight) {
-  double delta = now - rec->last_visit;
+  const double delta = now - rec->last_visit;
   rec->n_visits = weight + exp(-LONG_DECAY * delta) * rec->n_visits;
   rec->last_visit = now;
 }
 
 char *record_to_string(Record *rec) {
-  int n = strlen(rec->path) + 30;
+  const int n = strlen(rec->path) + 30;
   char *buffer = (char *)malloc(n * sizeof(char));
   snprintf(buffer, n, "%s|%f|%lld", rec->path, rec->n_visits, rec->last_visit);
   return buffer;
 }
 
+double visits(double n_visits, double delta) {
+  return exp(-LONG_DECAY * delta) * n_visits;
+}
+
 double frecency(double n_visits, double delta) {
   // log(0.1)  ~ -2.3, so we add 2.4 to ensure frecency is > 0
-  return 2.4 + log(0.1 + 10 / ( 1 + delta * SHORT_DECAY)  +
+  return 2.4 + log(0.1 + 10 / (1 + delta * SHORT_DECAY) +
                    exp(-LONG_DECAY * delta) * n_visits);
 }

@@ -74,7 +74,7 @@ static void clean_database(Arguments *args) {
       fwrite(rec_string, sizeof(char), record_length, temp);
       fwrite("\n", sizeof(char), 1, temp);
       free(rec_string);
-    } 
+    }
   }
   fclose(fp);
   fclose(temp);
@@ -88,8 +88,12 @@ static void clean_database(Arguments *args) {
 static void update_database(Arguments *args) {
   FILE *fp = fopen(args->file_path, "r+");
   if (fp == NULL) {
-    fprintf(stderr, "ERROR: File %s not found\n", args->file_path);
-    exit(EXIT_FAILURE);
+    // Database does not exist, we create it.
+    fp = fopen(args->file_path, "w+");
+    if (fp == NULL) {
+      fprintf(stderr, "ERROR: Couldn't open file %s.\n", args->file_path);
+      exit(EXIT_FAILURE);
+    }
   }
 
   Record rec;
@@ -149,6 +153,9 @@ static void update_database(Arguments *args) {
 }
 
 static void lookup(Arguments *args) {
+  if (args->n_results <= 0) {
+    return;
+  }
   FILE *fp = fopen(args->file_path, "r");
   if (fp == NULL) {
     fprintf(stderr, "ERROR: File %s not found\n", args->file_path);
@@ -189,13 +196,74 @@ static void lookup(Arguments *args) {
   }
 }
 
+static int print_stats(const char *path) {
+  FILE *fp = fopen(path, "r+");
+  if (fp == NULL) {
+    return 1;
+  }
+  int n_entries = 0;
+  double total_visits = 0;
+
+  Record rec;
+  long long now = (long long)time(NULL);
+  char *line = NULL;
+  size_t len;
+
+  while (getline(&line, &len, fp) != -1) {
+    n_entries++;
+    parse_record(line, &rec);
+    total_visits += visits(rec.n_visits, now - rec.last_visit);
+  }
+  fclose(fp);
+  if (line) {
+    free(line);
+  }
+  printf("%s:\n- %d entries\n- %.1f total_visits\n", path, n_entries,
+         total_visits);
+  return 0;
+}
+
+static void status(Arguments *args) {
+  const bool has_query = strlen(args->key) > 0;
+
+  printf("\nDIRECTORIES: ");
+  args->file_path = get_default_database_path(true);
+  if (print_stats(args->file_path) != 0) {
+    printf("ERROR, couldn't open %s\n", args->file_path);
+  } else if (args->n_results > 0) {
+    printf("Top %d entries", args->n_results);
+    if (has_query) {
+      printf(" matching %s:\n", args->key);
+    } else {
+      printf(":\n");
+    }
+    lookup(args);
+  }
+
+  printf("\nFILES: ");
+  args->file_path = get_default_database_path(false);
+  if (print_stats(args->file_path) != 0) {
+    printf("ERROR, couldn't open %s\n", args->file_path);
+  } else if (args->n_results > 0) {
+    printf("Top %d entries", args->n_results);
+    if (has_query) {
+      printf(" matching %s:\n", args->key);
+    } else {
+      printf(":\n");
+    }
+    lookup(args);
+  }
+}
+
 int main(int argc, char **argv) {
   Arguments *args = parse_arguments(argc, argv);
   if (args->mode == MODE_search) {
     lookup(args);
   } else if (args->mode == MODE_update) {
     update_database(args);
-  } else {
+  } else if (args->mode == MODE_status) {
+    status(args);
+  } else if (args->mode == MODE_clean) {
     clean_database(args);
   }
   free(args);

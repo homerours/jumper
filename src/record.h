@@ -13,3 +13,5 @@ void update_record(Record *rec, long long now, double weight);
 char *record_to_string(Record *rec);
 
 double frecency(double n_visits, double delta);
+
+double visits(double n_visits, double delta);

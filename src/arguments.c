@@ -10,10 +10,16 @@
 #include "shell.h"
 
 static const char HELP_STRING[] =
-    "Usage: %s [OPTIONS] QUERY\n"
-    " -f, --file=FILE_PATH      Path to the database file.\n"
+    "Usage: %s [MODE] [OPTIONS] ARG\n"
+    "MODE has to be one of 'find', 'update', 'clean', 'status', 'shell'.\n\n"
+    " -f, --file=FILE_PATH      Path to the database file. If not supplied\n"
+    "                           jumper will use the environment variables\n"
+    "                           __JUMPER_FOLDERS or __JUMPER_FILES depending "
+    "on --type.\n"
+    " -t, --type=TYPE           TYPE has to be 'files' or 'directories' "
+    "(default).\n"
     " -h, --help                Display this help and exit.\n\n"
-    "Search:\n"
+    "MODE find: query ARG in the database\n"
     " -n, --n-results=N         Maximum number of results to show.\n"
     " -c, --color               Highlight matches in outputs.\n"
     " -s, --scores              Print the scores of the matches.\n"
@@ -27,17 +33,14 @@ static const char HELP_STRING[] =
     " -H, --home-tilde          Substitute $HOME with ~ when printing "
     "results.\n"
     " -r, --relative=PATH       Outputs relative paths to PATH if\n"
-    "                           specified (defaults to current directory).\n\n"
-    "Update the database:\n"
+    "                           specified (defaults to current directory).\n"
+    "MODE update: update the record ARG in the database\n"
     " -a, --add                 Add the query to the database or\n"
     "                           update its record.\n"
-    " -w, --weight=WEIGHT       Weight of the visit (default=1.0).\n"
-    " -C, --clean=TYPE          Remove from the database the entries \n"
-    "                           that do not exist in the filesystem.\n"
-    "                           Set TYPE to f for files, d for directories.\n\n"
-    "Shell setup:\n"
-    " -l, --shell=SHELL         Prints the setup script for SHELL,\n"
-    "                           SHELL has to be bash, zsh or fish.\n";
+    " -w, --weight=WEIGHT       Weight of the visit (default=1.0).\n\n"
+    "MODE clean: remove entries that do not exist anymore.\n"
+    "MODE status: print databases' locations and some statistics.\n"
+    "MODE shell: print setup scripts: ARG has to be bash, zsh or fish.\n";
 
 static void help(const char *argv0) { printf(HELP_STRING, argv0); }
 
@@ -55,9 +58,8 @@ static struct option longopts[] = {
     {"n-results", required_argument, NULL, 'n'},
     {"syntax", required_argument, NULL, 'x'},
     {"orderless", no_argument, NULL, 'o'},
+    {"type", required_argument, NULL, 't'},
     {"help", no_argument, NULL, 'h'},
-    {"shell", required_argument, NULL, 'l'},
-    {"clean", required_argument, NULL, 'C'},
     {NULL, 0, NULL, 0}};
 
 static void args_init(Arguments *args) {
@@ -80,6 +82,34 @@ static void args_init(Arguments *args) {
   args->weight = 1.0;
 }
 
+static MODE parse_mode(const char *mode) {
+  if (strcmp(mode, "find") == 0) {
+    return MODE_search;
+  } else if (strcmp(mode, "update") == 0) {
+    return MODE_update;
+  } else if (strcmp(mode, "clean") == 0) {
+    return MODE_clean;
+  } else if (strcmp(mode, "shell") == 0) {
+    return MODE_shell;
+  } else if (strcmp(mode, "status") == 0) {
+    return MODE_status;
+  }
+  fprintf(stderr, "ERROR: Invalid argument: %s\n", mode);
+  fprintf(stderr, "Accepted arguments: find, update, clean, status, shell.\n");
+  exit(EXIT_FAILURE);
+}
+
+static bool parse_is_dir(const char *arg) {
+  if (strcmp(arg, "files") == 0) {
+    return false;
+  } else if (strcmp(arg, "directories") == 0) {
+    return true;
+  }
+  fprintf(stderr, "ERROR: Invalid argument for -t (--type): %s\n", arg);
+  fprintf(stderr, "Accepted arguments: files, directories.\n");
+  exit(EXIT_FAILURE);
+}
+
 static SYNTAX parse_syntax(const char *syntax) {
   if (strcmp(syntax, "extended") == 0) {
     return SYNTAX_extended;
@@ -93,6 +123,25 @@ static SYNTAX parse_syntax(const char *syntax) {
   exit(EXIT_FAILURE);
 }
 
+char *get_default_database_path(bool is_dir) {
+  char *path = getenv(is_dir ? "__JUMPER_FOLDERS" : "__JUMPER_FILES");
+  if (path == NULL) {
+    char *home = getenv("HOME");
+    if (home == NULL) {
+      fprintf(stderr, "ERROR: Could not access $HOME environment variable.\n");
+      fprintf(stderr,
+              "Please set the environment variables __JUMPER_FILES and "
+              "__JUMPER_FOLDERS to paths to jumper's files and folder's "
+              "databases.\n");
+      exit(EXIT_FAILURE);
+    }
+    path = (char *)malloc((strlen(home) + 20) * sizeof(char));
+    strcpy(path, home);
+    strcat(path, is_dir ? "/.jfolders" : "/.jfiles");
+  }
+  return path;
+}
+
 Arguments *parse_arguments(int argc, char **argv) {
 
   Arguments *args = (Arguments *)malloc(sizeof(Arguments));
@@ -102,119 +151,111 @@ Arguments *parse_arguments(int argc, char **argv) {
     help(argv[0]);
     exit(EXIT_SUCCESS);
   }
-  int c;
-  while ((c = getopt_long(argc, argv, "cashoHISl:f:n:w:b:x:r::C:", longopts,
-                          NULL)) != -1) {
-    switch (c) {
-    case 'f':
-      args->file_path = optarg;
-      break;
-    case 'a':
-      args->mode = MODE_update;
-      break;
-    case 'C':
-      if ( (strlen(optarg) != 1 || (*optarg != 'f' && *optarg != 'd'))) {
-        fprintf(stderr, "ERROR: Invalid argument for -C (--clean): %s\n",
-                optarg);
+  args->mode = parse_mode(argv[1]);
+  if (args->mode == MODE_status) {
+    args->n_results = 3;
+  }
+  if (args->mode == MODE_shell) {
+    shell_setup(argv[2]);
+    exit(EXIT_SUCCESS);
+  }
+  optind++;
+  int c = 0;
+  while (optind < argc && c != -1) {
+    c = getopt_long(argc, argv, "cshoHISt:f:n:w:b:x:r::", longopts, NULL);
+    if (c != -1) {
+      switch (c) {
+      case 'f':
+        args->file_path = optarg;
+        break;
+      case 'I':
+        args->case_mode = CASE_MODE_insensitive;
+        break;
+      case 'S':
+        args->case_mode = CASE_MODE_sensitive;
+        break;
+      case 'c':
+        args->highlight = true;
+        break;
+      case 'H':
+        args->home_tilde = true;
+        break;
+      case 't':
+        args->is_dir = parse_is_dir(optarg);
+        break;
+      case 'x':
+        args->syntax = parse_syntax(optarg);
+        break;
+      case 'o':
+        args->orderless = true;
+        break;
+      case 's':
+        args->print_scores = true;
+        break;
+      case 'r':
+        if (optarg == NULL && optind < argc && argv[optind][0] == '/') {
+          optarg = argv[optind++];
+        }
+        if (optarg == NULL) {
+          const size_t max_cwd_len = 256;
+          char *cwd = (char *)malloc(max_cwd_len * sizeof(char));
+          args->relative_to = getcwd(cwd, max_cwd_len);
+        } else {
+          args->relative_to = optarg;
+        }
+        break;
+      case 'n':
+        if (sscanf(optarg, "%d", &args->n_results) != 1) {
+          fprintf(stderr, "ERROR: Invalid argument for -n (--n-results): %s\n",
+                  optarg);
+          help(argv[0]);
+          exit(EXIT_FAILURE);
+        }
+        if (args->n_results < 0) {
+          fprintf(stderr,
+                  "ERROR: The number of results -n has to be non-positive.\n");
+          exit(EXIT_FAILURE);
+        }
+        break;
+      case 'b':
+        if (sscanf(optarg, "%lf", &args->beta) != 1) {
+          fprintf(stderr, "ERROR: Invalid argument for -b (--beta): %s\n",
+                  optarg);
+          help(argv[0]);
+          exit(EXIT_FAILURE);
+        }
+        break;
+      case 'w':
+        if (sscanf(optarg, "%lf", &args->weight) != 1) {
+          fprintf(stderr, "ERROR: Invalid argument for -w (--weight): %s\n",
+                  optarg);
+          help(argv[0]);
+          exit(EXIT_FAILURE);
+        }
+        if (args->weight < 0) {
+          fprintf(
+              stderr,
+              "ERROR: The weight of a visit (-w option) can't be negative.\n");
+          exit(EXIT_FAILURE);
+        }
+        break;
+      case 'h':
         help(argv[0]);
-        exit(EXIT_FAILURE);
-      }
-      args->is_dir = (*optarg == 'd');
-      args->mode = MODE_clean;
-      break;
-    case 'I':
-      args->case_mode = CASE_MODE_insensitive;
-      break;
-    case 'S':
-      args->case_mode = CASE_MODE_sensitive;
-      break;
-    case 'c':
-      args->highlight = true;
-      break;
-    case 'H':
-      args->home_tilde = true;
-      break;
-    case 'x':
-      args->syntax = parse_syntax(optarg);
-      break;
-    case 'o':
-      args->orderless = true;
-      break;
-    case 's':
-      args->print_scores = true;
-      break;
-    case 'r':
-      if (optarg == NULL && optind < argc && argv[optind][0] == '/') {
-        optarg = argv[optind++];
-      }
-      if (optarg == NULL) {
-        const size_t max_cwd_len = 256;
-        char *cwd = (char *)malloc(max_cwd_len * sizeof(char));
-        args->relative_to = getcwd(cwd, max_cwd_len);
-      } else {
-        args->relative_to = optarg;
-      }
-      break;
-    case 'n':
-      if (sscanf(optarg, "%d", &args->n_results) != 1) {
-        fprintf(stderr, "ERROR: Invalid argument for -n (--n-results): %s\n",
-                optarg);
+        exit(EXIT_SUCCESS);
+        break;
+      default:
         help(argv[0]);
-        exit(EXIT_FAILURE);
+        exit(EXIT_SUCCESS);
       }
-      if (args->n_results <= 0) {
-        fprintf(stderr,
-                "ERROR: The number of results -n has to be positive.\n");
-        exit(EXIT_FAILURE);
-      }
-      break;
-    case 'b':
-      if (sscanf(optarg, "%lf", &args->beta) != 1) {
-        fprintf(stderr, "ERROR: Invalid argument for -b (--beta): %s\n",
-                optarg);
-        help(argv[0]);
-        exit(EXIT_FAILURE);
-      }
-      break;
-    case 'w':
-      if (sscanf(optarg, "%lf", &args->weight) != 1) {
-        fprintf(stderr, "ERROR: Invalid argument for -w (--weight): %s\n",
-                optarg);
-        help(argv[0]);
-        exit(EXIT_FAILURE);
-      }
-      if (args->weight < 0) {
-        fprintf(
-            stderr,
-            "ERROR: The weight of a visit (-w option) can't be negative.\n");
-        exit(EXIT_FAILURE);
-      }
-      break;
-    case 'h':
-      help(argv[0]);
-      exit(EXIT_SUCCESS);
-      break;
-    case 'l':
-      shell_setup(optarg);
-      exit(EXIT_SUCCESS);
-      break;
-    default:
-      help(argv[0]);
-      exit(EXIT_SUCCESS);
+    } else {
+      args->key = argv[argc - 1];
     }
   }
   if (args->file_path == NULL) {
-    fprintf(stderr, "ERROR: you must provide a database file with -f.\n");
-    help(argv[0]);
-    exit(EXIT_FAILURE);
+    // no file path specified, trying to get it through environment variables.
+    args->file_path = get_default_database_path(args->is_dir);
   }
-  if (optind < argc - 1) {
-    help(argv[0]);
-    exit(EXIT_FAILURE);
-  }
-  if (optind != argc) {
-    args->key = argv[argc - 1];
-  }
+
   if (*(args->key) == 0 && args->mode == MODE_update) {
     fprintf(stderr, "ERROR: nothing to add to the database.\n");
     exit(EXIT_FAILURE);

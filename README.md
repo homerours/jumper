@@ -6,7 +6,7 @@ It relies on [fzf](https://github.com/junegunn/fzf) for UI and is heavily inspir
 https://github.com/homerours/jumper/assets/12702557/5cc45509-9f25-44ff-a69b-e413a7ce57a3
 
 It differentiates itself from the plethora of similar tools on the following points:
-- Efficient ranking mechanism which combines the "frecency" of the match (as [z](https://github.com/rupa/z) does) and the accuracy of the match (as [fzf](https://github.com/junegunn/fzf) or [fzy](https://github.com/jhawthorn/fzy) do). This allows to find files/folders accurately in very few keystrokes. More details [here](https://github.com/homerours/jumper/blob/master/doc/algorithm.md).
+- Efficient ranking mechanism which combines the "frecency" of the match (as [z](https://github.com/rupa/z) does) and the accuracy of the match (as [fzf](https://github.com/junegunn/fzf) or [fzy](https://github.com/jhawthorn/fzy) do). This allows to find files/folders accurately in very few keystrokes. More details [here](https://github.com/homerours/jumper/blob/master/algorithm.md).
 - "Orderless" search: match a sequence of tokens in any order.
 - It is not restricted to folders. It allows to quickly navigate files, or anything you want (you can easily create and query a new custom database).
 - It can be run in "interactive mode", relying on [fzf](https://github.com/junegunn/fzf) for the UI.
@@ -35,23 +35,23 @@ The ranking of a path at time $t$ is based on the following score
 \text{score}(\text{query}, \text{path}) =  \text{frecency}(t, \text{path}) + \beta \times \text{accuracy}(\text{query}, \text{path})
 ```
 where $\beta = 1.0$ by default, but can be updated with the flag `-b <value>`. 
-More details about the scoring mechanism are given [here](https://github.com/homerours/jumper/blob/master/doc/algorithm.md).
+More details about the scoring mechanism are given [here](https://github.com/homerours/jumper/blob/master/algorithm.md).
 
 
 ### Concept
 
 `jumper` operates on files whose lines are in the format `<path>|<number-of-visits>|<timestamp-of-last-visit>`. Such files are typically used to record accesses to files/directories. Given such a file, the command
 ```sh
-jumper -f <database-file> -n N <query>
+jumper find -f <database-file> -n N <query>
 ```
 returns the top `N` entries of the `<database-file>` (this will typically be `~/.jfolders` or `~/.jfiles`) that match `<query>`. Adding the `-c` flag colors the matched substring. The command
 ```sh
-jumper -f <database-file> -a <path>
+jumper update -f <database-file> <path>
 ```
 adds the `<path>` to the `<database-file>`, or updates its record (i.e. updates the visits count and timestamp) if already present.
-From these two main functions, the shell scripts `shell/jumper.{bash,zsh,fish}` define various functions/mappings (see [Usage](#usage) above) allowing to quickly jump around
-- **Folders**: Folders' visits are recorded in the file `${__JUMPER_FOLDERS}` using a shell pre-command.
-- **Files**: Files open are recorded in the file `${__JUMPER_FILES}` by making Vim run `jumper -f ${__JUMPER_FILES} -a <current-file>` each time a file is opened. This can be adapted to other editors.
+From these two main functions, shell scripts (run e.g. `jumper shell bash`) define various functions/mappings (see [Usage](#usage) above) allowing to quickly jump around.
+- **Folders**: Folders' visits are recorded in the file `~/.jfolders` using a shell pre-command. This can be updated by setting the `__JUMPER_FOLDERS` environment variable.
+- **Files**: Files open are recorded in the file `~/.jfiles` by making Vim run `jumper update --type=files -a <current-file>` each time a file is opened. This can be adapted to other editors and the database's file can be updated by setting the `__JUMPER_FILES` environment variable.
 
 ### Search syntax
 
@@ -68,7 +68,7 @@ The syntax mode can be changed to `fuzzy` (use only fuzzy-matches, the character
 
 ### Orderless
 
-If the flag `-o` (`--orderless`, name coming from emacs' [orderless](https://github.com/oantolin/orderless) package) is provided, the tokens can be matched in any order. A higher score will be given to matches whose order is closer to the one of the query. More precisely, one adds to the `matching_score` a term proportional to the number of pairs of token that are in the right order (see [inversions of a permutations](https://en.wikipedia.org/wiki/Inversion_(discrete_mathematics))).
+If the flag `-o` (`--orderless`, name coming from emacs' [orderless](https://github.com/oantolin/orderless) package) is provided, the tokens can be matched in any order. A higher score will be given to matches whose order is closer to the one of the query. More precisely, one adds to the `matching_score` a term proportional to the number of pairs of tokens that are in the right order (see [inversions of a permutations](https://en.wikipedia.org/wiki/Inversion_(discrete_mathematics))).
 
 The `--orderless` flag is turned on by default for the `z` command and interactive searches. This can be changed by editing the `__JUMPER_FLAGS` environment variable.
 
@@ -102,25 +102,25 @@ to compile and move the `jumper` binary to `/usr/local/bin`. Then add
 the following to your `.bashrc`, `.zshrc` or `.config/fish/config.fish` to get access to jumper's functions:
 * bash
   ```sh
-  eval "$(jumper --shell bash)"
+  eval "$(jumper shell bash)"
   ```
 * zsh
   ```sh
-  source <(jumper --shell zsh)
+  source <(jumper shell zsh)
   ```
 * fish
   ```fish
-  jumper --shell fish | source
+  jumper shell fish | source
   ```
 
 > [!TIP]
 > If you were already using [z](https://github.com/rupa/z), you can `cp ~/.z ~/.jfolders` to export your database to Jumper.
 
-In order to keep track of the visited files, the function `jumper -f $__JUMPER_FILES -a <file>` has to be called each time a file `<file>` is opened. 
+In order to keep track of the visited files, the function `jumper update --type=files <file>` has to be called each time a file `<file>` is opened. 
 This can be done automatically in Vim/Neovim, see next section. For other programs, you may want to use aliases (better solutions exist, using for instance "hooks" in emacs) 
 ```sh
 function myeditor() {
-   jumper -f $__JUMPER_FILES -a "$1" 
+   jumper update --type=files "$1" 
    myeditor $1
 }
 ```
@@ -130,7 +130,7 @@ function myeditor() {
 One typically only needs to add the lines above in ones `.bashrc`, `.zshrc` or `.config/fish/config.fish`.
 However, the default keybindings, previewers and "database-files" can still be configured if desired. Here is a sample configuration (for bash)
 ```sh
-# Change default folders/files database-files (defaults are ~/.jfolders and ~/.jfiles):
+# Change default folders/files database-files (defaults are $HOME/.jfolders and $HOME/.jfiles):
 export __JUMPER_FOLDERS='/path/to/custom/database_for_folders'
 export __JUMPER_FILES='/path/to/custom/database_for_files'
 
@@ -152,7 +152,7 @@ __JUMPER_FZF_FILES_PREVIEW='head -n 30'
 __JUMPER_FZF_FOLDERS_PREVIEW='ls -lah --color=always'
 
 # IMPORTANT: this has to be after the configuration above:
-eval "$(jumper --shell bash)"
+eval "$(jumper shell bash)"
 
 # Change default (ctrl-y and ctrl-u) bindings:
 bind -x '"\C-d": jumper-find-dir'
@@ -161,7 +161,8 @@ bind -x '"\C-f": jumper-find-file'
 
 #### Database maintenance
 
-Use the function `_jumper_clean` to remove from the databases the files and directories that do not exist anymore. To clean the files' or folders' database only, use `__jumper_clean_files_db` or `__jumper_clean_folders_db`.
+Use the function `_jumper_clean` to remove from the databases the files and directories that do not exist anymore. 
+To clean the files' or folders' database only, use `jumper clean --type=files` or `jumper clean --type=directories`.
 
 This cleaning can be done automatically by setting the variable `__JUMPER_CLEAN_FREQ` to some integer value `N`. In such case, the function `_jumper_clean` will be called on average every `N` command run in the terminal.
 
@@ -171,11 +172,11 @@ For more advanced/custom maintenance, the files `~/.jfolders` and `~/.jfiles` ca
 
 Querying and updating `jumper`'s database is very fast and shouldn't cause any latency. On an old 2012 laptop, these operations (over a database with 1000 entries) run in about 4ms:
 ```sh
-$ time for i in {1..100}; do jumper -f ~/.jfolders hello > /dev/null; done
+$ time for i in {1..100}; do jumper find hello > /dev/null; done
 real    0m0.432s
 user    0m0.165s
 sys     0m0.198s
-$ time for i in {1..100}; do jumper -f ~/.jfolders -a test; done
+$ time for i in {1..100}; do jumper update test; done
 real    0m0.383s
 user    0m0.118s
 sys     0m0.209s
@@ -200,7 +201,7 @@ Jumper can be used in Vim and Neovim. Depending on your configuration, you can e
 We describe below how to use it without plugins. This only allows to use `Z` and `Zf` commands.
 First, you have to keep track of the files you open by adding to your `.vimrc`/`init.lua`
 ```vim
-autocmd BufReadPre,BufNewFile *   silent execute '!jumper -f ${__JUMPER_FILES} -a ' .. expand('%:p')
+autocmd BufReadPre,BufNewFile *   silent execute '!jumper update --type=files ' .. expand('%:p')
 ```
 or, if you are using Neovim's Lua api,
 ```lua
@@ -210,15 +211,15 @@ vim.api.nvim_create_autocmd({ "BufNewFile", "BufReadPre" }, {
         local filename = vim.api.nvim_buf_get_name(ev.buf)
         -- do not log .git files, and buffers opened by plugins (which often contain some ':')
         if not (string.find(filename, "/.git") or string.find(filename, ":")) then
-            vim.fn.system({ "jumper", "-f", os.getenv("__JUMPER_FILES"),  "-a", filename })
+            vim.fn.system({ "jumper", "update", "--type=files", filename })
         end
     end
 })
 ```
 Then in order to quickly jumper to folders and files, add
 ```vim
-command! -nargs=+ Z :cd `jumper -f ${__JUMPER_FOLDERS} -n 1 '<args>'`
-command! -nargs=+ Zf :edit `jumper -f ${__JUMPER_FILES} -n 1 '<args>'`
+command! -nargs=+ Z :cd `jumper find --type=directories -n 1 '<args>'`
+command! -nargs=+ Zf :edit `jumper find --type=files -n 1 '<args>'`
 ```
 to your `.vimrc` to then change directory with `:Z <query>` or open files with `:Zf <query>`.
 
@@ -227,7 +228,7 @@ to your `.vimrc` to then change directory with `:Z <query>` or open files with `
 You can for instance define a function
 ```sh
 fu() {
-    RG_PREFIX="jumper -f ${__JUMPER_FILES} '' | xargs rg -i --column --line-number --color=always "
+    RG_PREFIX="jumper find --type=files '' | xargs rg -i --column --line-number --color=always "
     fzf --ansi --disabled --query '' \
     --bind "start:reload:$RG_PREFIX {q}" \
     --bind "change:reload:sleep 0.1; $RG_PREFIX {q} || true" \

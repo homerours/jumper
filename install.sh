@@ -49,24 +49,24 @@ if [[ $REPLY == 'y' ]]; then
     zsh_config=~/.zshrc 
     fish_config=~/.config/fish/config.fish  
     if [[ -f "${bash_config}" ]]; then
-        append_line 'eval "$(jumper --shell bash)"' "${bash_config}" 
+        append_line 'eval "$(jumper shell bash)"' "${bash_config}" 
     else
         echo "File ${bash_config} does not exists."
-        echo "Please add 'eval \"\$(jumper --shell bash)\"' to your bash config file if you would like to use jumper's mappings within bash."
+        echo "Please add 'eval \"\$(jumper shell bash)\"' to your bash config file if you would like to use jumper's mappings within bash."
         echo
     fi
     if [[ -f "${zsh_config}" ]]; then
-        append_line 'source <(jumper --shell zsh)' "${zsh_config}" 
+        append_line 'source <(jumper shell zsh)' "${zsh_config}" 
     else
         echo "File ${zsh_config} does not exists."
-        echo "Please add 'source <(jumper --shell zsh)' to your zsh config file if you would like to use jumper's mappings within zsh."
+        echo "Please add 'source <(jumper shell zsh)' to your zsh config file if you would like to use jumper's mappings within zsh."
         echo
     fi
     if [[ -f "${fish_config}" ]]; then
-        append_line 'jumper --shell fish | source' "${fish_config}" 
+        append_line 'jumper shell fish | source' "${fish_config}" 
     else
         echo "File ${fish_config} does not exists."
-        echo "Please add 'jumper --shell fish | source' to your fish config file if you would like to use jumper's mappings within fish."
+        echo "Please add 'jumper shell fish | source' to your fish config file if you would like to use jumper's mappings within fish."
         echo
     fi
 else

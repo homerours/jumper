@@ -7,6 +7,8 @@ typedef enum MODE {
   MODE_search,
   MODE_clean,
   MODE_update,
+  MODE_shell,
+  MODE_status,
 } MODE;
 
 typedef struct Arguments {
@@ -27,3 +29,4 @@ typedef struct Arguments {
 } Arguments;
 
 Arguments *parse_arguments(int argc, char **argv);
+char *get_default_database_path(bool is_dir);
