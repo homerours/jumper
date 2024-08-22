@@ -103,9 +103,9 @@ static MODE parse_mode(const char *mode) {
 }
 
 static TYPE parse_type(const char *arg) {
-    if (strcmp(arg, "files") == 0) {
+    if ((strcmp(arg, "f") == 0) || (strcmp(arg, "files") == 0)) {
         return TYPE_files;
-    } else if (strcmp(arg, "directories") == 0) {
+    } else if ((strcmp(arg, "d") == 0) || (strcmp(arg, "directories") == 0)) {
         return TYPE_directories;
     }
     fprintf(stderr, "ERROR: Invalid argument for -t (--type): %s\n", arg);
