@@ -10,7 +10,5 @@ typedef enum CASE_MODE {
   CASE_MODE_semi_sensitive,
 } CASE_MODE;
 
-
-
-double match_accuracy(const char *string, Queries queries, bool colors, char **output,
-                   CASE_MODE case_mode);
+double match_accuracy(const char *string, Queries queries, bool colors,
+                      char **output, CASE_MODE case_mode);

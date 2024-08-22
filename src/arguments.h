@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stdbool.h>
 #include "matching.h"
+#include <stdbool.h>
 
 typedef enum MODE {
   MODE_search,
@@ -16,7 +16,6 @@ typedef enum TYPE {
   TYPE_files,
   TYPE_undefined,
 } TYPE;
-
 
 typedef struct Arguments {
   const char *file_path;
