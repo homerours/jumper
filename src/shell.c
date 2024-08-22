@@ -377,7 +377,7 @@ void shell_setup(const char * shell){
     printf(fish_functions);
     printf(fish_bindings);
   } else {
-    fprintf(stderr, "Invalid argument for -l (--shell): %s.\n", shell);
+    fprintf(stderr, "ERROR: Invalid argument for shell: %s.\n", shell);
     fprintf(stderr, "Accepted arguments: bash, zsh, fish.\n");
     exit(EXIT_FAILURE);
   }

@@ -11,6 +11,13 @@ typedef enum MODE {
   MODE_status,
 } MODE;
 
+typedef enum TYPE {
+  TYPE_directories,
+  TYPE_files,
+  TYPE_undefined,
+} TYPE;
+
+
 typedef struct Arguments {
   const char *file_path;
   const char *key;
@@ -20,7 +27,7 @@ typedef struct Arguments {
   bool print_scores;
   bool home_tilde;
   bool orderless;
-  bool is_dir;
+  TYPE type;
   int n_results;
   const char *relative_to;
   MODE mode;
@@ -29,4 +36,4 @@ typedef struct Arguments {
 } Arguments;
 
 Arguments *parse_arguments(int argc, char **argv);
-char *get_default_database_path(bool is_dir);
+char *get_default_database_path(TYPE type);
