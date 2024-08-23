@@ -34,7 +34,7 @@ static inline bool exist(const char *path, TYPE type) {
   struct stat stats;
   if (stat(path, &stats) == 0) {
     return (((type == TYPE_directories) && (S_ISDIR(stats.st_mode) != 0)) ||
-            (!(type == TYPE_files) && (S_ISREG(stats.st_mode) != 0)));
+            ((type == TYPE_files) && (S_ISREG(stats.st_mode) != 0)));
   }
   return false;
 }
