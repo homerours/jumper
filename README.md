@@ -40,7 +40,7 @@ More details about the scoring mechanism are given [here](https://github.com/hom
 
 ### Concept
 
-`jumper` operates on files whose lines are in the format `<path>|<number-of-visits>|<timestamp-of-last-visit>`. Such files are typically used to record accesses to files/directories. Given such a file, the command
+`jumper` records visits to files anf direfotries in files whose lines are in the format `<path>|<number-of-visits>|<timestamp-of-last-visit>`. Given such a database's file, the command
 ```sh
 jumper find -f <database-file> -n N <query>
 ```
@@ -48,14 +48,14 @@ returns the top `N` entries of the `<database-file>` (this will typically be `~/
 ```sh
 jumper update -f <database-file> <path>
 ```
-adds the `<path>` to the `<database-file>`, or updates its record (i.e. updates the visits count and timestamp) if already present.
+adds the `<path>` to the `<database-file>`, or updates its record (i.e. updates the visits' count and timestamp) if already present.
 From these two main functions, shell scripts (run e.g. `jumper shell bash`) define various functions/mappings (see [Usage](#usage) above) allowing to quickly jump around.
 - **Folders**: Folders' visits are recorded in the file `~/.jfolders` using a shell pre-command. This can be updated by setting the `__JUMPER_FOLDERS` environment variable.
-- **Files**: Files open are recorded in the file `~/.jfiles` by making Vim run `jumper update --type=files -a <current-file>` each time a file is opened. This can be adapted to other editors and the database's file can be updated by setting the `__JUMPER_FILES` environment variable.
+- **Files**: Opened files are recorded in the file `~/.jfiles` by making Vim run `jumper update --type=files <current-file>` each time a file is opened. This can be adapted to other editors and the database's file can be updated by setting the `__JUMPER_FILES` environment variable.
 
 ### Search syntax
 
-By default jumper uses a simpler version of fzf's "extended search-mode". One can search for multiple tokens separated by spaces, which have to be found in the same order in order to have a match. The full [fzf-syntax](https://github.com/junegunn/fzf?tab=readme-ov-file#search-syntax) is not implemented yet, only the following token are implemented.
+By default jumper uses a simpler version of fzf's "extended search-mode". One can search for multiple tokens separated by spaces. The full [fzf-syntax](https://github.com/junegunn/fzf?tab=readme-ov-file#search-syntax) is not implemented yet, only the following token are implemented.
 
 | Token     | Match type                 | Description                          |
 | --------- | -------------------------- | ------------------------------------ |
@@ -81,7 +81,7 @@ By default, matches are "case-semi-sensitive". This means that a lower case char
 ### Requirements
 - A C compiler for installation. The makefile uses `gcc`.
 - Bash (>=4.0), Zsh or Fish.
-- [fzf](https://github.com/junegunn/fzf). This is not mandatory, but you will need it for running queries interactively.
+- [fzf](https://github.com/junegunn/fzf). This is not mandatory, but needed for running queries interactively.
 
 ### Install script
 
@@ -127,7 +127,7 @@ function myeditor() {
 
 ### Configuration
 
-One typically only needs to add the lines above in ones `.bashrc`, `.zshrc` or `.config/fish/config.fish`.
+One typically only needs to add the lines above in ones' `.bashrc`, `.zshrc` or `.config/fish/config.fish`.
 However, the default keybindings, previewers and "database-files" can still be configured if desired. Here is a sample configuration (for bash)
 ```sh
 # Change default folders/files database-files (defaults are $HOME/.jfolders and $HOME/.jfiles):
@@ -159,10 +159,10 @@ bind -x '"\C-d": jumper-find-dir'
 bind -x '"\C-f": jumper-find-file'
 ```
 
-#### Database maintenance
+#### Database's maintenance
 
 Use the function `_jumper_clean` to remove from the databases the files and directories that do not exist anymore. 
-To clean the files' or folders' database only, use `jumper clean --type=files` or `jumper clean --type=directories`.
+To clean the files' or folders' databases only, use `jumper clean --type=files` or `jumper clean --type=directories`.
 
 This cleaning can be done automatically by setting the variable `__JUMPER_CLEAN_FREQ` to some integer value `N`. In such case, the function `_jumper_clean` will be called on average every `N` command run in the terminal.
 
@@ -172,11 +172,11 @@ For more advanced/custom maintenance, the files `~/.jfolders` and `~/.jfiles` ca
 
 Querying and updating `jumper`'s database is very fast and shouldn't cause any latency. On an old 2012 laptop, these operations (over a database with 1000 entries) run in about 4ms:
 ```sh
-$ time for i in {1..100}; do jumper find hello > /dev/null; done
+$ time for i in {1..100}; do jumper find --type=files hello > /dev/null; done
 real    0m0.432s
 user    0m0.165s
 sys     0m0.198s
-$ time for i in {1..100}; do jumper update test; done
+$ time for i in {1..100}; do jumper update --type=files test; done
 real    0m0.383s
 user    0m0.118s
 sys     0m0.209s
