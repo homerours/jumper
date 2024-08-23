@@ -18,24 +18,23 @@ static const char files_env_variable[] = "__JUMPER_FILES";
 static const char HELP_STRING[] =
     "Usage: %s [MODE] [OPTIONS] ARG\n"
     "MODE has to be one of 'find', 'update', 'clean', 'status', 'shell'.\n\n"
-    " -f, --file=FILE_PATH      Path to the database file. If not supplied\n"
+    " -f, --file=FILE_PATH      Path to the database's file. If not supplied\n"
     "                           jumper will use the environment variables\n"
     "                           __JUMPER_FOLDERS or __JUMPER_FILES depending "
     "on --type.\n"
-    " -t, --type=TYPE           TYPE has to be 'files' or 'directories' "
-    "(default).\n"
+    " -t, --type=TYPE           TYPE has to be 'files' or 'directories'.\n"
     " -h, --help                Display this help and exit.\n\n"
-    "MODE find: query ARG in the database\n"
+    "MODE find: look for ARG in the database\n"
     " -n, --n-results=N         Maximum number of results to show.\n"
     " -c, --color               Highlight matches in outputs.\n"
     " -s, --scores              Print the scores of the matches.\n"
     " -b, --beta=BETA           Specify an inverse temperature\n"
-    "                           when computing the score (default=1.0).\n"
+    "                           for computing scores (default=1.0).\n"
     " -x, --syntax=syntax       Query syntax (default: extended).\n"
     " -o, --orderless           Orderless queries: token can be matched\n"
     "                           in any order (only for extended syntax).\n"
     " -I, --case-insensitive    Make the search case-insensitive.\n"
-    " -S, --case-sensitive      Make the search case-senstitive.\n"
+    " -S, --case-sensitive      Make the search case-sensititive.\n"
     " -H, --home-tilde          Substitute $HOME with ~ when printing "
     "results.\n"
     " -r, --relative=PATH       Outputs relative paths to PATH if\n"
@@ -44,7 +43,7 @@ static const char HELP_STRING[] =
     " -w, --weight=WEIGHT       Weight of the visit (default=1.0).\n\n"
     "MODE clean: remove entries that do not exist anymore.\n"
     "MODE status: print databases' locations and some statistics.\n"
-    "MODE shell: print setup scripts: ARG has to be bash, zsh or fish.\n";
+    "MODE shell: print setup scripts. ARG has to be bash, zsh or fish.\n";
 
 static void help(const char *argv0) { printf(HELP_STRING, argv0); }
 
@@ -153,7 +152,7 @@ void set_filepath(Arguments *args) {
       // no file path specified, trying to get it through environment variables.
       args->file_path = get_default_database_path(args->type);
     } else {
-      fprintf(stderr, "ERROR: no database file or type specified.\n");
+      fprintf(stderr, "ERROR: no database's file or type specified.\n");
       exit(EXIT_FAILURE);
     }
   }
@@ -174,6 +173,11 @@ void validate_arguments(Arguments *args) {
     }
     break;
   case MODE_clean:
+    if (args->type == TYPE_undefined) {
+      fprintf(stderr, "ERROR: please specify the type (files or directories) "
+                      "of the database you would like to clean.\n");
+      exit(EXIT_FAILURE);
+    }
     set_filepath(args);
     break;
   case MODE_status:
