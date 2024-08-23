@@ -240,7 +240,7 @@ static void status(Arguments *args) {
     args->file_path = get_default_database_path(TYPE_directories);
     printf("\nDIRECTORIES: ");
     status_file(args);
-    args->file_path = get_default_database_path(TYPE_directories);
+    args->file_path = get_default_database_path(TYPE_files);
     printf("\nFILES: ");
     status_file(args);
   } else {
