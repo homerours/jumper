@@ -45,12 +45,16 @@ static inline bool exist(const char *path, TYPE type) {
 
 static void clean_database(Arguments *args) {
   FILE *fp = fopen(args->file_path, "r+");
-  if (fp == NULL) {
+  if (!fp) {
     fprintf(stderr, "ERROR: File %s not found\n", args->file_path);
     exit(EXIT_FAILURE);
   }
   char *dir = dirname(strdup(args->file_path));
   char *tempname = (char *)malloc((strlen(dir) + 20) * sizeof(char));
+  if (!tempname) {
+    fprintf(stderr, "ERROR: failed to allocate %lu bytes.\n", strlen(dir) + 20);
+    exit(EXIT_FAILURE);
+  }
   strcpy(tempname, dir);
   strcat(tempname, "/.jumper_XXXXXX");
   const int temp_fd = mkstemp(tempname);
@@ -60,7 +64,7 @@ static void clean_database(Arguments *args) {
     exit(EXIT_FAILURE);
   }
   FILE *temp = fdopen(temp_fd, "r+");
-  if (temp == NULL) {
+  if (!temp) {
     fprintf(stderr,
             "ERROR: Could not open the file descriptor %d of the temporary "
             "file %s\n",
@@ -92,10 +96,10 @@ static void clean_database(Arguments *args) {
 
 static void update_database(Arguments *args) {
   FILE *fp = fopen(args->file_path, "r+");
-  if (fp == NULL) {
+  if (!fp) {
     // Database does not exist, we create it.
     fp = fopen(args->file_path, "w+");
-    if (fp == NULL) {
+    if (!fp) {
       fprintf(stderr, "ERROR: Couldn't open file %s.\n", args->file_path);
       exit(EXIT_FAILURE);
     }
@@ -112,6 +116,11 @@ static void update_database(Arguments *args) {
     if (strcmp(rec.path, args->key) == 0) {
       update_record(&rec, now, args->weight);
       char *rec_string = record_to_string(&rec);
+      if (!rec_string) {
+        fclose(fp);
+        fprintf(stderr, "ERROR: failed at formatting a record to string.\n");
+        exit(EXIT_FAILURE);
+      }
       int record_length = strlen(rec_string);
       long int new_position = ftell(fp);
 
@@ -145,6 +154,11 @@ static void update_database(Arguments *args) {
     rec.path = args->key;
     rec.last_visit = now;
     char *rec_string = record_to_string(&rec);
+    if (!rec_string) {
+      fclose(fp);
+      fprintf(stderr, "ERROR: failed at formatting a record to string.\n");
+      exit(EXIT_FAILURE);
+    }
     fputs(rec_string, fp);
     fputs("\n", fp);
     free(rec_string);
@@ -160,7 +174,7 @@ static void lookup(Arguments *args) {
     return;
   }
   FILE *fp = fopen(args->file_path, "r");
-  if (fp == NULL) {
+  if (!fp) {
     fprintf(stderr, "ERROR: File %s not found\n", args->file_path);
     exit(EXIT_FAILURE);
   }
@@ -208,7 +222,7 @@ static void lookup(Arguments *args) {
 
 static int print_stats(const char *path) {
   FILE *fp = fopen(path, "r+");
-  if (fp == NULL) {
+  if (!fp) {
     return 1;
   }
   int n_entries = 0;
@@ -247,7 +261,7 @@ static void status_file(Arguments *args) {
   }
 }
 static void status(Arguments *args) {
-  if (args->file_path == NULL) {
+  if (!args->file_path) {
     args->file_path = get_default_database_path(TYPE_directories);
     printf("\nDIRECTORIES: ");
     status_file(args);

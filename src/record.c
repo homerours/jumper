@@ -32,7 +32,11 @@ void update_record(Record *rec, long long now, double weight) {
 char *record_to_string(Record *rec) {
   const int n = strlen(rec->path) + 30;
   char *buffer = (char *)malloc(n * sizeof(char));
-  snprintf(buffer, n, "%s|%f|%lld", rec->path, rec->n_visits, rec->last_visit);
+  if (!buffer)
+    return NULL;
+  if (snprintf(buffer, n, "%s|%f|%lld", rec->path, rec->n_visits,
+               rec->last_visit) < 0)
+    return NULL;
   return buffer;
 }
 

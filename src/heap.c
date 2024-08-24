@@ -42,9 +42,9 @@ Heap *heap_create(int size) {
   }
 }
 
-void heap_free(Heap *heap) { 
-	free(heap->items);
-	free(heap);
+void heap_free(Heap *heap) {
+  free(heap->items);
+  free(heap);
 }
 
 static int heap_grow(Heap *heap) {
