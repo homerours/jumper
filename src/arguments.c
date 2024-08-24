@@ -201,6 +201,10 @@ void validate_arguments(Arguments *args) {
 Arguments *parse_arguments(int argc, char **argv) {
 
   Arguments *args = (Arguments *)malloc(sizeof(Arguments));
+  if (!args) {
+    fprintf(stderr, "ERROR: Failed to allocate memory for arguments.\n");
+    exit(EXIT_FAILURE);
+  }
   args_init(args);
 
   if (argc == 1) {

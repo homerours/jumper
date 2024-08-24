@@ -28,6 +28,9 @@ typedef struct Heap {
 
 Heap *heap_create(int size) {
   Heap *heap = (Heap *)malloc(sizeof(Heap));
+  if (!heap) {
+    return NULL;
+  }
   heap->n_items = 0;
   heap->size = size;
   heap->alloc_size = 512;

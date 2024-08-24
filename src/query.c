@@ -162,6 +162,12 @@ Queries make_extended_queries(const char *query, bool orderless) {
   TokenArray array = parse(query);
   const int N = array.length;
   Permutation *p = init_permutation(N);
+  if (!p) {
+    fprintf(stderr,
+            "ERROR: failed to allocate memory for permutations of size %d.\n",
+            N);
+    exit(EXIT_FAILURE);
+  }
   Queries q;
   q.queries = (Query *)malloc(30 * sizeof(Query));
   q.queries[0] = make_query(array, p);

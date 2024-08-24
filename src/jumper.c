@@ -21,9 +21,13 @@ static char *file_to_buffer(FILE *fp) {
   fseek(fp, position, SEEK_SET);
   size_t size = end_position - position;
   char *buffer = (char *)malloc((size + 1) * sizeof(char));
+  if (!buffer) {
+    fprintf(stderr, "ERROR: failed to allocate %zu bytes.\n", size + 1);
+    exit(EXIT_FAILURE);
+  }
   size_t n_read = fread(buffer, sizeof(char), size, fp);
   if (n_read != size) {
-    fprintf(stderr, "ERROR: Could not read file.");
+    fprintf(stderr, "ERROR: Could not read file.\n");
     exit(EXIT_FAILURE);
   }
   buffer[size] = '\0';

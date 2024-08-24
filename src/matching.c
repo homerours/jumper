@@ -69,6 +69,10 @@ static inline bool is_separator(char c) {
 
 static int *matching_bonus(const char *string, int n) {
   int *bonus = (int *)malloc(n * sizeof(int));
+  if (!bonus) {
+    fprintf(stderr, "ERROR: failed to allocate %d bytes.\n", n);
+    exit(EXIT_FAILURE);
+  }
   int last_slash = -1;
   bool prev_is_sep = true;
   for (int i = 0; i < n; i++) {
@@ -121,6 +125,11 @@ static MatchingData *make_data(const char *string, Query query,
   const int m = query.length + 1;
   const int h = n - m + 2;
   Scores *matrix = (Scores *)malloc(h * m * sizeof(struct Scores));
+  if (!matrix) {
+    fprintf(stderr, "ERROR: failed to allocate %lu bytes.\n",
+            h * m * sizeof(struct Scores));
+    exit(EXIT_FAILURE);
+  }
   for (int i = 0; i < h; i++) {
     matrix[i * m].match = 0;
     matrix[i * m].gap = 0;
@@ -188,7 +197,12 @@ static bool parent(MatchingData *data, int i, int j, bool skip) {
 
 static Breaks extract_breaks(MatchingData *data) {
   int i = data->imax, j = data->m - 1;
-  Breaks b = {.nbreaks = 0, .breaks = (int *)malloc(2 * data->m * sizeof(int))};
+  int *br = (int *)malloc(2 * data->m * sizeof(int));
+  if (!br) {
+    fprintf(stderr, "ERROR: failed to allocate %d bytes.\n", 2 * data->m);
+    exit(EXIT_FAILURE);
+  }
+  Breaks b = {.nbreaks = 0, .breaks = br};
   bool is_matched = true, skip = false;
   b.breaks[b.nbreaks++] = i - 1;
   while (j > 0) {
@@ -214,6 +228,10 @@ static Breaks extract_breaks(MatchingData *data) {
 static char *add_ansi_colors(MatchingData *data, Breaks b) {
   const int new_len = data->n + (b.nbreaks / 2) * 9 + 1;
   char *new_string = (char *)malloc(new_len * sizeof(char));
+  if (!new_string) {
+    fprintf(stderr, "ERROR: failed to allocate %d bytes.\n", new_len);
+    exit(EXIT_FAILURE);
+  }
   int k = 0;
   if (b.nbreaks > 0 && b.breaks[b.nbreaks - 1] == -1) {
     strncpy(new_string + k, COLOR_GREEN, 5);

@@ -7,11 +7,17 @@
 // We generate all n! permutations using Heap's algorithm
 Permutation *init_permutation(int n) {
   Permutation *p = (Permutation *)malloc(sizeof(Permutation));
+  if (!p)
+    return NULL;
   p->n = n;
   p->i = 1;
   p->alignment = (n * (n - 1)) / 2; // alignement is n (n-1) / 2 - inversions
   p->values = (int *)malloc(n * sizeof(int));
+  if (!p->values)
+    return NULL;
   p->c = (int *)malloc(n * sizeof(int));
+  if (!p->c)
+    return NULL;
   for (int i = 0; i < n; i++) {
     p->values[i] = i;
     p->c[i] = 0;
