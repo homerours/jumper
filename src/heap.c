@@ -42,7 +42,10 @@ Heap *heap_create(int size) {
   }
 }
 
-void heap_free(Heap *heap) { free(heap->items); }
+void heap_free(Heap *heap) { 
+	free(heap->items);
+	free(heap);
+}
 
 static int heap_grow(Heap *heap) {
   int newsize = 2 * heap->alloc_size;
