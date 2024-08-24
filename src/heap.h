@@ -2,11 +2,11 @@
 
 typedef struct Heap Heap;
 
-Heap *new_heap(int max_elements);
+Heap *heap_create(int size);
 
-void insert(Heap *heap, double priority, char *path);
+int heap_insert(Heap *heap, double priority, char *path);
 
-void free_heap(Heap *heap);
+void heap_free(Heap *heap);
 
-void print_heap(Heap *heap, bool print_scores, const char *relative_to,
+void heap_print(Heap *heap, bool print_scores, const char *relative_to,
                 bool tilde);

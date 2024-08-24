@@ -161,7 +161,11 @@ static void lookup(Arguments *args) {
     exit(EXIT_FAILURE);
   }
 
-  Heap *heap = new_heap(args->n_results);
+  Heap *heap = heap_create(args->n_results);
+  if (!heap) {
+    fprintf(stderr, "ERROR: Could not allocate heap memory.");
+    exit(EXIT_FAILURE);
+  }
   Record rec;
   Queries queries;
   if (args->syntax == SYNTAX_extended) {
@@ -184,10 +188,13 @@ static void lookup(Arguments *args) {
     if (match_score > 0) {
       score = args->beta * 0.25 * match_score +
               frecency(rec.n_visits, now - rec.last_visit);
-      insert(heap, score, matched_str);
+      if (heap_insert(heap, score, matched_str) != 0) {
+        fprintf(stderr, "ERROR: Could not allocate heap memory.");
+        exit(EXIT_FAILURE);
+      }
     }
   }
-  print_heap(heap, args->print_scores, args->relative_to, args->home_tilde);
+  heap_print(heap, args->print_scores, args->relative_to, args->home_tilde);
   fclose(fp);
   free_queries(queries);
   if (line) {
