@@ -135,8 +135,12 @@ export __JUMPER_FOLDERS='/path/to/custom/database_for_folders'
 export __JUMPER_FILES='/path/to/custom/database_for_files'
 
 # Update jumper's options
-# Default: '-cHo -n 500' (colors the matches, replace $HOME with ~/, orderless and print only the top 500 entries, see all options by running 'jumper --help')
-__JUMPER_FLAGS='-co -n 1000 --syntax=fuzzy --case-insensitive --beta=0.5'
+# Default: '-cHo' (colors the matches, replace $HOME with ~/, orderless, see all options by running 'jumper --help')
+__JUMPER_FLAGS='-ceo --syntax=fuzzy --case-insensitive --beta=0.5'
+# Flags for z/zf functions (default: -o):
+__JUMPER_ZFLAGS='-eo'
+# Print only the top 100 entries (default: 500)
+__JUMPER_NRESULTS=100
 
 # FZF options for interactive search
 # Default: --height=70% --layout=reverse --keep-right --preview-window=hidden --ansi
