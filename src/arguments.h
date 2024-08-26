@@ -26,6 +26,7 @@ typedef struct Arguments {
   bool print_scores;
   bool home_tilde;
   bool orderless;
+  bool existing;
   TYPE type;
   int n_results;
   const char *relative_to;

@@ -32,6 +32,8 @@ static const char HELP_STRING[] =
     "                           for computing scores (default=1.0).\n"
     " -x, --syntax=syntax       Query syntax (default: extended).\n"
     " -o, --orderless           Orderless queries: token can be matched\n"
+    " -e, --existing            Only print files/directories that exist in the "
+    "file system.\n"
     "                           in any order (only for extended syntax).\n"
     " -I, --case-insensitive    Make the search case-insensitive.\n"
     " -S, --case-sensitive      Make the search case-sensititive.\n"
@@ -60,6 +62,7 @@ static struct option longopts[] = {{"file", required_argument, NULL, 'f'},
                                    {"n-results", required_argument, NULL, 'n'},
                                    {"syntax", required_argument, NULL, 'x'},
                                    {"orderless", no_argument, NULL, 'o'},
+                                   {"existing", no_argument, NULL, 'e'},
                                    {"type", required_argument, NULL, 't'},
                                    {NULL, 0, NULL, 0}};
 
@@ -71,6 +74,7 @@ static void args_init(Arguments *args) {
   args->print_scores = false;
   args->home_tilde = false;
   args->orderless = false;
+  args->existing = false;
   args->type = TYPE_undefined;
   args->relative_to = NULL;
   args->mode = MODE_search;
@@ -158,6 +162,11 @@ void set_filepath(Arguments *args) {
   }
 }
 void validate_arguments(Arguments *args) {
+  if (args->type == TYPE_undefined && args->existing) {
+    fprintf(stderr,
+            "ERROR: missing --type when using the --existing (-e) flag.\n");
+    exit(EXIT_FAILURE);
+  }
   switch (args->mode) {
   case MODE_search:
     if (args->key == NULL) {
@@ -223,7 +232,7 @@ Arguments *parse_arguments(int argc, char **argv) {
   optind++;
   int c = 0;
   while (optind < argc && c != -1) {
-    c = getopt_long(argc, argv, "csoHISt:f:n:w:b:x:r::", longopts, NULL);
+    c = getopt_long(argc, argv, "csoeHISt:f:n:w:b:x:r::", longopts, NULL);
     if (c != -1) {
       switch (c) {
       case 'f':
@@ -234,6 +243,9 @@ Arguments *parse_arguments(int argc, char **argv) {
         break;
       case 'S':
         args->case_mode = CASE_MODE_sensitive;
+        break;
+      case 'e':
+        args->existing = true;
         break;
       case 'c':
         args->highlight = true;

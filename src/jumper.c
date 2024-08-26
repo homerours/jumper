@@ -206,9 +206,14 @@ static void lookup(Arguments *args) {
     if (match_score > 0) {
       score = args->beta * 0.25 * match_score +
               frecency(rec.n_visits, now - rec.last_visit);
-      if (heap_insert(heap, score, matched_str) != 0) {
-        fprintf(stderr, "ERROR: Could not allocate heap memory.");
-        exit(EXIT_FAILURE);
+      if (heap_accept(heap, score) &&
+          (!args->existing || exist(rec.path, args->type))) {
+        if (heap_insert(heap, score, matched_str) != 0) {
+          fprintf(stderr, "ERROR: Could not allocate heap memory.");
+          exit(EXIT_FAILURE);
+        }
+      } else {
+        free(matched_str);
       }
     }
   }

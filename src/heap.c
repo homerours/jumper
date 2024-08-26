@@ -86,6 +86,10 @@ static void heapify(Heap *heap) {
   }
 }
 
+bool heap_accept(Heap *heap, double value) {
+  return (heap->n_items < heap->size) || (value > heap->items->value);
+}
+
 int heap_insert(Heap *heap, double value, char *path) {
   if (heap->n_items == heap->alloc_size && heap->size > heap->alloc_size) {
     if (heap_grow(heap) != 0)
@@ -96,8 +100,6 @@ int heap_insert(Heap *heap, double value, char *path) {
       free(heap->items->path);
       new_item(heap->items, value, path);
       bubble_down(heap, 0);
-    } else {
-      free(path);
     }
   } else {
     new_item(heap->items + heap->n_items, value, path);
