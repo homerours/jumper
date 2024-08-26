@@ -19,7 +19,11 @@ static const char bash_variables[] =
 
 static const char bash_functions[] =
     "z() {\n"
-    "    args=\"${@// /\\ }\"\n"
+	"   if [[ $# -eq 0 ]]; then\n"
+	"       cd\n"
+	"       return 0\n"
+	"   fi\n"
+    "   args=\"${@// /\\ }\"\n"
     "	new_path=$(jumper find --type=directories -n 1 \"${args}\")\n"
     "	if [[ -z $new_path ]]; then\n"
     "		echo 'No match found.'\n"
@@ -146,7 +150,11 @@ static const char zsh_variables[] =
 
 static const char zsh_functions[] =
     "z() {\n"
-    "    args=\"${@// /\\ }\"\n"
+	"   if [[ $# -eq 0 ]]; then\n"
+	"       cd\n"
+	"       return 0\n"
+	"   fi\n"
+    "   args=\"${@// /\\ }\"\n"
     "	new_path=$(jumper find --type=directories -n 1 \"${args}\")\n"
     "	if [[ -z $new_path ]]; then\n"
     "		echo 'No match found.'\n"
@@ -306,6 +314,10 @@ static const char fish_functions[] =
     "    end\n"
     "end\n"
     "function z -d \"Jump to folder\"\n"
+	"    if not count $argv > /dev/null\n"
+	"        cd\n"
+	"        return 0\n"
+	"    end\n"
     "    set -l new_path (jumper find --type=directories -n 1 \"$argv\")\n"
     "    if [ -n \"$new_path\" ]\n"
     "        cd \"$new_path\"\n"
