@@ -91,9 +91,9 @@ bool heap_accept(Heap *heap, double value) {
 }
 
 int heap_insert(Heap *heap, double value, char *path) {
-  if (heap->n_items == heap->alloc_size && heap->size > heap->alloc_size) {
-    if (heap_grow(heap) != 0)
-      return -1;
+  if (heap->n_items == heap->alloc_size && heap->size > heap->alloc_size &&
+      heap_grow(heap) != 0) {
+    return -1;
   }
   if (heap->n_items == heap->size) {
     if (value > heap->items->value) {

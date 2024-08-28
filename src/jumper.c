@@ -13,26 +13,7 @@
 #include "query.h"
 #include "record.h"
 #include "shell.h"
-
-static char *file_to_buffer(FILE *fp) {
-  long int position = ftell(fp);
-  fseek(fp, 0, SEEK_END);
-  long int end_position = ftell(fp);
-  fseek(fp, position, SEEK_SET);
-  size_t size = end_position - position;
-  char *buffer = (char *)malloc((size + 1) * sizeof(char));
-  if (!buffer) {
-    fprintf(stderr, "ERROR: failed to allocate %zu bytes.\n", size + 1);
-    exit(EXIT_FAILURE);
-  }
-  size_t n_read = fread(buffer, sizeof(char), size, fp);
-  if (n_read != size) {
-    fprintf(stderr, "ERROR: Could not read file.\n");
-    exit(EXIT_FAILURE);
-  }
-  buffer[size] = '\0';
-  return buffer;
-}
+#include "textfile.h"
 
 static inline bool exist(const char *path, TYPE type) {
   struct stat stats;
@@ -44,11 +25,6 @@ static inline bool exist(const char *path, TYPE type) {
 }
 
 static void clean_database(Arguments *args) {
-  FILE *fp = fopen(args->file_path, "r+");
-  if (!fp) {
-    fprintf(stderr, "ERROR: File %s not found\n", args->file_path);
-    exit(EXIT_FAILURE);
-  }
   char *dir = dirname(strdup(args->file_path));
   char *tempname = (char *)malloc((strlen(dir) + 20) * sizeof(char));
   if (!tempname) {
@@ -72,12 +48,10 @@ static void clean_database(Arguments *args) {
     exit(EXIT_FAILURE);
   }
 
+  Textfile *f = file_open(args->file_path);
   Record rec;
-  char *line = NULL;
-  size_t len;
-
-  while (getline(&line, &len, fp) != -1) {
-    parse_record(line, &rec);
+  while (next_line(f)) {
+    parse_record(f->line, &rec);
     if (exist(rec.path, args->type)) {
       char *rec_string = record_to_string(&rec);
       fputs(rec_string, temp);
@@ -85,106 +59,56 @@ static void clean_database(Arguments *args) {
       free(rec_string);
     }
   }
-  fclose(fp);
+  file_close(f);
   fclose(temp);
   rename(tempname, args->file_path);
   free(tempname);
-  if (line) {
-    free(line);
-  }
 }
 
 static void update_database(Arguments *args) {
-  FILE *fp = fopen(args->file_path, "r+");
-  if (!fp) {
-    // Database does not exist, we create it.
-    fp = fopen(args->file_path, "w+");
-    if (!fp) {
-      fprintf(stderr, "ERROR: Couldn't open file %s.\n", args->file_path);
-      exit(EXIT_FAILURE);
-    }
-  }
-
-  Record rec;
   long long now = (long long)time(NULL);
-  char *line = NULL;
-  size_t len;
-  long int position = ftell(fp);
-
-  while (getline(&line, &len, fp) != -1) {
-    parse_record(line, &rec);
+  Textfile *f = file_open_rw(args->file_path);
+  Record rec;
+  while (next_line(f)) {
+    parse_record(f->line, &rec);
     if (strcmp(rec.path, args->key) == 0) {
       update_record(&rec, now, args->weight);
       char *rec_string = record_to_string(&rec);
       if (!rec_string) {
-        fclose(fp);
+        file_close(f);
         fprintf(stderr, "ERROR: failed at formatting a record to string.\n");
         exit(EXIT_FAILURE);
       }
-      int record_length = strlen(rec_string);
-      long int new_position = ftell(fp);
-
-      if (record_length <= new_position - position - 1) {
-        // New record has the same length or is shorter than the current one
-        // one can simply overwrite the corresponding chars
-        fseek(fp, position, SEEK_SET);
-        fputs(rec_string, fp);
-        // and add some padding if needed
-        while (record_length < new_position - position - 1) {
-          fputs(" ", fp);
-          record_length++;
-        }
-      } else {
-        // New record is longer than the current one
-        // We have to copy the rest of the file
-        fseek(fp, new_position - 1, SEEK_SET);
-        char *file_tail = file_to_buffer(fp);
-        fseek(fp, position, SEEK_SET);
-        fputs(rec_string, fp);
-        fputs(file_tail, fp);
-        free(file_tail);
-      }
+      overwrite_line(f, rec_string);
       free(rec_string);
       break;
     }
-    position = ftell(fp);
   }
-  if (feof(fp)) {
+  if (feof(f->fp)) {
     rec.n_visits = args->weight;
     rec.path = args->key;
     rec.last_visit = now;
     char *rec_string = record_to_string(&rec);
     if (!rec_string) {
-      fclose(fp);
+      file_close(f);
       fprintf(stderr, "ERROR: failed at formatting a record to string.\n");
       exit(EXIT_FAILURE);
     }
-    fputs(rec_string, fp);
-    fputs("\n", fp);
+    write_line(f, rec_string);
     free(rec_string);
   }
-  fclose(fp);
-  if (line) {
-    free(line);
-  }
+  file_close(f);
 }
 
 static void lookup(Arguments *args) {
   if (args->n_results <= 0) {
     return;
   }
-  FILE *fp = fopen(args->file_path, "r");
-  if (!fp) {
-    fprintf(stderr, "ERROR: File %s not found\n", args->file_path);
-    exit(EXIT_FAILURE);
-  }
-
   Heap *heap = heap_create(args->n_results);
   if (!heap) {
     fprintf(stderr, "ERROR: Could not allocate heap memory.");
     exit(EXIT_FAILURE);
   }
-  Record rec;
   Queries queries;
   if (args->syntax == SYNTAX_extended) {
     queries = make_extended_queries(args->key, args->orderless);
@@ -194,13 +118,14 @@ static void lookup(Arguments *args) {
     queries.n = 1;
   }
 
+  Textfile *f = file_open(args->file_path);
   long long now = (long long)time(NULL);
   double match_score;
   double score;
-  char *line = NULL, *matched_str;
-  size_t len;
-  while (getline(&line, &len, fp) != -1) {
-    parse_record(line, &rec);
+  char *matched_str;
+  Record rec;
+  while (next_line(f)) {
+    parse_record(f->line, &rec);
     match_score = match_accuracy(rec.path, queries, args->highlight,
                                  &matched_str, args->case_mode);
     if (match_score > 0) {
@@ -218,35 +143,23 @@ static void lookup(Arguments *args) {
     }
   }
   heap_print(heap, args->print_scores, args->relative_to, args->home_tilde);
-  fclose(fp);
-  free_queries(queries);
-  if (line) {
-    free(line);
-  }
+  file_close(f);
 }
 
 static int print_stats(const char *path) {
-  FILE *fp = fopen(path, "r+");
-  if (!fp) {
-    return 1;
-  }
   int n_entries = 0;
   double total_visits = 0;
 
-  Record rec;
   long long now = (long long)time(NULL);
-  char *line = NULL;
-  size_t len;
 
-  while (getline(&line, &len, fp) != -1) {
+  Textfile *f = file_open(path);
+  Record rec;
+  while (next_line(f)) {
+    parse_record(f->line, &rec);
     n_entries++;
-    parse_record(line, &rec);
     total_visits += visits(rec.n_visits, now - rec.last_visit);
   }
-  fclose(fp);
-  if (line) {
-    free(line);
-  }
+  file_close(f);
   printf("%s:\n- %d entries\n- %.1f total_visits\n", path, n_entries,
          total_visits);
   return 0;

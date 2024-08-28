@@ -18,7 +18,7 @@ install: jumper clean
 uninstall:
 	rm -f $(BINDIR)/jumper
 
-jumper: jumper.o heap.o record.o matching.o arguments.o shell.o query.o permutations.o
+jumper: jumper.o heap.o record.o matching.o arguments.o shell.o query.o permutations.o textfile.o
 	$(CC) -o $@ $^ $(FLAGS) -lm
 
 %.o: src/%.c
