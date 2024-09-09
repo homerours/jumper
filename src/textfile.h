@@ -1,7 +1,9 @@
+#include <stdio.h>
 #include <stdbool.h>
 
 typedef struct Textfile {
   char *line;
+  size_t len;
   FILE *fp;
   long int position;
 } Textfile;

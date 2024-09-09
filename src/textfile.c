@@ -17,7 +17,6 @@ Textfile *file_open(const char *path) {
 Textfile *file_open_rw(const char *path) {
   Textfile *data = (Textfile *)malloc(sizeof(Textfile));
   data->fp = fopen(path, "r+");
-  data->position = ftell(data->fp);
   if (!data->fp) {
     // Textfile does not exist, we create it.
     data->fp = fopen(path, "w+");
@@ -26,6 +25,7 @@ Textfile *file_open_rw(const char *path) {
       exit(EXIT_FAILURE);
     }
   }
+  data->position = ftell(data->fp);
   data->line = NULL;
   return data;
 }
@@ -51,9 +51,8 @@ static char *file_to_buffer(FILE *fp) {
 }
 
 bool next_line(Textfile *data) {
-  size_t len;
   data->position = ftell(data->fp);
-  return (getline(&data->line, &len, data->fp) != -1);
+  return (getline(&data->line, &data->len, data->fp) != -1);
 }
 
 void overwrite_line(Textfile *data, const char *newline) {
