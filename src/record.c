@@ -9,6 +9,7 @@ static const double SHORT_DECAY = 2 * 1e-5;
 static const double LONG_DECAY = 3 * 1e-7;
 
 void parse_record(char *string, Record *rec) {
+  // Warning: this modifies string
   char *current = string;
   rec->path = strtok_r(string, "|", &current);
   char *parsed = strtok_r(current, "|", &current);

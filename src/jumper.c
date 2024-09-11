@@ -69,9 +69,17 @@ static void update_database(Arguments *args) {
   long long now = (long long)time(NULL);
   Textfile *f = file_open_rw(args->file_path);
   Record rec;
+  const size_t n = strlen(args->key) + 2;
+  char *prefix = (char *)malloc(n * sizeof(char));
+  strcpy(prefix, args->key);
+  prefix[n - 2] = '|';
+  prefix[n - 1] = '\0';
   while (next_line(f)) {
-    parse_record(f->line, &rec);
-    if (strcmp(rec.path, args->key) == 0) {
+    if (strncmp(f->line, prefix, n - 1) == 0) {
+      // parse_record below will modify f->line
+      // we have to make a copy of it
+      char *buffer = strdup(f->line);
+      parse_record(buffer, &rec);
       update_record(&rec, now, args->weight);
       char *rec_string = record_to_string(&rec);
       if (!rec_string) {
@@ -81,6 +89,7 @@ static void update_database(Arguments *args) {
       }
       overwrite_line(f, rec_string);
       free(rec_string);
+      free(buffer);
       break;
     }
   }
