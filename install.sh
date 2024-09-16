@@ -16,10 +16,11 @@ make install
 cd "$CURRENT_DIR"
 
 echo
-read -p "Update shell configurations files? (y/n) " -r
+echo "Update shell configurations files? (y/n)"
+read REPLY
 echo
 
-if [[ $REPLY == 'y' ]]; then
+if [ $REPLY = 'y' ]; then
 
     # Borrowed from https://github.com/junegunn/fzf
     append_line() {
@@ -48,21 +49,21 @@ if [[ $REPLY == 'y' ]]; then
     bash_config=~/.bashrc 
     zsh_config=~/.zshrc 
     fish_config=~/.config/fish/config.fish  
-    if [[ -f "${bash_config}" ]]; then
+    if [ -f "${bash_config}" ]; then
         append_line 'eval "$(jumper shell bash)"' "${bash_config}" 
     else
         echo "File ${bash_config} does not exists."
         echo "Please add 'eval \"\$(jumper shell bash)\"' to your bash config file if you would like to use jumper's mappings within bash."
         echo
     fi
-    if [[ -f "${zsh_config}" ]]; then
+    if [ -f "${zsh_config}" ]; then
         append_line 'source <(jumper shell zsh)' "${zsh_config}" 
     else
         echo "File ${zsh_config} does not exists."
         echo "Please add 'source <(jumper shell zsh)' to your zsh config file if you would like to use jumper's mappings within zsh."
         echo
     fi
-    if [[ -f "${fish_config}" ]]; then
+    if [ -f "${fish_config}" ]; then
         append_line 'jumper shell fish | source' "${fish_config}" 
     else
         echo "File ${fish_config} does not exists."
