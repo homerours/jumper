@@ -9,8 +9,8 @@ Textfile *file_open(const char *path) {
   Textfile *f = (Textfile *)malloc(sizeof(Textfile));
   f->fp = fopen(path, "r");
   if (!f->fp) {
-    fprintf(stderr, "ERROR: File %s not found\n", path);
-    exit(EXIT_FAILURE);
+	  free(f);
+	  return NULL;
   }
   f->line = NULL;
   return f;

@@ -25,6 +25,10 @@ static inline bool exist(const char *path, TYPE type) {
 }
 
 static void clean_database(Arguments *args) {
+  Textfile *f = file_open(args->file_path);
+  if (!f){
+	  return;
+  }
   char *dir = dirname(strdup(args->file_path));
   char *tempname = (char *)malloc((strlen(dir) + 20) * sizeof(char));
   if (!tempname) {
@@ -48,7 +52,6 @@ static void clean_database(Arguments *args) {
     exit(EXIT_FAILURE);
   }
 
-  Textfile *f = file_open(args->file_path);
   Record rec;
   while (next_line(f)) {
     parse_record(f->line, &rec);
@@ -113,6 +116,10 @@ static void lookup(Arguments *args) {
   if (args->n_results <= 0) {
     return;
   }
+  Textfile *f = file_open(args->file_path);
+  if (!f){
+	  return;
+  }
   Heap *heap = heap_create(args->n_results);
   if (!heap) {
     fprintf(stderr, "ERROR: Could not allocate heap memory.");
@@ -127,7 +134,6 @@ static void lookup(Arguments *args) {
     queries.n = 1;
   }
 
-  Textfile *f = file_open(args->file_path);
   long long now = (long long)time(NULL);
   double match_score;
   double score;
@@ -162,6 +168,9 @@ static int print_stats(const char *path) {
   long long now = (long long)time(NULL);
 
   Textfile *f = file_open(path);
+  if (!f){
+	  return -1;
+  }
   Record rec;
   while (next_line(f)) {
     parse_record(f->line, &rec);
@@ -176,7 +185,7 @@ static int print_stats(const char *path) {
 
 static void status_file(Arguments *args) {
   if (print_stats(args->file_path) != 0) {
-    printf("ERROR, couldn't open %s\n", args->file_path);
+    printf("File %s does not exist.\n", args->file_path);
   } else if (args->n_results > 0) {
     printf("Top %d entries", args->n_results);
     if (strlen(args->key) > 0) {
@@ -187,10 +196,11 @@ static void status_file(Arguments *args) {
     lookup(args);
   }
 }
+
 static void status(Arguments *args) {
   if (!args->file_path) {
     args->file_path = get_default_database_path(TYPE_directories);
-    printf("\nDIRECTORIES: ");
+    printf("DIRECTORIES: ");
     status_file(args);
     args->file_path = get_default_database_path(TYPE_files);
     printf("\nFILES: ");
