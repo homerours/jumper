@@ -1,0 +1,80 @@
+name: release
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs: 
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: build
+        run : |
+          make jumper
+          make clean
+      - name: Version
+        id: version
+        run: |
+          printf "version=$(./jumper -v)\n" >> $GITHUB_OUTPUT
+
+  release:
+    if: startsWith(github.event.head_commit.message, 'release')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          gh release create "${VERSION}"  --repo '${{ github.repository }}' --notes-file "$GITHUB_WORKSPACE/.github/workflows/notes.md" 
+
+  publish:
+    needs : [build, release]
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: x86_64
+            name: jumper-${{ needs.build.outputs.version }}-linux-x86_64
+          - os: ubuntu-latest
+            arch: arm64
+            name: jumper-${{ needs.build.outputs.version }}-linux-arm64
+          - os: macos-13
+            arch: x86_64
+            name: jumper-${{ needs.build.outputs.version }}-macos-x86_64
+          - os: macos-latest
+            arch: arm64
+            name: jumper-${{ needs.build.outputs.version }}-macos-arm64
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: build
+        run : |
+          make jumper
+          make clean
+          tar -czvf ${{ matrix.name }}.tar.gz jumper
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: ${{ matrix.name }}.tar.gz
+          retention-days: 1
+      - name: Add binary to release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: >-
+          gh release upload "${VERSION}" ${{ matrix.name }}.tar.gz
+          --repo '${{ github.repository }}'
