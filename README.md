@@ -78,19 +78,24 @@ By default, matches are "case-semi-sensitive". This means that a lower case char
 
 ## Installation
 
-### Requirements
-- A C compiler for installation. The makefile uses `gcc`.
-- Bash (>=4.0), Zsh or Fish.
-- [fzf](https://github.com/junegunn/fzf). This is not mandatory, but needed for running queries interactively.
+Jumper runs on Linux and macOS, with either Bash (>=4.0), Zsh or Fish. Installing [fzf](https://github.com/junegunn/fzf) is recommended. This is not mandatory, but needed for running queries interactively.
 
-### Install script
+Pre-built packages and instructions can be found on the [Releases](https://github.com/homerours/jumper/releases) page. On macOS, you can directly run
+```bash
+brew install homerours/tap/jumper
+```
+
+### Install from source
+A C compiler is needed to install from source. The makefile uses `gcc`.
+
+#### Install script
 
 You can use the install script to clone and compile jumper + set up the shell keybindings automatically:
 ```sh
 sh -c "$(curl -s https://raw.githubusercontent.com/homerours/jumper/master/install.sh)"
 ```
 
-### Manual installation
+#### Manual installation
 
 Alternatively, you can run
 ```sh
