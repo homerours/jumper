@@ -21,6 +21,7 @@ jobs:
       - name: Version
         id: version
         run: |
+          echo "Build of version $(./jumper -v) has succeeded."
           printf "version=$(./jumper -v)\n" >> $GITHUB_OUTPUT
 
   release:
