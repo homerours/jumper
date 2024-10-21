@@ -8,6 +8,8 @@
 
 #include "arguments.h"
 
+static const char VERSION[] = "v1.0";
+
 static const int default_n_results = 50000;
 static const size_t max_cwd_len = 256;
 static const char default_dir_database[] = "/.jfolders";
@@ -23,7 +25,8 @@ static const char HELP_STRING[] =
     "                           __JUMPER_FOLDERS or __JUMPER_FILES depending "
     "on --type.\n"
     " -t, --type=TYPE           TYPE has to be 'files' or 'directories'.\n"
-    " -h, --help                Display this help and exit.\n\n"
+    " -h, --help                Display this help and exit.\n"
+    " -v, --version             Print version.\n\n"
     "MODE find: look for ARG in the database\n"
     " -n, --n-results=N         Maximum number of results to show.\n"
     " -c, --color               Highlight matches in outputs.\n"
@@ -31,7 +34,7 @@ static const char HELP_STRING[] =
     " -b, --beta=BETA           Specify an inverse temperature\n"
     "                           for computing scores (default=1.0).\n"
     " -x, --syntax=syntax       Query syntax (default: extended).\n"
-    " -o, --orderless           Orderless queries: token can be matched\n"
+    " -o, --orderless           Orderless queries: tokens can be matched\n"
     "                           in any order (only for extended syntax).\n"
     " -e, --existing            Only print files/directories that exist in the "
     "file system.\n"
@@ -48,6 +51,8 @@ static const char HELP_STRING[] =
     "MODE shell: print setup scripts. ARG has to be bash, zsh or fish.\n";
 
 static void help(const char *argv0) { printf(HELP_STRING, argv0); }
+
+static void print_version(void) { printf("%s\n", VERSION); }
 
 static struct option longopts[] = {{"file", required_argument, NULL, 'f'},
                                    {"add", no_argument, NULL, 'a'},
@@ -223,6 +228,11 @@ Arguments *parse_arguments(int argc, char **argv) {
   if (strcmp(argv[1], "help") == 0 || strcmp(argv[1], "--help") == 0 ||
       strcmp(argv[1], "-h") == 0) {
     help(argv[0]);
+    exit(EXIT_SUCCESS);
+  }
+  if (strcmp(argv[1], "version") == 0 || strcmp(argv[1], "--version") == 0 ||
+      strcmp(argv[1], "-v") == 0) {
+    print_version();
     exit(EXIT_SUCCESS);
   }
   args->mode = parse_mode(argv[1]);
