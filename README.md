@@ -80,10 +80,16 @@ By default, matches are "case-semi-sensitive". This means that a lower case char
 
 Jumper runs on Linux and macOS, with either Bash (>=4.0), Zsh or Fish. Installing [fzf](https://github.com/junegunn/fzf) is recommended. This is not mandatory, but needed for running queries interactively.
 
-Pre-built packages and instructions can be found on the [Releases](https://github.com/homerours/jumper/releases) page. On macOS, you can directly run
+You'll need to install `jumper` and then set up your shell following the [instructions](#shell) below.
+- macOS:
 ```bash
 brew install homerours/tap/jumper
 ```
+- archlinux: an [AUR package](https://aur.archlinux.org/packages/jumper) is available:
+```bash
+yay -S jumper
+```
+- other OS: you can either download pre-built packages on the [Releases](https://github.com/homerours/jumper/releases) page, or follow the instructions below to install from source.
 
 ### Install from source
 A C compiler is needed to install from source. The makefile uses `gcc`.
@@ -103,8 +109,10 @@ git clone https://github.com/homerours/jumper
 cd jumper
 make install
 ```
-to compile and move the `jumper` binary to `/usr/local/bin`. Then add 
-the following to your `.bashrc`, `.zshrc` or `.config/fish/config.fish` to get access to jumper's functions:
+to compile and move the `jumper` binary to `/usr/local/bin`. You then have to setup your shell as follows.
+
+#### Shell setup<a id='shell'></a>
+Add the following to your `.bashrc`, `.zshrc` or `.config/fish/config.fish` to get access to jumper's functions:
 * bash
   ```sh
   eval "$(jumper shell bash)"
@@ -196,7 +204,7 @@ user    0m0.117s
 sys     0m0.233s
 ```
 
-## Vim-Neovim
+## Vim-Neovim<a id='vim'></a>
 
 Jumper can be used in Vim and Neovim. Depending on your configuration, you can either use it
 - without any plugin, see below. However, you won't be able to do run queries interactively.
