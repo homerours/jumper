@@ -11,7 +11,11 @@ git clone https://github.com/homerours/jumper
 cd jumper
 echo
 echo "Building jumper's binary..."
-make install
+if [ -z "$PREFIX" ]; then
+    make install
+else
+    make PREFIX="$PREFIX" install
+fi
 
 cd "$CURRENT_DIR"
 
