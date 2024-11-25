@@ -98,7 +98,7 @@ A C compiler is needed to install from source. The makefile uses `gcc`.
 
 You can use the install script to clone and compile jumper + set up the shell keybindings automatically:
 ```sh
-sh -c "$(curl -s https://raw.githubusercontent.com/homerours/jumper/master/install.sh)"
+PREFIX=$HOME/.local/bin sh -c "$(curl -s https://raw.githubusercontent.com/homerours/jumper/master/install.sh)"
 ```
 
 #### Manual installation
