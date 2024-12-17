@@ -27,6 +27,7 @@ typedef struct Arguments {
   bool home_tilde;
   bool orderless;
   bool existing;
+  bool no_bind;
   TYPE type;
   int n_results;
   const char *relative_to;

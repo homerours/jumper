@@ -39,7 +39,7 @@ static const char HELP_STRING[] =
     " -e, --existing            Only print files/directories that exist in the "
     "file system.\n"
     " -I, --case-insensitive    Make the search case-insensitive.\n"
-    " -S, --case-sensitive      Make the search case-sensititive.\n"
+    " -S, --case-sensitive      Make the search case-sensitive.\n"
     " -H, --home-tilde          Substitute $HOME with ~ when printing "
     "results.\n"
     " -r, --relative=PATH       Outputs relative paths to PATH if\n"
@@ -48,7 +48,8 @@ static const char HELP_STRING[] =
     " -w, --weight=WEIGHT       Weight of the visit (default=1.0).\n\n"
     "MODE clean: remove entries that do not exist anymore.\n"
     "MODE status: print databases' locations and some statistics.\n"
-    "MODE shell: print setup scripts. ARG has to be bash, zsh or fish.\n";
+    "MODE shell: print setup scripts. ARG has to be bash, zsh or fish.\n"
+    " -B, --no-bind             Do not bind keys.\n";
 
 static void help(const char *argv0) { printf(HELP_STRING, argv0); }
 
@@ -69,6 +70,7 @@ static struct option longopts[] = {{"file", required_argument, NULL, 'f'},
                                    {"orderless", no_argument, NULL, 'o'},
                                    {"existing", no_argument, NULL, 'e'},
                                    {"type", required_argument, NULL, 't'},
+                                   {"no-bind", no_argument, NULL, 'B'},
                                    {NULL, 0, NULL, 0}};
 
 static void args_init(Arguments *args) {
@@ -90,6 +92,7 @@ static void args_init(Arguments *args) {
   // score.
   args->beta = 1.0;
   args->weight = 1.0;
+  args->no_bind = false;
 }
 
 static MODE parse_mode(const char *mode) {
@@ -242,7 +245,7 @@ Arguments *parse_arguments(int argc, char **argv) {
   optind++;
   int c = 0;
   while (optind < argc && c != -1) {
-    c = getopt_long(argc, argv, "csoeHISt:f:n:w:b:x:r::", longopts, NULL);
+    c = getopt_long(argc, argv, "csoeHISt:f:n:w:b:x:r::B", longopts, NULL);
     if (c != -1) {
       switch (c) {
       case 'f':
@@ -320,6 +323,9 @@ Arguments *parse_arguments(int argc, char **argv) {
               "ERROR: The weight of a visit (-w option) can't be negative.\n");
           exit(EXIT_FAILURE);
         }
+        break;
+      case 'B':
+        args->no_bind = true;
         break;
       default:
         help(argv[0]);

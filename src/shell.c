@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -136,7 +137,9 @@ static const char bash_functions[] =
 static const char bash_bindings[] =
     "bind -x '\"\\C-y\": jumper-find-dir'\n"
     "stty kill undef\n"
-    "bind -x '\"\\C-u\": jumper-find-file'\n"
+    "bind -x '\"\\C-u\": jumper-find-file'\n";
+
+static const char bash_prompt[] =
     "PROMPT_COMMAND=\"__jumper_update_db;$PROMPT_COMMAND\"\n";
 
 static const char zsh_variables[] =
@@ -276,10 +279,11 @@ static const char zsh_functions[] =
 static const char zsh_bindings[] = "zle -N jumper-find-dir\n"
                                    "zle -N jumper-find-file\n"
                                    "bindkey '^Y' jumper-find-dir\n"
-                                   "bindkey '^U' jumper-find-file\n"
-                                   "precmd() {\n"
-                                   "    __jumper_update_db\n"
-                                   "}\n";
+                                   "bindkey '^U' jumper-find-file\n";
+
+static const char zsh_prompt[] = "precmd() {\n"
+                                 "    __jumper_update_db\n"
+                                 "}\n";
 
 static const char fish_variables[] =
     "if not set -q __JUMPER_FLAGS\n"
@@ -404,19 +408,21 @@ static const char fish_functions[] =
 static const char fish_bindings[] = "bind \\cy jumper-find-dir\n"
                                     "bind \\cu jumper-find-file\n";
 
-void shell_setup(const char *shell) {
+void shell_setup(const char *shell, bool no_bind) {
   if (strcmp(shell, "bash") == 0) {
     printf(bash_variables);
     printf(bash_functions);
-    printf(bash_bindings);
+    if (!no_bind) printf(bash_bindings);
+    printf(bash_prompt);
   } else if (strcmp(shell, "zsh") == 0) {
     printf(zsh_variables);
     printf(zsh_functions);
-    printf(zsh_bindings);
+    if (!no_bind) printf(zsh_bindings);
+    printf(zsh_prompt);
   } else if (strcmp(shell, "fish") == 0) {
     printf(fish_variables);
     printf(fish_functions);
-    printf(fish_bindings);
+    if (!no_bind) printf(fish_bindings);
   } else {
     fprintf(stderr, "ERROR: Invalid argument for shell: %s.\n", shell);
     fprintf(stderr, "Accepted arguments: bash, zsh, fish.\n");
