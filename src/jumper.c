@@ -221,7 +221,7 @@ int main(int argc, char **argv) {
   } else if (args->mode == MODE_clean) {
     clean_database(args);
   } else if (args->mode == MODE_shell) {
-    shell_setup(args->key);
+    shell_setup(args->key, args->no_bind);
   }
   free(args);
   return EXIT_SUCCESS;
