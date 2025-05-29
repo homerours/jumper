@@ -134,7 +134,7 @@ This can be done automatically in Vim/Neovim, see next section. For other progra
 ```sh
 function myeditor() {
    jumper update --type=files "$1" 
-   myeditor $1
+   command myeditor $1
 }
 ```
 
