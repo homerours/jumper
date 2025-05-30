@@ -40,7 +40,7 @@ More details about the scoring mechanism are given [here](https://github.com/hom
 
 ### Concept
 
-`jumper` records visits to files anf direfotries in files whose lines are in the format `<path>|<number-of-visits>|<timestamp-of-last-visit>`. Given such a database's file, the command
+`jumper` records visits to files and directotries in files whose lines are in the format `<path>|<number-of-visits>|<timestamp-of-last-visit>`. Given such a database's file, the command
 ```sh
 jumper find -f <database-file> -n N <query>
 ```
@@ -211,9 +211,9 @@ Jumper can be used in Vim and Neovim. Depending on your configuration, you can e
 - with the [jumper.nvim](https://github.com/homerours/jumper.nvim) plugin (prefered). This uses either [Telescope](https://github.com/nvim-telescope/telescope.nvim) or [fzf-lua](https://github.com/ibhagwan/fzf-lua) as backend for the UI.
 - with the [jumper.vim](https://github.com/homerours/jumper.vim) plugin (works for both Vim/Neovim). This uses [fzf "native" plugin](https://github.com/junegunn/fzf/blob/master/README-VIM.md) as UI.
 
-### Without any plugins
+### Without any plugin
 
-We describe below how to use it without plugins. This only allows to use `Z` and `Zf` commands.
+We describe below how to use it without plugin. This only allows to use `Z` and `Zf` commands.
 First, you have to keep track of the files you open by adding to your `.vimrc`/`init.lua`
 ```vim
 autocmd BufReadPre,BufNewFile *   silent execute '!jumper update --type=files ' .. expand('%:p')
