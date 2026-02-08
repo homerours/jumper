@@ -204,7 +204,7 @@ Add the following to your `.bashrc`, `.zshrc` or `.config/fish/config.fish` to g
 > If you were already using [z](https://github.com/rupa/z), you can `cp ~/.z ~/.jfolders` to export your database to Jumper.
 
 In order to keep track of the visited files, the function `jumper update --type=files <file>` has to be called each time a file `<file>` is opened. 
-This can be done automatically in Vim/Neovim and VSCode, see next section. For other programs, you may want to use aliases (better solutions exist, using for instance "hooks" in emacs) 
+This can be done automatically in Vim/Neovim and VSCode, see next section. For other programs, you may want to use aliases (better solutions exist, using for instance "hooks" in emacs).
 ```sh
 function myeditor() {
    jumper update --type=files "$1" 
