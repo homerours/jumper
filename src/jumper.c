@@ -29,14 +29,17 @@ static void clean_database(Arguments *args) {
   if (!f){
 	  return;
   }
-  char *dir = dirname(strdup(args->file_path));
+  char *path_copy = strdup(args->file_path);
+  char *dir = dirname(path_copy);
   char *tempname = (char *)malloc((strlen(dir) + 20) * sizeof(char));
   if (!tempname) {
     fprintf(stderr, "ERROR: failed to allocate %lu bytes.\n", strlen(dir) + 20);
+    free(path_copy);
     exit(EXIT_FAILURE);
   }
   strcpy(tempname, dir);
   strcat(tempname, "/.jumper_XXXXXX");
+  free(path_copy);
   const int temp_fd = mkstemp(tempname);
   if (temp_fd == -1) {
     fprintf(stderr, "ERROR: Could not create the temporary file %s\n",
