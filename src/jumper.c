@@ -58,6 +58,9 @@ static void clean_database(Arguments *args) {
   }
 
   Record rec;
+  int removed_count = 0;
+  int kept_count = 0;
+
   while (next_line(f)) {
     parse_record(f->line, &rec);
     if (exist(rec.path, args->type)) {
@@ -72,10 +75,26 @@ static void clean_database(Arguments *args) {
         exit(EXIT_FAILURE);
       }
       free(rec_string);
+      kept_count++;
+    } else {
+      removed_count++;
     }
   }
   file_close(f);
   fclose(temp);
+
+  fprintf(stdout, "Cleaned %d non-existent %s (kept %d)\n",
+          removed_count,
+          args->type == TYPE_files ? "files" : "directories",
+          kept_count);
+
+  // Only rename if something was removed
+  if (removed_count == 0) {
+    unlink(tempname);
+    free(tempname);
+    return;
+  }
+
   if (rename(tempname, args->file_path) != 0) {
     fprintf(stderr, "ERROR: Failed to replace database file: %s\n", strerror(errno));
     fprintf(stderr, "Cleaned data is in: %s\n", tempname);
