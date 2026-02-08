@@ -47,6 +47,7 @@ static const char HELP_STRING[] =
     "MODE update: update the record ARG in the database\n"
     " -w, --weight=WEIGHT       Weight of the visit (default=1.0).\n\n"
     "MODE clean: remove entries that do not exist anymore.\n"
+    "            If --type is not specified, cleans both databases.\n"
     "MODE status: print databases' locations and some statistics.\n"
     "MODE shell: print setup scripts. ARG has to be bash, zsh or fish.\n"
     " -B, --no-bind             Do not bind keys.\n";
@@ -190,12 +191,11 @@ void validate_arguments(Arguments *args) {
     }
     break;
   case MODE_clean:
-    if (args->type == TYPE_undefined) {
-      fprintf(stderr, "ERROR: please specify the type (files or directories) "
-                      "of the database you would like to clean.\n");
-      exit(EXIT_FAILURE);
+    // If type is specified, set the file path
+    // If type is undefined, we'll clean both databases in parallel
+    if (args->type != TYPE_undefined) {
+      set_filepath(args);
     }
-    set_filepath(args);
     break;
   case MODE_status:
     if (args->key == NULL) {

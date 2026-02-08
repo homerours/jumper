@@ -109,6 +109,18 @@ static void clean_database(Arguments *args) {
   free(tempname);
 }
 
+static void clean_both_databases(Arguments *args) {
+  // Clean files database
+  args->type = TYPE_files;
+  args->file_path = get_default_database_path(TYPE_files);
+  clean_database(args);
+
+  // Clean directories database
+  args->type = TYPE_directories;
+  args->file_path = get_default_database_path(TYPE_directories);
+  clean_database(args);
+}
+
 static void update_database(Arguments *args) {
   long long now = (long long)time(NULL);
   Textfile *f = file_open_rw(args->file_path);
@@ -260,7 +272,11 @@ int main(int argc, char **argv) {
   } else if (args->mode == MODE_status) {
     status(args);
   } else if (args->mode == MODE_clean) {
-    clean_database(args);
+    if (args->type == TYPE_undefined) {
+      clean_both_databases(args);
+    } else {
+      clean_database(args);
+    }
   } else if (args->mode == MODE_shell) {
     shell_setup(args->key, args->no_bind);
   }
