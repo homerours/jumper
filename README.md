@@ -32,9 +32,7 @@ eval "$(jumper shell bash)"  # or zsh
 ```
 
 **Linux/Other:**
-```bash
-# See [installation instructions](#installation) below.
-```
+See [installation instructions](#installation) below.
 
 **That's it!** Start navigating around, then:
 ```bash
