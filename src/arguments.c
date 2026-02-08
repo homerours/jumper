@@ -8,7 +8,7 @@
 
 #include "arguments.h"
 
-static const char VERSION[] = "v1.0";
+static const char VERSION[] = "v1.1";
 
 static const int default_n_results = 50000;
 static const size_t max_cwd_len = 256;
