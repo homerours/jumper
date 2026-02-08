@@ -52,10 +52,10 @@ jobs:
           - os: ubuntu-latest
             arch: arm64
             name: jumper-${{ needs.build.outputs.version }}-linux-arm64
-          - os: macos-13-xlarge
+          - os: macos-12
             arch: x86_64
             name: jumper-${{ needs.build.outputs.version }}-macos-x86_64
-          - os: macos-latest
+          - os: macos-14
             arch: arm64
             name: jumper-${{ needs.build.outputs.version }}-macos-arm64
     steps:
