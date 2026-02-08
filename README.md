@@ -5,42 +5,116 @@ It relies on [fzf](https://github.com/junegunn/fzf) for UI and is heavily inspir
 
 https://github.com/homerours/jumper/assets/12702557/5cc45509-9f25-44ff-a69b-e413a7ce57a3
 
-It differentiates itself from the plethora of similar tools on the following points:
-- Efficient ranking mechanism which combines the "frecency" of the match (as [z](https://github.com/rupa/z) does) and the accuracy of the match (as [fzf](https://github.com/junegunn/fzf) or [fzy](https://github.com/jhawthorn/fzy) do). This allows to find files/folders accurately in very few keystrokes. More details [here](https://github.com/homerours/jumper/blob/master/algorithm.md).
-- "Orderless" search: match a sequence of tokens in any order.
-- It is not restricted to folders. It allows to quickly navigate files, or anything you want (you can easily create and query a new custom database).
-- It can be run in "interactive mode", relying on [fzf](https://github.com/junegunn/fzf) for the UI.
-- Written in C, for speed and portability.
+## Why Jumper?
 
-[Usage](#usage) - [Installation](#installation) - [Vim-Neovim](#vim)
+- **🎯 Smart ranking** - Combines frecency (frequency + recency) with match accuracy for precise results in minimal keystrokes
+- **🔄 Orderless search** - Match tokens in any order: `z src main` finds both `main/src` and `src/main`
+- **📁 Files & directories** - Track and jump to both files and folders, not just directories
+- **⚡ Fast** - Written in C for speed (~4ms queries on 1000 entries)
+- **🎨 Interactive mode** - Beautiful fzf integration with live preview
+- **🔌 Editor integration** - Works with Vim, Neovim, and VSCode
+
+[Read more about the algorithm →](algorithm.md)
+
+## Quick Start
+
+**macOS:**
+```bash
+brew install homerours/tap/jumper
+eval "$(jumper shell bash)"  # or zsh
+```
+
+**Linux/Other:**
+```bash
+# See installation instructions below
+```
+
+**That's it!** Start navigating around, then:
+```bash
+z proj              # Jump to most-used directory matching "proj"
+zf main             # Open most-used file matching "main" in $EDITOR
+Ctrl+Y              # Interactive directory search (fzf required)
+Ctrl+U              # Interactive file search (fzf required)
+```
+
+**Quick Links:**
+[Installation](#installation) •
+[Usage & Examples](#usage) •
+[Configuration](#configuration) •
+[Editor Integration](#editors) •
+[How it Works](#ranking-mechanism)
 
 ## Usage
 
-Just move around files and folders as usual, jumper will keep track of them. Then,
-- Use `z <something>` to jump to the most frequent/recent directories matching `<something>`.
-- Use `zf <something>` to open (in `$EDITOR`) the most frequent/recent file matching `<something>`.
-- Use `Ctrl+Y` to fuzzy-find directories matching a query interactively (`fzf` required).
-- Use `Ctrl+U` to fuzzy-find files matching a query interactively (`fzf` required).
+Just move around files and folders as usual - jumper will automatically track them. Then use these commands to jump back quickly:
 
-All these mappings can be updated, see [Configuration](#configuration) below.
+| Command | Description | Example |
+|---------|-------------|---------|
+| `z <query>` | Jump to most-used directory | `z proj` → `~/projects/jumper` |
+| `zf <query>` | Open most-used file in $EDITOR | `zf main` → opens `src/main.c` |
+| `Ctrl+Y` | Interactive directory search (fzf) | Fuzzy-find with live preview |
+| `Ctrl+U` | Interactive file search (fzf) | Fuzzy-find with live preview |
 
-### Ranking mechanism
+### Examples
 
-The paths that match a given query are ranked based on
-- *the frecency of the path*: how often / recently has this path been visited ?
-- *the accuracy of the query*: how well does the query match the path ?
+**Basic navigation:**
+```bash
+# After visiting ~/projects/jumper/src a few times...
+$ z jum src          # Instantly jumps to ~/projects/jumper/src
+$ z proj             # Jumps to ~/projects (most frecent match)
 
-The ranking of a path at time $t$ is based on the following score
+# Multiple tokens work in any order (orderless search)
+$ z src jum          # Also finds ~/projects/jumper/src
+```
+
+**File navigation:**
+```bash
+# After editing ~/.config/nvim/init.lua...
+$ zf init            # Opens ~/.config/nvim/init.lua in $EDITOR
+$ zf nvim lua        # Also matches (orderless)
+```
+
+**Interactive mode:**
+```bash
+$ Ctrl+Y             # Opens interactive directory picker
+> proj▊              # Type to filter in real-time
+  ~/projects/jumper  (154 visits)
+  ~/projects/website (87 visits)
+  ~/work/project-x   (43 visits)
+# Press Enter to jump
+```
+
+> **Tip:** All keybindings can be customized. See [Configuration](#configuration) below.
+
+### How It Works
+
+Jumper uses a smart ranking algorithm that combines:
+- **Frecency** - How frequently and recently you've visited a path
+- **Match accuracy** - How well your query matches the path
+
+This means your most-used paths naturally bubble to the top, but typing more characters gives you precise control.
+
+<details>
+<summary><b>📊 Ranking Algorithm Details</b> (click to expand)</summary>
+
+The paths that match a given query are ranked based on:
+- *the frecency of the path*: how often / recently has this path been visited?
+- *the accuracy of the query*: how well does the query match the path?
+
+The ranking of a path at time $t$ is based on the following score:
 ```math
 \text{score}(\text{query}, \text{path}) =  \text{frecency}(t, \text{path}) + \beta \times \text{accuracy}(\text{query}, \text{path})
 ```
-where $\beta = 1.0$ by default, but can be updated with the flag `-b <value>`. 
-More details about the scoring mechanism are given [here](https://github.com/homerours/jumper/blob/master/algorithm.md).
+where $\beta = 1.0$ by default, but can be updated with the flag `-b <value>`.
 
+More details about the scoring mechanism are given in [algorithm.md](https://github.com/homerours/jumper/blob/master/algorithm.md).
 
-### Concept
+</details>
 
-`jumper` records visits to files and directotries in files whose lines are in the format `<path>|<number-of-visits>|<timestamp-of-last-visit>`. Given such a database's file, the command
+<details>
+<summary><b>🗄️ Database Format</b> (click to expand)</summary>
+
+`jumper` records visits to files and directories in files whose lines are in the format `<path>|<number-of-visits>|<timestamp-of-last-visit>`. Given such a database's file, the command
 ```sh
 jumper find -f <database-file> -n N <query>
 ```
@@ -53,7 +127,9 @@ From these two main functions, shell scripts (run e.g. `jumper shell bash`) defi
 - **Folders**: Folders' visits are recorded in the file `~/.jfolders` using a shell pre-command. This can be updated by setting the `__JUMPER_FOLDERS` environment variable.
 - **Files**: Opened files are recorded in the file `~/.jfiles` by making Vim run `jumper update --type=files <current-file>` each time a file is opened. This can be adapted to other editors and the database's file can be updated by setting the `__JUMPER_FILES` environment variable.
 
-### Search syntax
+</details>
+
+### Search Syntax
 
 By default jumper uses a simpler version of fzf's "extended search-mode". One can search for multiple tokens separated by spaces. The full [fzf-syntax](https://github.com/junegunn/fzf?tab=readme-ov-file#search-syntax) is not implemented yet, only the following token are implemented.
 
@@ -130,7 +206,7 @@ Add the following to your `.bashrc`, `.zshrc` or `.config/fish/config.fish` to g
 > If you were already using [z](https://github.com/rupa/z), you can `cp ~/.z ~/.jfolders` to export your database to Jumper.
 
 In order to keep track of the visited files, the function `jumper update --type=files <file>` has to be called each time a file `<file>` is opened. 
-This can be done automatically in Vim/Neovim, see next section. For other programs, you may want to use aliases (better solutions exist, using for instance "hooks" in emacs) 
+This can be done automatically in Vim/Neovim and VSCode, see next section. For other programs, you may want to use aliases (better solutions exist, using for instance "hooks" in emacs) 
 ```sh
 function myeditor() {
    jumper update --type=files "$1" 
@@ -176,10 +252,10 @@ bind -x '"\C-f": jumper-find-file'
 
 #### Database's maintenance
 
-Use the function `_jumper_clean` to remove from the databases the files and directories that do not exist anymore. 
+Use `jumper clean` to remove from the databases the files and directories that do not exist anymore. 
 To clean the files' or folders' databases only, use `jumper clean --type=files` or `jumper clean --type=directories`.
 
-This cleaning can be done automatically by setting the variable `__JUMPER_CLEAN_FREQ` to some integer value `N`. In such case, the function `_jumper_clean` will be called on average every `N` command run in the terminal.
+This cleaning can be done automatically by setting the variable `__JUMPER_CLEAN_FREQ` to some integer value `N`. In such case, the function `jumper clean` will be called on average every `N` command run in the terminal.
 
 For more advanced/custom maintenance, the files `~/.jfolders` and `~/.jfiles` can be edited directly.
 
@@ -204,14 +280,16 @@ user    0m0.117s
 sys     0m0.233s
 ```
 
-## Vim-Neovim<a id='vim'></a>
+## Editor Integration<a id='editors'></a>
+
+### Vim-Neovim<a id='vim'></a>
 
 Jumper can be used in Vim and Neovim. Depending on your configuration, you can either use it
 - without any plugin, see below. However, you won't be able to do run queries interactively.
 - with the [jumper.nvim](https://github.com/homerours/jumper.nvim) plugin (prefered). This uses either [Telescope](https://github.com/nvim-telescope/telescope.nvim) or [fzf-lua](https://github.com/ibhagwan/fzf-lua) as backend for the UI.
 - with the [jumper.vim](https://github.com/homerours/jumper.vim) plugin (works for both Vim/Neovim). This uses [fzf "native" plugin](https://github.com/junegunn/fzf/blob/master/README-VIM.md) as UI.
 
-### Without any plugin
+#### Without any plugin
 
 We describe below how to use it without plugin. This only allows to use `Z` and `Zf` commands.
 First, you have to keep track of the files you open by adding to your `.vimrc`/`init.lua`
@@ -238,19 +316,16 @@ command! -nargs=+ Zf :edit `jumper find --type=files -n 1 '<args>'`
 ```
 to your `.vimrc` to then change directory with `:Z <query>` or open files with `:Zf <query>`.
 
-## Combine it with other tools
+### VSCode
 
-You can for instance define a function
-```sh
-fu() {
-    RG_PREFIX="jumper find --type=files '' | xargs rg -i --column --line-number --color=always "
-    fzf --ansi --disabled --query '' \
-    --bind "start:reload:$RG_PREFIX {q}" \
-    --bind "change:reload:sleep 0.1; $RG_PREFIX {q} || true" \
-    --delimiter : \
-    --preview 'bat --color=always {1} --highlight-line {2}' \
-    --preview-window 'up,60%,border-bottom,+{2}+3/3,~3' \
-    --bind 'enter:become(nvim {1} +{2})'
-}
-```
-which allows to "live-grep" (using here [ripgrep](https://github.com/BurntSushi/ripgrep)) the files of jumper's database.
+Jumper integrates with VSCode through the [jumper.vscode](https://github.com/homerours/jumper.vscode) extension, which automatically tracks opened files and provides commands to quickly navigate to frequently used files and directories.
+
+**Installation:**
+1. Install jumper following the [installation instructions](#installation) above
+2. Install the extension from the [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=homerours.jumper-vscode) or search for "Jumper" in VSCode's extension panel
+3. The extension will automatically track files you open in VSCode
+
+**Features:**
+- Automatically updates jumper's database when you open files
+- `Jumper: Find File` command to fuzzy-find and open frequently used files
+- `Jumper: Find Directory` command to open frequently used directories
