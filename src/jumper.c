@@ -57,6 +57,12 @@ static void clean_database(Arguments *args) {
     exit(EXIT_FAILURE);
   }
 
+  // Preserve permissions from original file
+  struct stat st;
+  if (stat(args->file_path, &st) == 0) {
+    fchmod(temp_fd, st.st_mode);
+  }
+
   Record rec;
   int removed_count = 0;
   int kept_count = 0;
