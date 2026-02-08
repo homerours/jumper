@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <errno.h>
 #include <libgen.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -6,6 +7,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "arguments.h"
 #include "heap.h"
@@ -60,14 +62,25 @@ static void clean_database(Arguments *args) {
     parse_record(f->line, &rec);
     if (exist(rec.path, args->type)) {
       char *rec_string = record_to_string(&rec);
-      fputs(rec_string, temp);
-      fputs("\n", temp);
+      if (fputs(rec_string, temp) == EOF || fputs("\n", temp) == EOF) {
+        fprintf(stderr, "ERROR: Failed to write to temporary file\n");
+        free(rec_string);
+        fclose(temp);
+        unlink(tempname);
+        file_close(f);
+        free(tempname);
+        exit(EXIT_FAILURE);
+      }
       free(rec_string);
     }
   }
   file_close(f);
   fclose(temp);
-  rename(tempname, args->file_path);
+  if (rename(tempname, args->file_path) != 0) {
+    fprintf(stderr, "ERROR: Failed to replace database file: %s\n", strerror(errno));
+    fprintf(stderr, "Cleaned data is in: %s\n", tempname);
+    exit(EXIT_FAILURE);
+  }
   free(tempname);
 }
 
