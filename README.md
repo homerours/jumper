@@ -5,6 +5,13 @@ It relies on [fzf](https://github.com/junegunn/fzf) for UI and is heavily inspir
 
 https://github.com/homerours/jumper/assets/12702557/5cc45509-9f25-44ff-a69b-e413a7ce57a3
 
+**Quick Links:**
+[Installation](#installation) •
+[Usage & Examples](#usage) •
+[Configuration](#configuration) •
+[Editor Integration](#editors) •
+[How it Works](#ranking-mechanism)
+
 ## Why Jumper?
 
 - **🎯 Smart ranking** - Combines frecency (frequency + recency) with match accuracy for precise results in minimal keystrokes
@@ -26,7 +33,7 @@ eval "$(jumper shell bash)"  # or zsh
 
 **Linux/Other:**
 ```bash
-# See installation instructions below
+# See [installation instructions](#installation) below.
 ```
 
 **That's it!** Start navigating around, then:
@@ -36,13 +43,6 @@ zf main             # Open most-used file matching "main" in $EDITOR
 Ctrl+Y              # Interactive directory search (fzf required)
 Ctrl+U              # Interactive file search (fzf required)
 ```
-
-**Quick Links:**
-[Installation](#installation) •
-[Usage & Examples](#usage) •
-[Configuration](#configuration) •
-[Editor Integration](#editors) •
-[How it Works](#ranking-mechanism)
 
 ## Usage
 
