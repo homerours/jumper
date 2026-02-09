@@ -285,13 +285,10 @@ static const char zsh_functions[] =
     "}\n";
 
 static const char zsh_completions[] =
-    "# Initialize completion system only if not already done\n"
     "if ! type compdef >/dev/null 2>&1; then\n"
     "  autoload -Uz compinit\n"
     "  compinit -C\n"
     "fi\n"
-    "# Configure completion behavior for z and zf\n"
-    "# Disable longest-prefix completion, cycle through full matches immediately\n"
     "zstyle ':completion:*:*:z:*' menu yes select\n"
     "zstyle ':completion:*:*:zf:*' menu yes select\n"
     "zstyle ':completion:*:*:z:*' insert-unambiguous false\n"
@@ -306,7 +303,6 @@ static const char zsh_completions[] =
     "  setopt localoptions menu_complete no_list_beep; unsetopt list_ambiguous bash_auto_list auto_list; compstate[insert]=menu; compstate[list]=list\n"
     "  compadd -Q -U -V unsorted -- ${(f)\"$(jumper find --type=files ${__JUMPER_ZFLAGS} -n 3 \"${words[CURRENT]:-${words[2,-1]}}\" 2>/dev/null)\"}\n"
     "}\n"
-    "# Register completions\n"
     "compdef _z_completion z\n"
     "compdef _zf_completion zf\n";
 
