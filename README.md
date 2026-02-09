@@ -28,7 +28,7 @@ https://github.com/homerours/jumper/assets/12702557/5cc45509-9f25-44ff-a69b-e413
 **macOS:**
 ```bash
 brew install homerours/tap/jumper
-eval "$(jumper shell bash)"  # or zsh
+eval "$(jumper shell bash)"  # or, for zsh: source <(jumper shell zsh)
 ```
 
 **Linux/Other:**
