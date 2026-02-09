@@ -130,6 +130,22 @@ static const char bash_functions[] =
     "  READLINE_POINT=$(( READLINE_POINT + ${#selected} ))\n"
     "}\n";
 
+static const char bash_completions[] =
+    "_z_completion() {\n"
+    "  local cur=\"${COMP_WORDS[COMP_CWORD]}\"\n"
+    "  local IFS=$'\\n'\n"
+    "  local results=($(jumper find --type=directories ${__JUMPER_ZFLAGS} -n 3 \"$cur\" 2>/dev/null))\n"
+    "  COMPREPLY=(\"${results[@]}\")\n"
+    "}\n"
+    "_zf_completion() {\n"
+    "  local cur=\"${COMP_WORDS[COMP_CWORD]}\"\n"
+    "  local IFS=$'\\n'\n"
+    "  local results=($(jumper find --type=files ${__JUMPER_ZFLAGS} -n 3 \"$cur\" 2>/dev/null))\n"
+    "  COMPREPLY=(\"${results[@]}\")\n"
+    "}\n"
+    "complete -o nosort -o nospace -F _z_completion z\n"
+    "complete -o nosort -o nospace -F _zf_completion zf\n";
+
 static const char bash_bindings[] =
     "bind -x '\"\\C-y\": jumper-find-dir'\n"
     "stty kill undef\n"
@@ -268,6 +284,32 @@ static const char zsh_functions[] =
     "  zle reset-prompt\n"
     "}\n";
 
+static const char zsh_completions[] =
+    "# Initialize completion system only if not already done\n"
+    "if ! type compdef >/dev/null 2>&1; then\n"
+    "  autoload -Uz compinit\n"
+    "  compinit -C\n"
+    "fi\n"
+    "# Configure completion behavior for z and zf\n"
+    "# Disable longest-prefix completion, cycle through full matches immediately\n"
+    "zstyle ':completion:*:*:z:*' menu yes select\n"
+    "zstyle ':completion:*:*:zf:*' menu yes select\n"
+    "zstyle ':completion:*:*:z:*' insert-unambiguous false\n"
+    "zstyle ':completion:*:*:zf:*' insert-unambiguous false\n"
+    "zstyle ':completion:*:*:z:*' original true\n"
+    "zstyle ':completion:*:*:zf:*' original true\n"
+    "_z_completion() {\n"
+    "  setopt localoptions menu_complete no_list_beep; unsetopt list_ambiguous bash_auto_list auto_list; compstate[insert]=menu; compstate[list]=list\n"
+    "  compadd -Q -U -V unsorted -- ${(f)\"$(jumper find --type=directories ${__JUMPER_ZFLAGS} -n 3 \"${words[CURRENT]:-${words[2,-1]}}\" 2>/dev/null)\"}\n"
+    "}\n"
+    "_zf_completion() {\n"
+    "  setopt localoptions menu_complete no_list_beep; unsetopt list_ambiguous bash_auto_list auto_list; compstate[insert]=menu; compstate[list]=list\n"
+    "  compadd -Q -U -V unsorted -- ${(f)\"$(jumper find --type=files ${__JUMPER_ZFLAGS} -n 3 \"${words[CURRENT]:-${words[2,-1]}}\" 2>/dev/null)\"}\n"
+    "}\n"
+    "# Register completions\n"
+    "compdef _z_completion z\n"
+    "compdef _zf_completion zf\n";
+
 static const char zsh_bindings[] = "zle -N jumper-find-dir\n"
                                    "zle -N jumper-find-file\n"
                                    "bindkey '^Y' jumper-find-dir\n"
@@ -399,11 +441,13 @@ void shell_setup(const char *shell, bool no_bind) {
   if (strcmp(shell, "bash") == 0) {
     printf(bash_variables);
     printf(bash_functions);
+    printf(bash_completions);
     if (!no_bind) printf(bash_bindings);
     printf(bash_prompt);
   } else if (strcmp(shell, "zsh") == 0) {
     printf(zsh_variables);
     printf(zsh_functions);
+    printf(zsh_completions);
     if (!no_bind) printf(zsh_bindings);
     printf(zsh_prompt);
   } else if (strcmp(shell, "fish") == 0) {
