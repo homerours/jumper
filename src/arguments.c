@@ -189,6 +189,15 @@ void validate_arguments(Arguments *args) {
       fprintf(stderr, "ERROR: nothing to add to the database.\n");
       exit(EXIT_FAILURE);
     }
+    if (*args->key == '\0') {
+      fprintf(stderr,
+              "ERROR: can not add an empty argument to the database.\n");
+      exit(EXIT_FAILURE);
+    }
+    if (strchr(args->key, '|') != NULL) {
+      fprintf(stderr, "ERROR: the argument can not contain '|'.\n");
+      exit(EXIT_FAILURE);
+    }
     break;
   case MODE_clean:
     // If type is specified, set the file path
