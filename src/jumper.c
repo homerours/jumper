@@ -12,6 +12,7 @@
 #include "arguments.h"
 #include "heap.h"
 #include "matching.h"
+#include "progress_bar.h"
 #include "query.h"
 #include "record.h"
 #include "shell.h"
@@ -63,16 +64,35 @@ static void clean_database(Arguments *args) {
     fchmod(temp_fd, st.st_mode);
   }
 
+  // Count total lines for progress tracking
+  int total_lines = 0;
+  while (next_line(f)) {
+    total_lines++;
+  }
+  file_close(f);
+
+  // Reopen file for processing
+  f = file_open(args->file_path);
+  if (!f) {
+    fclose(temp);
+    unlink(tempname);
+    free(tempname);
+    return;
+  }
+
   Record rec;
   int removed_count = 0;
   int kept_count = 0;
+  int current_line = 0;
 
+  char* type_name = args->type == TYPE_files ? "files" : "directories";
+  fprintf(stdout, "Cleaning %s' database...\n", type_name);
   while (next_line(f)) {
     parse_record(f->line, &rec);
     if (exist(rec.path, args->type)) {
       char *rec_string = record_to_string(&rec);
       if (fputs(rec_string, temp) == EOF || fputs("\n", temp) == EOF) {
-        fprintf(stderr, "ERROR: Failed to write to temporary file\n");
+        fprintf(stderr, "\nERROR: Failed to write to temporary file\n");
         free(rec_string);
         fclose(temp);
         unlink(tempname);
@@ -85,13 +105,15 @@ static void clean_database(Arguments *args) {
     } else {
       removed_count++;
     }
+    current_line++;
+    progress_bar(current_line, total_lines);
   }
   file_close(f);
   fclose(temp);
 
   fprintf(stdout, "Cleaned %d non-existent %s (kept %d)\n",
           removed_count,
-          args->type == TYPE_files ? "files" : "directories",
+          type_name,
           kept_count);
 
   // Only rename if something was removed
@@ -114,6 +136,8 @@ static void clean_both_databases(Arguments *args) {
   args->type = TYPE_files;
   args->file_path = get_default_database_path(TYPE_files);
   clean_database(args);
+
+  printf("\n");
 
   // Clean directories database
   args->type = TYPE_directories;
