@@ -248,6 +248,15 @@ bind -x '"\C-d": jumper-find-dir'
 bind -x '"\C-f": jumper-find-file'
 ```
 
+### Filtering
+
+By default, jumper will filter out all files and directories that match one of the filters specified in `~/.jfilters` (which will be replaced by `__JUMPER_FILTERS` if set). For instance, adding
+```
+**/.git
+**/.git/**
+```
+will disable tracking all git files and directories. The filtering can be disabled using the `-F` flag.
+
 #### Database's maintenance
 
 Use `jumper clean` to remove from the databases the files and directories that do not exist anymore. 

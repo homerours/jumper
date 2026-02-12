@@ -14,8 +14,10 @@ static const int default_n_results = 50000;
 static const size_t max_cwd_len = 256;
 static const char default_dir_database[] = "/.jfolders";
 static const char default_files_database[] = "/.jfiles";
+static const char default_filters_database[] = "/.jfilters";
 static const char directories_env_variable[] = "__JUMPER_FOLDERS";
 static const char files_env_variable[] = "__JUMPER_FILES";
+static const char filters_env_variable[] = "__JUMPER_FILTERS";
 
 static const char HELP_STRING[] =
     "Usage: %s [MODE] [OPTIONS] ARG\n"
@@ -25,6 +27,10 @@ static const char HELP_STRING[] =
     "                           __JUMPER_FOLDERS or __JUMPER_FILES depending "
     "on --type.\n"
     " -t, --type=TYPE           TYPE has to be 'files' or 'directories'.\n"
+    " -F, --filters=FILE_PATH   Path to a file that specifies which pathes to "
+    "filter out.\n"
+    "                           Jumper uses __JUMPER_FILTERS by default.\n"
+    "                           Leave empty to turn filtering off.\n"
     " -h, --help                Display this help and exit.\n"
     " -v, --version             Print version.\n\n"
     "MODE find: look for ARG in the database\n"
@@ -46,8 +52,10 @@ static const char HELP_STRING[] =
     "                           specified (defaults to current directory).\n"
     "MODE update: update the record ARG in the database\n"
     " -w, --weight=WEIGHT       Weight of the visit (default=1.0).\n\n"
-    "MODE clean: remove entries that do not exist anymore.\n"
-    "            If --type is not specified, cleans both databases.\n"
+    "MODE clean: remove entries that do not exist anymore, or that matches one "
+    "of the filters.\n"
+    "                           If --type is not specified, cleans both "
+    "databases.\n"
     "MODE status: print databases' locations and some statistics.\n"
     "MODE shell: print setup scripts. ARG has to be bash, zsh or fish.\n"
     " -B, --no-bind             Do not bind keys.\n";
@@ -65,6 +73,7 @@ static struct option longopts[] = {{"file", required_argument, NULL, 'f'},
                                    {"case-insensitive", no_argument, NULL, 'I'},
                                    {"case-sensitive", no_argument, NULL, 'S'},
                                    {"relative", optional_argument, NULL, 'r'},
+                                   {"filters", optional_argument, NULL, 'F'},
                                    {"beta", required_argument, NULL, 'b'},
                                    {"n-results", required_argument, NULL, 'n'},
                                    {"syntax", required_argument, NULL, 'x'},
@@ -85,6 +94,7 @@ static void args_init(Arguments *args) {
   args->existing = false;
   args->type = TYPE_undefined;
   args->relative_to = NULL;
+  args->filters = NULL;
   args->mode = MODE_search;
   args->syntax = SYNTAX_extended;
   args->case_mode = CASE_MODE_semi_sensitive;
@@ -137,24 +147,40 @@ static SYNTAX parse_syntax(const char *syntax) {
   exit(EXIT_FAILURE);
 }
 
+char *get_home_path() {
+  char *home = getenv("HOME");
+  if (home == NULL) {
+    fprintf(stderr, "ERROR: Could not access $HOME environment variable.\n");
+    fprintf(stderr,
+            "Please set the environment variables %s and "
+            "%s to paths to jumper's files and folder's "
+            "databases.\n",
+            directories_env_variable, files_env_variable);
+    exit(EXIT_FAILURE);
+  }
+  return home;
+}
+
 char *get_default_database_path(TYPE type) {
   char *path = getenv((type == TYPE_directories) ? directories_env_variable
                                                  : files_env_variable);
   if (path == NULL) {
-    char *home = getenv("HOME");
-    if (home == NULL) {
-      fprintf(stderr, "ERROR: Could not access $HOME environment variable.\n");
-      fprintf(stderr,
-              "Please set the environment variables %s and "
-              "%s to paths to jumper's files and folder's "
-              "databases.\n",
-              directories_env_variable, files_env_variable);
-      exit(EXIT_FAILURE);
-    }
+    char *home = get_home_path();
     path = (char *)malloc((strlen(home) + 20) * sizeof(char));
     strcpy(path, home);
     strcat(path, (type == TYPE_directories) ? default_dir_database
                                             : default_files_database);
+  }
+  return path;
+}
+
+char *get_default_filters_path() {
+  char *path = getenv(directories_env_variable);
+  if (path == NULL) {
+    char *home = get_home_path();
+    path = (char *)malloc((strlen(home) + 20) * sizeof(char));
+    strcpy(path, home);
+    strcat(path, default_filters_database);
   }
   return path;
 }
@@ -251,10 +277,11 @@ Arguments *parse_arguments(int argc, char **argv) {
   if (args->mode == MODE_status) {
     args->n_results = 3;
   }
+  args->filters = get_default_filters_path();
   optind++;
   int c = 0;
   while (optind < argc && c != -1) {
-    c = getopt_long(argc, argv, "csoeHISt:f:n:w:b:x:r::B", longopts, NULL);
+    c = getopt_long(argc, argv, "csoeHISt:f:n:w:b:x:r::F::B", longopts, NULL);
     if (c != -1) {
       switch (c) {
       case 'f':
@@ -288,15 +315,16 @@ Arguments *parse_arguments(int argc, char **argv) {
         args->print_scores = true;
         break;
       case 'r':
-        if (optarg == NULL && optind < argc && argv[optind][0] == '/') {
-          optarg = argv[optind++];
-        }
         if (optarg == NULL) {
           char *cwd = (char *)malloc(max_cwd_len * sizeof(char));
           args->relative_to = getcwd(cwd, max_cwd_len);
         } else {
           args->relative_to = optarg;
         }
+        break;
+      case 'F':
+        free((void *)args->filters);
+        args->filters = optarg;
         break;
       case 'n':
         if (sscanf(optarg, "%d", &args->n_results) != 1) {

@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include "arguments.h"
+#include "glob.h"
 #include "heap.h"
 #include "matching.h"
 #include "progress_bar.h"
@@ -29,8 +30,8 @@ static inline bool exist(const char *path, TYPE type) {
 
 static void clean_database(Arguments *args) {
   Textfile *f = file_open(args->file_path);
-  if (!f){
-	  return;
+  if (!f) {
+    return;
   }
   char *path_copy = strdup(args->file_path);
   char *dir = dirname(path_copy);
@@ -80,16 +81,17 @@ static void clean_database(Arguments *args) {
     return;
   }
 
+  char **filters = read_filters(args->filters);
   Record rec;
   int removed_count = 0;
   int kept_count = 0;
   int current_line = 0;
 
-  char* type_name = args->type == TYPE_files ? "files" : "directories";
+  char *type_name = args->type == TYPE_files ? "files" : "directories";
   fprintf(stdout, "Cleaning %s' database...\n", type_name);
   while (next_line(f)) {
     parse_record(f->line, &rec);
-    if (exist(rec.path, args->type)) {
+    if (!glob_match_list(filters, rec.path) && exist(rec.path, args->type)) {
       char *rec_string = record_to_string(&rec);
       if (fputs(rec_string, temp) == EOF || fputs("\n", temp) == EOF) {
         fprintf(stderr, "\nERROR: Failed to write to temporary file\n");
@@ -110,10 +112,9 @@ static void clean_database(Arguments *args) {
   }
   file_close(f);
   fclose(temp);
+  free_filters(filters);
 
-  fprintf(stdout, "Cleaned %d non-existent %s (kept %d)\n",
-          removed_count,
-          type_name,
+  fprintf(stdout, "Cleaned %d %s (kept %d)\n", removed_count, type_name,
           kept_count);
 
   // Only rename if something was removed
@@ -124,7 +125,8 @@ static void clean_database(Arguments *args) {
   }
 
   if (rename(tempname, args->file_path) != 0) {
-    fprintf(stderr, "ERROR: Failed to replace database file: %s\n", strerror(errno));
+    fprintf(stderr, "ERROR: Failed to replace database file: %s\n",
+            strerror(errno));
     fprintf(stderr, "Cleaned data is in: %s\n", tempname);
     exit(EXIT_FAILURE);
   }
@@ -146,6 +148,13 @@ static void clean_both_databases(Arguments *args) {
 }
 
 static void update_database(Arguments *args) {
+  char **filters = read_filters(args->filters);
+  if (glob_match_list(filters, args->key)) {
+    free_filters(filters);
+    return;
+  }
+  free_filters(filters);
+
   long long now = (long long)time(NULL);
   Textfile *f = file_open_rw(args->file_path);
   Record rec;
@@ -173,6 +182,7 @@ static void update_database(Arguments *args) {
       break;
     }
   }
+  free(prefix);
   if (feof(f->fp)) {
     rec.n_visits = args->weight;
     rec.path = args->key;
@@ -194,12 +204,13 @@ static void lookup(Arguments *args) {
     return;
   }
   Textfile *f = file_open(args->file_path);
-  if (!f){
-	  return;
+  if (!f) {
+    return;
   }
+  char **filters = read_filters(args->filters);
   Heap *heap = heap_create(args->n_results);
   if (!heap) {
-    fprintf(stderr, "ERROR: Could not allocate heap memory.");
+    fprintf(stderr, "ERROR: Could not allocate heap memory.\n");
     exit(EXIT_FAILURE);
   }
   Queries queries;
@@ -218,6 +229,9 @@ static void lookup(Arguments *args) {
   Record rec;
   while (next_line(f)) {
     parse_record(f->line, &rec);
+    if (glob_match_list(filters, rec.path)) {
+      continue;
+    }
     match_score = match_accuracy(rec.path, queries, args->highlight,
                                  &matched_str, args->case_mode);
     if (match_score > 0) {
@@ -236,6 +250,7 @@ static void lookup(Arguments *args) {
   }
   heap_print(heap, args->print_scores, args->relative_to, args->home_tilde);
   file_close(f);
+  free_filters(filters);
 }
 
 static int print_stats(const char *path) {
@@ -245,8 +260,8 @@ static int print_stats(const char *path) {
   long long now = (long long)time(NULL);
 
   Textfile *f = file_open(path);
-  if (!f){
-	  return -1;
+  if (!f) {
+    return -1;
   }
   Record rec;
   while (next_line(f)) {
