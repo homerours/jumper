@@ -5,6 +5,95 @@
 #include "glob.h"
 #include "textfile.h"
 
+// Validate a glob pattern and return error message if invalid
+static bool is_valid_filter(const char *pattern, const char **error_msg) {
+  int i = 0;
+
+  // Check for pipe character (database delimiter)
+  if (strchr(pattern, '|') != NULL) {
+    *error_msg = "pattern contains '|' which is used as database delimiter";
+    return false;
+  }
+
+  // Check for multiple consecutive wildcards (*** or more)
+  if (strstr(pattern, "***") != NULL) {
+    *error_msg = "three or more consecutive '*' characters (use '**' for recursive matching)";
+    return false;
+  }
+
+  // Validate ** patterns and character classes
+  while (pattern[i]) {
+    // Check for malformed ** patterns
+    if (pattern[i] == '*' && pattern[i + 1] == '*') {
+      // ** must be followed by '/' or end of string
+      if (pattern[i + 2] != '\0' && pattern[i + 2] != '/') {
+        *error_msg = "malformed '**': must be followed by '/' or end of pattern (e.g., '**/foo' or 'bar/**')";
+        return false;
+      }
+      // Skip past the **
+      i += 2;
+      // Skip optional /
+      if (pattern[i] == '/') {
+        i++;
+      }
+      continue;
+    }
+
+    if (pattern[i] == '[') {
+      i++;
+
+      // Check for empty character class []
+      if (pattern[i] == ']') {
+        *error_msg = "empty character class []";
+        return false;
+      }
+
+      // Skip negation character
+      bool negated = false;
+      if (pattern[i] == '^' || pattern[i] == '!') {
+        negated = true;
+        i++;
+
+        // Check for [^] or [!] (empty negated class)
+        if (pattern[i] == ']') {
+          *error_msg = negated ? "empty negated character class [^] or [!]" : "empty character class []";
+          return false;
+        }
+      }
+
+      // Find closing bracket and validate ranges
+      bool found_closing = false;
+      while (pattern[i] && !found_closing) {
+        if (pattern[i] == ']') {
+          found_closing = true;
+          break;
+        }
+
+        // Check for character ranges like a-z
+        if (pattern[i + 1] == '-' && pattern[i + 2] != ']' && pattern[i + 2] != '\0') {
+          // Validate that range is not reversed (e.g., z-a is invalid)
+          if (pattern[i] > pattern[i + 2]) {
+            *error_msg = "invalid character range (start > end)";
+            return false;
+          }
+          i += 3;
+        } else {
+          i++;
+        }
+      }
+
+      if (!found_closing) {
+        *error_msg = "unclosed character class [";
+        return false;
+      }
+    } else {
+      i++;
+    }
+  }
+
+  return true;
+}
+
 char **read_filters(const char *path) {
   if (!path) {
     return NULL;
@@ -17,20 +106,39 @@ char **read_filters(const char *path) {
   int buffer_size = 20;
   char **filters = (char **)malloc(buffer_size * sizeof(char *));
   int i = 0;
+  int line_num = 0;
+
   while (next_line(f)) {
+    line_num++;
+
     // Remove trailing newline
     f->line[strcspn(f->line, "\n")] = '\0';
-    // Skip empty lines
-    if (f->line[0] == '\0') {
+
+    // Skip empty lines and comments
+    if (f->line[0] == '\0' || f->line[0] == '#') {
       continue;
     }
+
+    // Validate filter before adding it
+    const char *error_msg = NULL;
+    if (!is_valid_filter(f->line, &error_msg)) {
+      fprintf(stderr, "WARNING: Invalid filter at line %d in %s\n",
+              line_num, path);
+      fprintf(stderr, "         Pattern: '%s'\n", f->line);
+      fprintf(stderr, "         Reason: %s\n", error_msg);
+      fprintf(stderr, "         This filter will be ignored.\n\n");
+      continue;
+    }
+
     filters[i] = strdup(f->line);
     i++;
+
     if (i == buffer_size) {
       buffer_size = buffer_size * 2;
       filters = realloc(filters, buffer_size * sizeof(char *));
     }
   }
+
   filters[i] = NULL;
   file_close(f);
   return filters;
