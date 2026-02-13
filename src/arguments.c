@@ -8,7 +8,7 @@
 
 #include "arguments.h"
 
-static const char VERSION[] = "v1.1";
+static const char VERSION[] = "v1.2";
 
 static const int default_n_results = 50000;
 static const char default_dir_database[] = "/.jfolders";
