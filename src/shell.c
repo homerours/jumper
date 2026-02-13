@@ -48,7 +48,7 @@ static const char bash_functions[] =
     "  if [[ -z $file ]]; then\n"
     "    echo 'No match found.'\n"
     "    else\n"
-    "    eval \"${EDITOR} '${file}'\"\n"
+    "    $EDITOR \"${file}\"\n"
     "  fi\n"
     "}\n"
     "__jumper_fzf() {\n"
@@ -94,7 +94,7 @@ static const char bash_functions[] =
     "      jumper update --type=\"$actual_type\" -w 0.3 \"$expanded\"\n"
     "    fi\n"
     "  fi\n"
-    "  echo $actual_selection\n"
+    "  echo \"$actual_selection\"\n"
     "}\n"
     "zi() {\n"
     "  args=\"${@// /\\ }\"\n"
@@ -234,7 +234,7 @@ static const char zsh_functions[] =
     "  if [[ -z $file ]]; then\n"
     "    echo 'No match found.'\n"
     "  else\n"
-    "    eval \"${EDITOR} '${file}'\"\n"
+    "    $EDITOR \"${file}\"\n"
     "  fi\n"
     "}\n"
     "__jumper_fzf() {\n"
@@ -381,9 +381,8 @@ static const char zsh_bindings[] = "zle -N jumper-find-dir\n"
                                    "bindkey '^Y' jumper-find-dir\n"
                                    "bindkey '^U' jumper-find-file\n";
 
-static const char zsh_prompt[] = "precmd() {\n"
-                                 "    __jumper_update_db\n"
-                                 "}\n";
+static const char zsh_prompt[] =
+    "precmd_functions+=(__jumper_update_db)\n";
 
 static const char fish_variables[] =
     "if not set -q __JUMPER_FLAGS\n"
@@ -452,7 +451,7 @@ static const char fish_functions[] =
     "  set -l file (jumper find --type=files $__JUMPER_ZFLAGS -n 1 "
     "\"$argv\")\n"
     "  if [ -n \"$file\" ]\n"
-    "    eval \"$EDITOR '$file'\"\n"
+    "    $EDITOR \"$file\"\n"
     "  else\n"
     "    echo 'No match found'\n"
     "  end\n"
@@ -516,7 +515,7 @@ static const char fish_functions[] =
     "  set file (__jumper_fzf 'files' \"$argv\")\n"
     "  if [ -n \"$file\" ]\n"
     "    set file (string replace '~' $HOME $file)\n"
-    "    eval \"$EDITOR '$file'\"\n"
+    "    $EDITOR \"$file\"\n"
     "  end\n"
     "end\n"
     "function jumper-find-dir -d \"Fuzzy-find directories\"\n"

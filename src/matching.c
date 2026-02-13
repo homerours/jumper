@@ -316,7 +316,7 @@ double match_accuracy(const char *string, Queries queries, bool colors,
       if ((score > -1) && (total_score > best_score)) {
         best_score = total_score;
         if (best_matching_data != NULL) {
-          free(best_matching_data);
+          free_matching_data(best_matching_data);
         }
         best_matching_data = data;
       } else {

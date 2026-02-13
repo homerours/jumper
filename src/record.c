@@ -36,8 +36,10 @@ char *record_to_string(Record *rec) {
   if (!buffer)
     return NULL;
   if (snprintf(buffer, n, "%s|%f|%lld", rec->path, rec->n_visits,
-               rec->last_visit) < 0)
+               rec->last_visit) < 0) {
+    free(buffer);
     return NULL;
+  }
   return buffer;
 }
 

@@ -13,6 +13,7 @@ Textfile *file_open(const char *path) {
 	  return NULL;
   }
   f->line = NULL;
+  f->len = 0;
   return f;
 }
 Textfile *file_open_rw(const char *path) {
@@ -27,6 +28,7 @@ Textfile *file_open_rw(const char *path) {
     }
   }
   f->line = NULL;
+  f->len = 0;
   return f;
 }
 

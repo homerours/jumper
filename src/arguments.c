@@ -11,7 +11,6 @@
 static const char VERSION[] = "v1.1";
 
 static const int default_n_results = 50000;
-static const size_t max_cwd_len = 256;
 static const char default_dir_database[] = "/.jfolders";
 static const char default_files_database[] = "/.jfiles";
 static const char default_filters_database[] = "/.jfilters";
@@ -67,7 +66,6 @@ static void help(const char *argv0) { printf(HELP_STRING, argv0); }
 static void print_version(void) { printf("%s\n", VERSION); }
 
 static struct option longopts[] = {{"file", required_argument, NULL, 'f'},
-                                   {"add", no_argument, NULL, 'a'},
                                    {"weight", required_argument, NULL, 'w'},
                                    {"scores", no_argument, NULL, 's'},
                                    {"color", no_argument, NULL, 'c'},
@@ -174,17 +172,21 @@ char *get_default_database_path(TYPE type) {
     strcpy(path, home);
     strcat(path, (type == TYPE_directories) ? default_dir_database
                                             : default_files_database);
+  } else {
+    path = strdup(path);
   }
   return path;
 }
 
 char *get_default_filters_path() {
-  char *path = getenv(directories_env_variable);
+  char *path = getenv(filters_env_variable);
   if (path == NULL) {
     char *home = get_home_path();
     path = (char *)malloc((strlen(home) + 20) * sizeof(char));
     strcpy(path, home);
     strcat(path, default_filters_database);
+  } else {
+    path = strdup(path);
   }
   return path;
 }
@@ -320,8 +322,7 @@ Arguments *parse_arguments(int argc, char **argv) {
         break;
       case 'r':
         if (optarg == NULL) {
-          char *cwd = (char *)malloc(max_cwd_len * sizeof(char));
-          args->relative_to = getcwd(cwd, max_cwd_len);
+          args->relative_to = getcwd(NULL, 0);
         } else {
           args->relative_to = optarg;
         }
@@ -339,7 +340,7 @@ Arguments *parse_arguments(int argc, char **argv) {
         }
         if (args->n_results < 0) {
           fprintf(stderr,
-                  "ERROR: The number of results -n has to be non-positive.\n");
+                  "ERROR: The number of results -n has to be non-negative.\n");
           exit(EXIT_FAILURE);
         }
         break;

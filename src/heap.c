@@ -34,7 +34,7 @@ Heap *heap_create(int size) {
   heap->n_items = 0;
   heap->size = size;
   heap->alloc_size = 512;
-  heap->items = (Item *)malloc(size * sizeof(Item));
+  heap->items = (Item *)malloc(heap->alloc_size * sizeof(Item));
   if (!heap->items) {
     return NULL;
   } else {
@@ -122,11 +122,13 @@ void heap_print(Heap *heap, bool print_scores, const char *relative_to,
     swap(heap->items, heap->items + heap->n_items);
     bubble_down(heap, 0);
   }
-  const char *home_folder;
+  const char *home_folder = NULL;
   int home_len = 0;
   if (tilde) {
     home_folder = getenv("HOME");
-    home_len = strlen(home_folder);
+    if (home_folder) {
+      home_len = strlen(home_folder);
+    }
   }
   const int relative_len = (relative_to == NULL) ? 0 : strlen(relative_to);
   const char *path;
@@ -138,7 +140,8 @@ void heap_print(Heap *heap, bool print_scores, const char *relative_to,
     if (relative_len > 0 && strncmp(path, relative_to, relative_len) == 0 &&
         path[relative_len] == '/') {
       printf("%s\n", path + relative_len + 1);
-    } else if (tilde && strncmp(path, home_folder, home_len) == 0 &&
+    } else if (tilde && home_folder &&
+               strncmp(path, home_folder, home_len) == 0 &&
                path[home_len] == '/') {
       printf("~%s\n", path + home_len);
     } else {

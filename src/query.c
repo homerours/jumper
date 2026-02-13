@@ -19,13 +19,16 @@ void free_queries(Queries queries) {
 
 static void free_tokenarray(TokenArray t) {
   for (int i = 0; i < t.length; i++) {
+    free(t.tokens[i]->token);
     free(t.tokens[i]);
   }
   free(t.tokens);
   if (t.start != NULL) {
+    free(t.start->token);
     free(t.start);
   }
   if (t.end != NULL) {
+    free(t.end->token);
     free(t.end);
   }
 }
