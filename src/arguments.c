@@ -56,6 +56,8 @@ static const char HELP_STRING[] =
     "of the filters.\n"
     "                           If --type is not specified, cleans both "
     "databases.\n"
+    " -D, --dry-run             Create filtered tmp file without replacing the "
+    "original database.\n"
     "MODE status: print databases' locations and some statistics.\n"
     "MODE shell: print setup scripts. ARG has to be bash, zsh or fish.\n"
     " -B, --no-bind             Do not bind keys.\n";
@@ -81,6 +83,7 @@ static struct option longopts[] = {{"file", required_argument, NULL, 'f'},
                                    {"existing", no_argument, NULL, 'e'},
                                    {"type", required_argument, NULL, 't'},
                                    {"no-bind", no_argument, NULL, 'B'},
+                                   {"dry-run", no_argument, NULL, 'D'},
                                    {NULL, 0, NULL, 0}};
 
 static void args_init(Arguments *args) {
@@ -104,6 +107,7 @@ static void args_init(Arguments *args) {
   args->beta = 1.0;
   args->weight = 1.0;
   args->no_bind = false;
+  args->dry_run = false;
 }
 
 static MODE parse_mode(const char *mode) {
@@ -281,7 +285,7 @@ Arguments *parse_arguments(int argc, char **argv) {
   optind++;
   int c = 0;
   while (optind < argc && c != -1) {
-    c = getopt_long(argc, argv, "csoeHISt:f:n:w:b:x:r::F::B", longopts, NULL);
+    c = getopt_long(argc, argv, "csoeHISt:f:n:w:b:x:r::F::BD", longopts, NULL);
     if (c != -1) {
       switch (c) {
       case 'f':
@@ -363,6 +367,9 @@ Arguments *parse_arguments(int argc, char **argv) {
         break;
       case 'B':
         args->no_bind = true;
+        break;
+      case 'D':
+        args->dry_run = true;
         break;
       default:
         help(argv[0]);

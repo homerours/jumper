@@ -124,6 +124,13 @@ static void clean_database(Arguments *args) {
     return;
   }
 
+  if (args->dry_run) {
+    fprintf(stdout, "Dry run: filtered data saved to %s\n", tempname);
+    fprintf(stdout, "Original database unchanged: %s\n", args->file_path);
+    free(tempname);
+    return;
+  }
+
   if (rename(tempname, args->file_path) != 0) {
     fprintf(stderr, "ERROR: Failed to replace database file: %s\n",
             strerror(errno));

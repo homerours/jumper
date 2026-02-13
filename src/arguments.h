@@ -28,6 +28,7 @@ typedef struct Arguments {
   bool orderless;
   bool existing;
   bool no_bind;
+  bool dry_run;
   TYPE type;
   int n_results;
   const char *relative_to;
