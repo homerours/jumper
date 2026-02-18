@@ -112,7 +112,7 @@ int heap_insert(Heap *heap, double value, char *path) {
 }
 
 void heap_print(Heap *heap, bool print_scores, const char *relative_to,
-                bool tilde) {
+                bool tilde, const char *prefix) {
   const int n = heap->n_items;
   if (n != heap->size) {
     heapify(heap);
@@ -133,6 +133,8 @@ void heap_print(Heap *heap, bool print_scores, const char *relative_to,
   const int relative_len = (relative_to == NULL) ? 0 : strlen(relative_to);
   const char *path;
   for (int i = 0; i < n; i++) {
+    if (prefix)
+      printf("%s", prefix);
     if (print_scores) {
       printf("%.3f  ", heap->items[i].value);
     }

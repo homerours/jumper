@@ -206,7 +206,7 @@ static void update_database(Arguments *args) {
   file_close(f);
 }
 
-static void lookup(Arguments *args) {
+static void lookup(Arguments *args, const char *prefix) {
   if (args->n_results <= 0) {
     return;
   }
@@ -255,14 +255,55 @@ static void lookup(Arguments *args) {
       }
     }
   }
-  heap_print(heap, args->print_scores, args->relative_to, args->home_tilde);
+  heap_print(heap, args->print_scores, args->relative_to, args->home_tilde,
+             prefix);
   file_close(f);
   free_filters(filters);
 }
 
-static int print_stats(const char *path) {
-  int n_entries = 0;
-  double total_visits = 0;
+static int count_filters(const char *path) {
+  char **filters = read_filters(path);
+  if (!filters)
+    return 0;
+  int count = 0;
+  while (filters[count])
+    count++;
+  free_filters(filters);
+  return count;
+}
+
+static void print_config(const Arguments *args, bool color) {
+  if (color)
+    printf("\033[1m");
+  printf("CONFIG:");
+  if (color)
+    printf("\033[0m");
+  printf("\n");
+
+  char *dir_path = get_default_database_path(TYPE_directories);
+  char *files_path = get_default_database_path(TYPE_files);
+
+  printf("  directories: %s%s\n", dir_path,
+         getenv("__JUMPER_FOLDERS") ? " (via $__JUMPER_FOLDERS)" : "");
+  printf("  files: %s%s\n", files_path,
+         getenv("__JUMPER_FILES") ? " (via $__JUMPER_FILES)" : "");
+
+  free(dir_path);
+  free(files_path);
+
+  if (args->filters) {
+    int n = count_filters(args->filters);
+    printf("  filters: %s (%d pattern%s)%s\n", args->filters, n,
+           n == 1 ? "" : "s",
+           getenv("__JUMPER_FILTERS") ? " (via $__JUMPER_FILTERS)" : "");
+  } else {
+    printf("  filters: (disabled)\n");
+  }
+}
+
+static int get_stats(const char *path, int *n_entries, double *total_visits) {
+  *n_entries = 0;
+  *total_visits = 0;
 
   long long now = (long long)time(NULL);
 
@@ -273,46 +314,64 @@ static int print_stats(const char *path) {
   Record rec;
   while (next_line(f)) {
     parse_record(f->line, &rec);
-    n_entries++;
-    total_visits += visits(rec.n_visits, now - rec.last_visit);
+    (*n_entries)++;
+    *total_visits += visits(rec.n_visits, now - rec.last_visit);
   }
   file_close(f);
-  printf("%s:\n- %d entries\n- %.1f total_visits\n", path, n_entries,
-         total_visits);
   return 0;
 }
 
-static void status_file(Arguments *args) {
-  if (print_stats(args->file_path) != 0) {
-    printf("File %s does not exist.\n", args->file_path);
-  } else if (args->n_results > 0) {
-    printf("Top %d entries", args->n_results);
-    if (strlen(args->key) > 0) {
-      printf(" matching %s:\n", args->key);
-    } else {
-      printf(":\n");
-    }
-    lookup(args);
+static void status_file(const char *label, Arguments *args, bool color) {
+  const char *header = label ? label : args->file_path;
+
+  if (color)
+    printf("\033[1m");
+  printf("%s:", header);
+  if (color)
+    printf("\033[0m");
+  printf("\n");
+
+  args->print_scores = true;
+
+  int n_entries;
+  double total_visits;
+  if (get_stats(args->file_path, &n_entries, &total_visits) != 0) {
+    printf("  File does not exist.\n");
+    return;
+  }
+
+  printf("  %d entries, %.1f total visits\n", n_entries, total_visits);
+
+  if (args->n_results > 0) {
+    printf("  Top %d entries", args->n_results);
+    if (strlen(args->key) > 0)
+      printf(" matching %s", args->key);
+    printf(":\n");
+    lookup(args, "  ");
   }
 }
 
 static void status(Arguments *args) {
+  bool color = isatty(STDOUT_FILENO);
   if (!args->file_path) {
+    print_config(args, color);
+
     args->file_path = get_default_database_path(TYPE_directories);
-    printf("DIRECTORIES: ");
-    status_file(args);
+    printf("\n");
+    status_file("DIRECTORIES", args, color);
+
     args->file_path = get_default_database_path(TYPE_files);
-    printf("\nFILES: ");
-    status_file(args);
+    printf("\n");
+    status_file("FILES", args, color);
   } else {
-    status_file(args);
+    status_file(NULL, args, color);
   }
 }
 
 int main(int argc, char **argv) {
   Arguments *args = parse_arguments(argc, argv);
   if (args->mode == MODE_search) {
-    lookup(args);
+    lookup(args, NULL);
   } else if (args->mode == MODE_update) {
     update_database(args);
   } else if (args->mode == MODE_status) {
